@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 10% 72%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 94%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 96%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 6 89% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 10% 68%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 10% 66%;
+    --muted-foreground: 215 18% 30%;
+    --accent: 24 40% 72%;
+    --accent-foreground: 24 100% 27%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 12% 70%;
+    --input: 214 12% 70%;
+    --ring: 6 89% 52%;
+    --success: 142 76% 36%;
+    --warning: 38 92% 50%;
+    --radius: 0.95rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at top left, rgba(248, 113, 113, 0.12), transparent 24%),
+      radial-gradient(circle at top right, rgba(251, 191, 36, 0.1), transparent 20%),
+      linear-gradient(180deg, rgba(71, 85, 105, 0.08), transparent 32%);
+  }
+}
+
+@layer utilities {
+  .surface-grid {
+    background-image:
+      linear-gradient(rgba(71, 85, 105, 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(71, 85, 105, 0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+}
