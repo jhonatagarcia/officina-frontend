@@ -1,16 +1,25 @@
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BudgetItemsEditor } from '@/features/budgets/components/budget-items-editor';
 import { BudgetSummaryCard } from '@/features/budgets/components/budget-summary-card';
 import { useBudgetForm } from '@/features/budgets/hooks/use-budget-form';
 import { useClientOptions } from '@/features/reference-data/hooks/use-client-options';
 import { useVehicleOptions } from '@/features/reference-data/hooks/use-vehicle-options';
-import { SelectField, TextAreaField, TextField } from '@/components/shared/form-fields';
+import { SelectField, TextAreaField } from '@/components/shared/form-fields';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Option } from '@/types/common';
+import { capitalizeFirstLetter, formatCurrency, parseCurrencyInput } from '@/lib/utils';
+
+interface VehicleOption extends Option {
+  clientId: string;
+}
 
 export function BudgetFormPage({ mode }: { mode: 'create' | 'view' }) {
   const navigate = useNavigate();
@@ -21,6 +30,20 @@ export function BudgetFormPage({ mode }: { mode: 'create' | 'view' }) {
     navigate('/app/orcamentos'),
   );
   const isReadOnly = mode === 'view';
+  const selectedClientId = form.watch('clientId');
+  const selectedVehicleId = form.watch('vehicleId');
+  const vehicleOptions = ((vehicleOptionsQuery.data as VehicleOption[] | undefined) ?? []).filter(
+    (vehicle) => vehicle.clientId === selectedClientId,
+  );
+
+  useEffect(() => {
+    if (!selectedVehicleId) return;
+
+    const vehicleBelongsToClient = vehicleOptions.some((vehicle) => vehicle.value === selectedVehicleId);
+    if (!vehicleBelongsToClient) {
+      form.setValue('vehicleId', '');
+    }
+  }, [form, selectedVehicleId, vehicleOptions]);
 
   if (clientOptionsQuery.isLoading || vehicleOptionsQuery.isLoading || budgetQuery.isLoading) return <LoadingState />;
   if (clientOptionsQuery.isError || vehicleOptionsQuery.isError || budgetQuery.isError) {
@@ -46,9 +69,9 @@ export function BudgetFormPage({ mode }: { mode: 'create' | 'view' }) {
                 <SelectField
                   control={form.control}
                   name="vehicleId"
-                  disabled={isReadOnly}
+                  disabled={isReadOnly || !selectedClientId}
                   label="Veículo"
-                  options={vehicleOptionsQuery.data ?? []}
+                  options={vehicleOptions}
                   error={form.formState.errors.vehicleId?.message}
                 />
               </div>
@@ -58,17 +81,27 @@ export function BudgetFormPage({ mode }: { mode: 'create' | 'view' }) {
                 disabled={isReadOnly}
                 label="Problema relatado"
                 error={form.formState.errors.problemDescription?.message}
+                transformValue={capitalizeFirstLetter}
               />
-              <TextAreaField control={form.control} name="notes" disabled={isReadOnly} label="Observações" error={form.formState.errors.notes?.message} />
+              <TextAreaField control={form.control} 
+                name="notes" disabled={isReadOnly} 
+                label="Observações" 
+                error={form.formState.errors.notes?.message} 
+                transformValue={capitalizeFirstLetter}/>
               <BudgetItemsEditor fieldArray={fieldArray} form={form} items={items} readOnly={isReadOnly} />
-              <TextField
-                control={form.control}
-                name="discount"
-                disabled={isReadOnly}
-                label="Desconto"
-                type="number"
-                error={form.formState.errors.discount?.message}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="discount">Desconto</Label>
+                <Input
+                  id="discount"
+                  disabled={isReadOnly}
+                  inputMode="numeric"
+                  value={formatCurrency(form.watch('discount') ?? 0)}
+                  onChange={(event) => form.setValue('discount', parseCurrencyInput(event.target.value), { shouldValidate: true })}
+                />
+                {form.formState.errors.discount?.message ? (
+                  <p className="text-xs text-destructive">{form.formState.errors.discount.message}</p>
+                ) : null}
+              </div>
               {!isReadOnly ? <Button disabled={mutation.isPending}>{mutation.isPending ? 'Salvando...' : 'Salvar orçamento'}</Button> : null}
             </form>
           </CardContent>

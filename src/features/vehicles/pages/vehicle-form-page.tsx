@@ -8,7 +8,7 @@ import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { normalizePlate } from '@/lib/utils';
+import { capitalizeFirstLetter, normalizePlate } from '@/lib/utils';
 
 export function VehicleFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
   const navigate = useNavigate();
@@ -32,6 +32,8 @@ export function VehicleFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) 
                 name="clientId"
                 label="Cliente vinculado"
                 options={clientOptionsQuery.data ?? []}
+                searchable
+                searchPlaceholder="Buscar cliente por nome"
                 error={form.formState.errors.clientId?.message}
               />
               <TextField
@@ -41,14 +43,44 @@ export function VehicleFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) 
                 error={form.formState.errors.plate?.message}
                 transformValue={normalizePlate}
               />
-              <TextField control={form.control} name="brand" label="Marca" error={form.formState.errors.brand?.message} />
-              <TextField control={form.control} name="model" label="Modelo" error={form.formState.errors.model?.message} />
+              <TextField
+                control={form.control}
+                name="brand"
+                label="Marca"
+                error={form.formState.errors.brand?.message}
+                transformValue={capitalizeFirstLetter}
+              />
+              <TextField
+                control={form.control}
+                name="model"
+                label="Modelo"
+                error={form.formState.errors.model?.message}
+                transformValue={capitalizeFirstLetter}
+              />
               <TextField control={form.control} name="year" label="Ano" error={form.formState.errors.year?.message} />
-              <TextField control={form.control} name="color" label="Cor" error={form.formState.errors.color?.message} />
+              <TextField
+                control={form.control}
+                name="color"
+                label="Cor"
+                error={form.formState.errors.color?.message}
+                transformValue={capitalizeFirstLetter}
+              />
               <TextField control={form.control} name="mileage" label="Quilometragem" error={form.formState.errors.mileage?.message} />
-              <TextField control={form.control} name="fuel" label="Combustível" error={form.formState.errors.fuel?.message} />
+              <TextField
+                control={form.control}
+                name="fuel"
+                label="Combustível"
+                error={form.formState.errors.fuel?.message}
+                transformValue={capitalizeFirstLetter}
+              />
               <div className="md:col-span-2">
-                <TextAreaField control={form.control} name="notes" label="Observações" error={form.formState.errors.notes?.message} />
+                <TextAreaField
+                  control={form.control}
+                  name="notes"
+                  label="Observações"
+                  error={form.formState.errors.notes?.message}
+                  transformValue={capitalizeFirstLetter}
+                />
               </div>
             </fieldset>
             <div className="md:col-span-2 flex justify-end gap-3">

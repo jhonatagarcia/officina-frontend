@@ -5,6 +5,8 @@ export interface BudgetItem {
   id: string;
   budgetId: string;
   type: BudgetItemType;
+  serviceCatalogItemId: string | null;
+  serviceCode: string | null;
   description: string;
   quantity: number;
   unitPrice: number;

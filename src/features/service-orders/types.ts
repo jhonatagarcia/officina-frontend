@@ -29,13 +29,23 @@ export interface ServiceOrder {
   client?: ServiceOrderClientSummary;
   vehicle?: ServiceOrderVehicleSummary;
   mechanic?: ServiceOrderMechanicSummary | null;
+  budgetItems?: ServiceOrderBudgetItem[];
   parts?: ServiceOrderPart[];
+}
+
+export interface ServiceOrderBudgetItem {
+  id: string;
+  type: 'PART' | 'LABOR';
+  serviceCode: string | null;
+  description: string;
+  quantity: number;
 }
 
 export interface ServiceOrderClientSummary {
   id: string;
   name: string;
   document: string | null;
+  phone: string | null;
 }
 
 export interface ServiceOrderVehicleSummary {

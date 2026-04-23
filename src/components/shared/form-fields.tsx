@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { Controller, type Control, type FieldPath, type FieldValues } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -96,6 +97,8 @@ export function TextAreaField<TFieldValues extends FieldValues>({
 
 interface SelectFieldProps<TFieldValues extends FieldValues> extends ControlledFieldProps<TFieldValues> {
   options: Option[];
+  searchable?: boolean;
+  searchPlaceholder?: string;
 }
 
 export function SelectField<TFieldValues extends FieldValues>({
@@ -106,19 +109,49 @@ export function SelectField<TFieldValues extends FieldValues>({
   error,
   options,
   disabled,
+  searchable,
+  searchPlaceholder,
 }: SelectFieldProps<TFieldValues>) {
+  const [search, setSearch] = useState('');
+  const filteredOptions = useMemo(() => {
+    if (!searchable || !search.trim()) return options;
+
+    const normalizedSearch = search.trim().toLowerCase();
+    return options.filter((option) => option.label.toLowerCase().includes(normalizedSearch));
+  }, [options, search, searchable]);
+
   return (
     <Controller
       control={control}
       name={name}
       render={({ field }) => (
         <FieldWrapper label={label} error={error}>
-          <Select disabled={disabled} onValueChange={field.onChange} value={field.value}>
+          <Select
+            disabled={disabled}
+            onOpenChange={(open) => {
+              if (!open) setSearch('');
+            }}
+            onValueChange={field.onChange}
+            value={field.value}
+          >
             <SelectTrigger>
               <SelectValue placeholder={placeholder ?? 'Selecione'} />
             </SelectTrigger>
             <SelectContent>
-              {options.map((option) => (
+              {searchable ? (
+                <div className="p-2">
+                  <Input
+                    placeholder={searchPlaceholder ?? 'Buscar...'}
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    onKeyDown={(event) => event.stopPropagation()}
+                  />
+                </div>
+              ) : null}
+              {filteredOptions.length === 0 ? (
+                <div className="px-2 py-3 text-sm text-muted-foreground">Nenhum resultado encontrado.</div>
+              ) : null}
+              {filteredOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>

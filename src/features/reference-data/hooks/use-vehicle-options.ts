@@ -9,6 +9,7 @@ export function useVehicleOptions() {
       return response.data.map((vehicle) => ({
         label: `${vehicle.plate} • ${vehicle.brand} ${vehicle.model}`,
         value: vehicle.id,
+        clientId: vehicle.clientId,
       }));
     },
   });

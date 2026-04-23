@@ -3,7 +3,7 @@ import { DollarSign, TrendingDown, TrendingUp } from 'lucide-react';
 import { financialService } from '@/features/financial/services/financial-service';
 import type { PaymentMethod } from '@/features/financial/types';
 import { useListParams } from '@/hooks/use-list-params';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatServiceOrderNumber } from '@/lib/utils';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { SearchInput } from '@/components/shared/search-input';
@@ -105,7 +105,7 @@ export function FinancialPage() {
                       <TableCell>{entry.type === 'RECEIVABLE' ? 'Receber' : 'Pagar'}</TableCell>
                       <TableCell><StatusBadge status={entry.status} /></TableCell>
                       <TableCell>{formatCurrency(entry.amount)}</TableCell>
-                      <TableCell>{entry.serviceOrder ? `OS ${entry.serviceOrder.orderNumber}` : entry.client?.name ?? '-'}</TableCell>
+                      <TableCell>{entry.serviceOrder ? formatServiceOrderNumber(entry.serviceOrder.orderNumber) : entry.client?.name ?? '-'}</TableCell>
                       <TableCell className="text-right">
                         {canRegisterPayment(entry.status) ? (
                           <Button

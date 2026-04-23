@@ -25,6 +25,8 @@ import { FinancialPage } from '@/features/financial/pages/financial-page';
 import { ServicesPage } from '@/features/services/pages/services-page';
 import { ServiceFormPage } from '@/features/services/pages/service-form-page';
 import { VehicleHistoryPage } from '@/features/vehicle-history/pages/vehicle-history-page';
+import { MechanicsPage } from '@/features/mechanics/pages/mechanics-page';
+import { MechanicFormPage } from '@/features/mechanics/pages/mechanic-form-page';
 
 export interface AppRouteDefinition {
   key: string;
@@ -183,6 +185,33 @@ export const appRoutes: AppRouteDefinition[] = [
     path: 'servicos/:id/editar',
     roles: ['ADMIN', 'ATENDENTE'],
     element: <ServiceFormPage mode="edit" />,
+  },
+  {
+    key: 'mecanicos-list',
+    path: 'mecanicos',
+    roles: ['ADMIN'],
+    element: <MechanicsPage />,
+    label: 'Mecânicos',
+    icon: Wrench,
+    sidebar: true,
+  },
+  {
+    key: 'mecanicos-create',
+    path: 'mecanicos/novo',
+    roles: ['ADMIN'],
+    element: <MechanicFormPage mode="create" />,
+  },
+  {
+    key: 'mecanicos-view',
+    path: 'mecanicos/:id',
+    roles: ['ADMIN'],
+    element: <MechanicFormPage mode="view" />,
+  },
+  {
+    key: 'mecanicos-edit',
+    path: 'mecanicos/:id/editar',
+    roles: ['ADMIN'],
+    element: <MechanicFormPage mode="edit" />,
   },
   {
     key: 'financeiro-list',

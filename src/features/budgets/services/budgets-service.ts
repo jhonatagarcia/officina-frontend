@@ -8,6 +8,8 @@ interface BudgetItemApiResponse {
   id: string;
   budgetId: string;
   type: BudgetItemType;
+  serviceCatalogItemId: string | null;
+  serviceCode: string | null;
   description: string;
   quantity: number;
   unitPrice: number | string;
@@ -77,7 +79,13 @@ export const budgetsService = {
     problemDescription: string;
     notes?: string;
     discount: number;
-    items: Array<{ type: BudgetItemType; description: string; quantity: number; unitPrice: number }>;
+    items: Array<{
+      type: BudgetItemType;
+      serviceCatalogItemId?: string;
+      description: string;
+      quantity: number;
+      unitPrice: number;
+    }>;
   }) {
     const response = await http.post<BudgetApiResponse>('/budgets', payload);
     return mapBudget(response.data);

@@ -5,7 +5,7 @@ import { inventoryService } from '@/features/inventory/services/inventory-servic
 import type { InventoryItem } from '@/features/inventory/types';
 import type { ServiceOrder } from '@/features/service-orders/types';
 import { serviceOrdersService } from '@/features/service-orders/services/service-orders-service';
-import { toNumber } from '@/lib/utils';
+import { formatServiceOrderNumber, toNumber } from '@/lib/utils';
 import { http } from '@/services/api/http';
 
 interface DashboardSummaryApiResponse {
@@ -138,7 +138,7 @@ function buildOperationalAlerts(params: {
       metric: `${overdueOrders.length} OS com prazo vencido`,
       description:
         oldestOrder && delayDays !== null
-          ? `OS ${oldestOrder.orderNumber} de ${oldestOrder.clientName} está atrasada há ${Math.max(delayDays, 1)} dia(s).`
+          ? `${formatServiceOrderNumber(oldestOrder.orderNumber)} de ${oldestOrder.clientName} está atrasada há ${Math.max(delayDays, 1)} dia(s).`
           : 'Existem ordens de serviço com prazo de entrega vencido.',
     });
   }

@@ -48,7 +48,7 @@ export function BudgetsPage() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success('Orçamento convertido em ordem de serviço.');
 
-      const serviceOrderId = result?.id ?? result?.serviceOrder?.id;
+      const serviceOrderId = result?.serviceOrder?.id;
       if (serviceOrderId) {
         navigate(`/app/ordens-servico/${serviceOrderId}`);
       }
