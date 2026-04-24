@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useServiceForm } from '@/features/services/hooks/use-service-form';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, parseCurrencyInput } from '@/lib/utils';
 
 const billingTypeOptions = [
   { label: 'Apenas mão de obra', value: 'LABOR_ONLY' },
@@ -56,12 +56,7 @@ export function ServiceFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) 
                 <Label htmlFor="code">Código</Label>
                 <Input id="code" disabled value={query.data?.code ?? ''} />
               </div>
-            ) : (
-              <div className="space-y-2">
-                <Label htmlFor="code-preview">Código</Label>
-                <Input id="code-preview" disabled value="Gerado automaticamente pelo backend" />
-              </div>
-            )}
+            ) : null}
             <TextField control={form.control} name="name" label="Nome do serviço" disabled={isReadOnly} error={form.formState.errors.name?.message} />
             <TextField control={form.control} name="category" label="Categoria" disabled={isReadOnly} error={form.formState.errors.category?.message} />
             <SelectField
@@ -80,22 +75,32 @@ export function ServiceFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) 
               options={materialSourceOptions}
               error={form.formState.errors.materialSource?.message}
             />
-            <TextField
-              control={form.control}
-              name="laborPrice"
-              label="Valor da mão de obra"
-              type="number"
-              disabled={isReadOnly}
-              error={form.formState.errors.laborPrice?.message}
-            />
-            <TextField
-              control={form.control}
-              name="productPrice"
-              label="Valor sugerido de produto/peça"
-              type="number"
-              disabled={isReadOnly || productPriceLocked}
-              error={form.formState.errors.productPrice?.message}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="laborPrice">Valor da mão de obra</Label>
+              <Input
+                id="laborPrice"
+                disabled={isReadOnly}
+                inputMode="numeric"
+                value={formatCurrency(form.watch('laborPrice') ?? 0)}
+                onChange={(event) => form.setValue('laborPrice', parseCurrencyInput(event.target.value), { shouldValidate: true, shouldDirty: true })}
+              />
+              {form.formState.errors.laborPrice?.message ? (
+                <p className="text-xs text-destructive">{form.formState.errors.laborPrice.message}</p>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="productPrice">Valor sugerido de produto/peça</Label>
+              <Input
+                id="productPrice"
+                disabled={isReadOnly || productPriceLocked}
+                inputMode="numeric"
+                value={formatCurrency(form.watch('productPrice') ?? 0)}
+                onChange={(event) => form.setValue('productPrice', parseCurrencyInput(event.target.value), { shouldValidate: true, shouldDirty: true })}
+              />
+              {form.formState.errors.productPrice?.message ? (
+                <p className="text-xs text-destructive">{form.formState.errors.productPrice.message}</p>
+              ) : null}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="suggestedTotalPrice">Total sugerido</Label>
               <Input id="suggestedTotalPrice" disabled value={formatCurrency(suggestedTotalPrice)} />

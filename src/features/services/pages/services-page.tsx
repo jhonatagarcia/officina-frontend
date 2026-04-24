@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { DollarSign, Eye, Pencil, Wrench } from 'lucide-react';
+import { Eye, Pencil, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -28,6 +28,22 @@ const billingTypeLabelMap = {
   FIXED_PRICE: 'Preço fixo',
 } as const;
 
+const activeImageSrc =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+      <path d="M20 32l8 8 16-16" stroke="#15803D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `);
+
+const inactiveImageSrc =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+      <path d="M24 24l16 16M40 24L24 40" stroke="#B91C1C" stroke-width="6" stroke-linecap="round"/>
+    </svg>
+  `);
+
 export function ServicesPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -36,14 +52,13 @@ export function ServicesPage() {
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('ALL');
 
   const query = useQuery({
-    queryKey: ['servicos', params.page, params.search, category, activeFilter],
+    queryKey: ['servicos', params.search, category],
     queryFn: () =>
       servicesService.list({
-        page: params.page,
-        pageSize: params.pageSize,
+        page: 1,
+        pageSize: 100,
         search: params.search,
         category: category || undefined,
-        active: activeFilter === 'ALL' ? undefined : activeFilter === 'ACTIVE',
       }),
   });
 
@@ -53,7 +68,13 @@ export function ServicesPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['servicos'] }),
   });
 
-  const listedItems = query.data?.data ?? [];
+  const fetchedItems = query.data?.data ?? [];
+  const filteredItems = fetchedItems.filter((item) => {
+    if (activeFilter === 'ALL') return true;
+    return activeFilter === 'ACTIVE' ? item.active : !item.active;
+  });
+  const listedItems = filteredItems.slice((params.page - 1) * params.pageSize, params.page * params.pageSize);
+  const totalItems = filteredItems.length;
   const activeCount = listedItems.filter((item) => item.active).length;
   const inactiveCount = listedItems.filter((item) => !item.active).length;
 
@@ -62,8 +83,21 @@ export function ServicesPage() {
       <PageHeader title="Serviços" description="Catálogo padronizado de serviços para orçamento e ordem de serviço.">
         <div className="flex flex-col gap-3 lg:flex-row">
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por nome ou código" />
-          <Input value={category} onChange={(event) => setCategory(event.target.value)} placeholder="Filtrar por categoria" />
-          <Select value={activeFilter} onValueChange={(value) => setActiveFilter(value as ActiveFilter)}>
+          <Input
+            value={category}
+            onChange={(event) => {
+              setCategory(event.target.value);
+              params.setPage(1);
+            }}
+            placeholder="Filtrar por categoria"
+          />
+          <Select
+            value={activeFilter}
+            onValueChange={(value) => {
+              setActiveFilter(value as ActiveFilter);
+              params.setPage(1);
+            }}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Situação" />
             </SelectTrigger>
@@ -79,9 +113,26 @@ export function ServicesPage() {
         </div>
       </PageHeader>
       <div className="grid gap-4 md:grid-cols-3">
-        <SummaryCard title="Serviços listados" value={String(query.data?.total ?? 0)} icon={Wrench} />
-        <SummaryCard title="Ativos na página" value={String(activeCount)} icon={DollarSign} />
-        <SummaryCard title="Inativos na página" value={String(inactiveCount)} icon={DollarSign} />
+        <SummaryCard
+          title="Serviços listados"
+          value={String(totalItems)}
+          icon={Wrench}
+          mediaClassName="bg-blue-100 text-blue-700"
+        />
+        <SummaryCard
+          title="Ativos na página"
+          value={String(activeCount)}
+          imageAlt="Serviços ativos"
+          imageSrc={activeImageSrc}
+          mediaClassName="border border-emerald-200 bg-emerald-50 p-2"
+        />
+        <SummaryCard
+          title="Inativos na página"
+          value={String(inactiveCount)}
+          imageAlt="Serviços inativos"
+          imageSrc={inactiveImageSrc}
+          mediaClassName="border border-rose-200 bg-rose-50 p-2"
+        />
       </div>
       <Card>
         <CardContent className="p-0">
@@ -143,7 +194,7 @@ export function ServicesPage() {
                 </TableBody>
               </Table>
               <div className="mt-6">
-                <Pagination page={query.data!.page} total={query.data!.total} pageSize={query.data!.pageSize} onPageChange={params.setPage} />
+                <Pagination page={params.page} total={totalItems} pageSize={params.pageSize} onPageChange={params.setPage} />
               </div>
             </div>
           ) : null}

@@ -94,6 +94,7 @@ export function FinancialPage() {
                     <TableHead>Tipo</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Valor</TableHead>
+                    <TableHead>Cliente</TableHead>
                     <TableHead>Origem</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -101,11 +102,12 @@ export function FinancialPage() {
                 <TableBody>
                   {filteredEntries.map((entry) => (
                     <TableRow key={entry.id}>
-                      <TableCell>{entry.description}</TableCell>
+                      <TableCell>{entry.serviceOrder ? formatServiceOrderNumber(entry.serviceOrder.orderNumber) : entry.description}</TableCell>
                       <TableCell>{entry.type === 'RECEIVABLE' ? 'Receber' : 'Pagar'}</TableCell>
                       <TableCell><StatusBadge status={entry.status} /></TableCell>
                       <TableCell>{formatCurrency(entry.amount)}</TableCell>
-                      <TableCell>{entry.serviceOrder ? formatServiceOrderNumber(entry.serviceOrder.orderNumber) : entry.client?.name ?? '-'}</TableCell>
+                      <TableCell>{entry.client?.name ?? '-'}</TableCell>
+                      <TableCell>{entry.serviceOrder ? 'Ordem de serviço' : entry.client?.name ?? '-'}</TableCell>
                       <TableCell className="text-right">
                         {canRegisterPayment(entry.status) ? (
                           <Button

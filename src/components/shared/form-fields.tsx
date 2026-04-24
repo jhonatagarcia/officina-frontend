@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { capitalizeFirstLetter } from '@/lib/utils';
 import { Option } from '@/types/common';
 
 interface FieldWrapperProps {
@@ -35,6 +36,10 @@ interface ControlledFieldProps<TFieldValues extends FieldValues> {
   transformValue?: (value: string) => string;
 }
 
+function normalizeStringInputValue(value: string) {
+  return value ? capitalizeFirstLetter(value) : value;
+}
+
 export function TextField<TFieldValues extends FieldValues>({
   control,
   name,
@@ -59,7 +64,11 @@ export function TextField<TFieldValues extends FieldValues>({
             placeholder={placeholder}
             type={type}
             {...field}
-            onChange={(event) => field.onChange(transformValue ? transformValue(event.target.value) : event.target.value)}
+            onChange={(event) => {
+              const nextValue = transformValue ? transformValue(event.target.value) : event.target.value;
+              const shouldCapitalize = !type || type === 'text';
+              field.onChange(shouldCapitalize ? normalizeStringInputValue(nextValue) : nextValue);
+            }}
           />
         </FieldWrapper>
       )}
@@ -87,7 +96,10 @@ export function TextAreaField<TFieldValues extends FieldValues>({
             disabled={disabled}
             placeholder={placeholder}
             {...field}
-            onChange={(event) => field.onChange(transformValue ? transformValue(event.target.value) : event.target.value)}
+            onChange={(event) => {
+              const nextValue = transformValue ? transformValue(event.target.value) : event.target.value;
+              field.onChange(normalizeStringInputValue(nextValue));
+            }}
           />
         </FieldWrapper>
       )}

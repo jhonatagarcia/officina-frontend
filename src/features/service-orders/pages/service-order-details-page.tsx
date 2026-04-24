@@ -17,22 +17,70 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { buildWhatsAppUrl, formatCurrency, formatDate, formatPhone, formatServiceOrderNumber } from '@/lib/utils';
 
-function toDateTimeLocalValue(value?: string | null) {
+function toDateInputValue(value?: string | null) {
   if (!value) return '';
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
 
-  const timezoneOffset = date.getTimezoneOffset();
-  const localDate = new Date(date.getTime() - timezoneOffset * 60_000);
-  return localDate.toISOString().slice(0, 16);
+  return date.toISOString().slice(0, 10);
+}
+
+function getTodayDateInputMin() {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return toDateInputValue(now.toISOString());
+}
+
+function validateExpectedDeliveryAtValue(value: string) {
+  if (!value) return null;
+
+  const match = value.match(/^(\d{4})-\d{2}-\d{2}$/);
+  if (!match) {
+    return 'Informe uma data valida.';
+  }
+
+  if (match[1].length !== 4) {
+    return 'O ano da previsao deve ter 4 digitos.';
+  }
+
+  const parsedValue = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsedValue.getTime())) {
+    return 'Informe uma data valida.';
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (parsedValue < today) {
+    return 'A previsao de entrega nao pode ser anterior ao dia atual.';
+  }
+
+  return null;
+}
+
+function formatServiceOrderStatusLabel(status: ServiceOrderStatus) {
+  switch (status) {
+    case 'ABERTA':
+      return 'Aberta';
+    case 'EM_ANDAMENTO':
+      return 'Em andamento';
+    case 'FINALIZADA':
+      return 'Finalizada';
+    case 'ENTREGUE':
+      return 'Entregue';
+    default:
+      return status;
+  }
 }
 
 export function ServiceOrderDetailsPage() {
   const { id = '' } = useParams();
   const [nextStatus, setNextStatus] = useState<ServiceOrderStatus | ''>('');
   const [expectedDeliveryAt, setExpectedDeliveryAt] = useState('');
+  const [expectedDeliveryAtError, setExpectedDeliveryAtError] = useState<string | null>(null);
   const [selectedMechanicId, setSelectedMechanicId] = useState('');
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ['ordem-servico', id], queryFn: () => serviceOrdersService.getById(id) });
   const mechanicsQuery = useQuery({
@@ -52,14 +100,21 @@ export function ServiceOrderDetailsPage() {
   const deliveryEstimateMutation = useMutation({
     mutationFn: (value: string) =>
       serviceOrdersService.update(id, {
-        expectedDeliveryAt: value ? new Date(value).toISOString() : null,
+        expectedDeliveryAt: value ? `${value}T00:00:00.000Z` : null,
       }),
     onSuccess: () => {
+      setExpectedDeliveryAtError(null);
       queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
       queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success('Previsão de entrega atualizada.');
       query.refetch();
+    },
+    onError: (error: { message?: string | string[] }) => {
+      const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      const normalizedMessage = message || 'Informe uma data válida para salvar a previsão de entrega.';
+      setExpectedDeliveryAtError(normalizedMessage);
+      toast.error(normalizedMessage);
     },
   });
   const mechanicMutation = useMutation({
@@ -77,7 +132,8 @@ export function ServiceOrderDetailsPage() {
   });
 
   useEffect(() => {
-    setExpectedDeliveryAt(toDateTimeLocalValue(query.data?.expectedDeliveryAt));
+    setExpectedDeliveryAt(toDateInputValue(query.data?.expectedDeliveryAt));
+    setExpectedDeliveryAtError(null);
   }, [query.data?.expectedDeliveryAt]);
 
   useEffect(() => {
@@ -91,6 +147,132 @@ export function ServiceOrderDetailsPage() {
   const mechanicOptions = mechanicsQuery.data?.data ?? [];
   const whatsappUrl = buildWhatsAppUrl(query.data.client?.phone, 'Olá, seu carro está pronto!');
   const canSendWhatsAppNotification = query.data.status === 'FINALIZADA' && Boolean(whatsappUrl);
+  const canGeneratePdf = query.data.status === 'ENTREGUE';
+  const minExpectedDeliveryAt = getTodayDateInputMin();
+
+  const handleSaveExpectedDeliveryAt = () => {
+    const validationError = validateExpectedDeliveryAtValue(expectedDeliveryAt);
+
+    if (validationError) {
+      setExpectedDeliveryAtError(validationError);
+      toast.error(validationError);
+      return;
+    }
+
+    setExpectedDeliveryAtError(null);
+    deliveryEstimateMutation.mutate(expectedDeliveryAt);
+  };
+
+  const handleGeneratePdf = async () => {
+    if (!canGeneratePdf) {
+      toast.error('O PDF só pode ser gerado quando a ordem de serviço estiver entregue.');
+      return;
+    }
+
+    setIsGeneratingPdf(true);
+
+    try {
+      const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 14;
+      const maxWidth = pageWidth - margin * 2;
+      let y = margin;
+
+      const ensureSpace = (needed = 8) => {
+        if (y + needed <= pageHeight - margin) return;
+        pdf.addPage();
+        y = margin;
+      };
+
+      const addLines = (lines: string[], size = 11, step = 6) => {
+        pdf.setFontSize(size);
+        lines.forEach((line) => {
+          ensureSpace(step);
+          pdf.text(line, margin, y);
+          y += step;
+        });
+      };
+
+      const addWrappedText = (text: string, size = 11, step = 6, indent = 0) => {
+        pdf.setFontSize(size);
+        const lines = pdf.splitTextToSize(text, maxWidth - indent);
+        lines.forEach((line: string) => {
+          ensureSpace(step);
+          pdf.text(line, margin + indent, y);
+          y += step;
+        });
+      };
+
+      const addSectionTitle = (title: string) => {
+        ensureSpace(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(13);
+        pdf.text(title, margin, y);
+        y += 7;
+        pdf.setFont('helvetica', 'normal');
+      };
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(18);
+      pdf.text('Relatório da execução', margin, y);
+      y += 8;
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      pdf.text('Documento para entrega ao cliente', margin, y);
+      y += 10;
+
+      addLines([
+        `OS: ${formatServiceOrderNumber(query.data.orderNumber)}`,
+        `Cliente: ${query.data.clientName}`,
+        `Telefone: ${formatPhone(query.data.client?.phone)}`,
+        `Veículo: ${query.data.vehicleLabel}`,
+        `Status: ${formatServiceOrderStatusLabel(query.data.status)}`,
+        `Previsão de entrega: ${query.data.expectedDeliveryAt ? formatDate(query.data.expectedDeliveryAt) : 'Não informada'}`,
+        `Mecânico responsável: ${query.data.mechanicName ?? '-'}`,
+      ]);
+
+      addSectionTitle('Problema relatado');
+      addWrappedText(query.data.problemDescription || '-');
+
+      addSectionTitle('Observações');
+      addWrappedText(query.data.notes || '-');
+
+      addSectionTitle('Serviços executados');
+      if (budgetLaborItems.length) {
+        budgetLaborItems.forEach((item) => {
+          addWrappedText(
+            `- ${item.serviceCode ? `${item.serviceCode} • ` : ''}${item.description}${item.quantity > 1 ? ` x${item.quantity}` : ''}`,
+          );
+        });
+      } else {
+        addWrappedText('-');
+      }
+
+      addSectionTitle('Peças aplicadas');
+      if (query.data.parts?.length) {
+        query.data.parts.forEach((part) => {
+          addWrappedText(`- ${part.inventoryItem.internalCode} • ${part.inventoryItem.name}`);
+          addWrappedText(
+            `Quantidade: ${part.quantity} | Valor unitário: ${formatCurrency(part.unitPrice)} | Subtotal: ${formatCurrency(part.totalPrice)}`,
+            10,
+            5,
+            4,
+          );
+        });
+      } else {
+        addWrappedText('Nenhuma peça lançada nesta OS.');
+      }
+
+      pdf.save(`detalhes-da-execucao-${formatServiceOrderNumber(query.data.orderNumber)}.pdf`);
+      toast.success('PDF gerado com sucesso.');
+    } catch {
+      toast.error('Não foi possível gerar o PDF.');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
 
   return (
     <PageContainer>
@@ -101,7 +283,7 @@ export function ServiceOrderDetailsPage() {
       <div className="grid gap-6 xl:grid-cols-[1.5fr_0.9fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Detalhes da execução</CardTitle>
+            <CardTitle>Relatório da Execução</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <p><span className="font-medium">OS:</span> {formatServiceOrderNumber(query.data.orderNumber)}</p>
@@ -186,15 +368,21 @@ export function ServiceOrderDetailsPage() {
               <Label htmlFor="expectedDeliveryAt">Previsão de entrega</Label>
               <Input
                 id="expectedDeliveryAt"
-                type="datetime-local"
+                type="date"
+                min={minExpectedDeliveryAt}
                 value={expectedDeliveryAt}
-                onChange={(event) => setExpectedDeliveryAt(event.target.value)}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setExpectedDeliveryAt(value);
+                  setExpectedDeliveryAtError(validateExpectedDeliveryAtValue(value));
+                }}
               />
+              {expectedDeliveryAtError ? <p className="text-xs text-destructive">{expectedDeliveryAtError}</p> : null}
               <Button
                 className="w-full"
                 disabled={deliveryEstimateMutation.isPending}
                 variant="outline"
-                onClick={() => deliveryEstimateMutation.mutate(expectedDeliveryAt)}
+                onClick={handleSaveExpectedDeliveryAt}
               >
                 {deliveryEstimateMutation.isPending ? 'Salvando previsão...' : 'Salvar previsão'}
               </Button>
@@ -222,6 +410,9 @@ export function ServiceOrderDetailsPage() {
               }}
             >
               Enviar notificação
+            </Button>
+            <Button className="w-full" disabled={!canGeneratePdf || isGeneratingPdf} variant="outline" onClick={handleGeneratePdf}>
+              {isGeneratingPdf ? 'Gerando PDF...' : 'Gerar PDF'}
             </Button>
           </CardContent>
         </Card>
