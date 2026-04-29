@@ -21,6 +21,7 @@ export interface DashboardOverview {
   };
   financial: {
     monthRevenue: number;
+    stockOutValue: number;
   };
   inventory: {
     lowStockCount: number;

@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { DollarSign, TrendingDown, TrendingUp } from 'lucide-react';
+import { DollarSign, PackageSearch, TrendingUp } from 'lucide-react';
+import { dashboardService } from '@/features/dashboard/services/dashboard-service';
 import { financialService } from '@/features/financial/services/financial-service';
-import type { PaymentMethod } from '@/features/financial/types';
+import type { FinancialEntry, PaymentMethod } from '@/features/financial/types';
 import { useListParams } from '@/hooks/use-list-params';
-import { formatCurrency, formatServiceOrderNumber } from '@/lib/utils';
+import { formatCurrency, formatDate, formatServiceOrderNumber } from '@/lib/utils';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { SearchInput } from '@/components/shared/search-input';
@@ -15,6 +17,7 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -22,9 +25,28 @@ function canRegisterPayment(status: string) {
   return status === 'PENDENTE' || status === 'VENCIDO';
 }
 
+function getEntryOriginLabel(entry: FinancialEntry) {
+  if (entry.serviceOrder) return 'Ordem de serviço';
+  return entry.client?.name ?? '-';
+}
+
+function toDateInputValue(value: Date) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function toPaidAtIsoString(value: string) {
+  return new Date(`${value}T12:00:00`).toISOString();
+}
+
 export function FinancialPage() {
   const params = useListParams();
   const queryClient = useQueryClient();
+  const [paymentDates, setPaymentDates] = useState<Record<string, string>>({});
+  const today = toDateInputValue(new Date());
   const query = useQuery({
     queryKey: ['financeiro', params.page, params.search, params.status, params.type],
     queryFn: () =>
@@ -34,9 +56,13 @@ export function FinancialPage() {
         search: params.search,
       }),
   });
+  const dashboardQuery = useQuery({
+    queryKey: ['dashboard', 'financial-summary'],
+    queryFn: dashboardService.getOverview,
+  });
   const mutation = useMutation({
-    mutationFn: ({ id, paymentMethod }: { id: string; paymentMethod: PaymentMethod }) =>
-      financialService.markAsPaid(id, { paymentMethod, paidAt: new Date().toISOString() }),
+    mutationFn: ({ id, paymentMethod, paidAt }: { id: string; paymentMethod: PaymentMethod; paidAt: string }) =>
+      financialService.markAsPaid(id, { paymentMethod, paidAt }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['financeiro'] }),
   });
   const selectedType = params.type || 'ALL';
@@ -49,11 +75,11 @@ export function FinancialPage() {
     }) ?? [];
   const pagination = query.data;
   const income = filteredEntries.filter((item) => item.type === 'RECEIVABLE').reduce((acc, item) => acc + item.amount, 0) ?? 0;
-  const expense = filteredEntries.filter((item) => item.type === 'PAYABLE').reduce((acc, item) => acc + item.amount, 0) ?? 0;
+  const stockOutValue = dashboardQuery.data?.financial.stockOutValue ?? 0;
 
   return (
     <PageContainer>
-      <PageHeader title="Financeiro" description="Contas a pagar, contas a receber e conciliação.">
+      <PageHeader title="Financeiro" description="Contas a receber, saída de estoque e conciliação.">
         <div className="flex gap-3">
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por descrição ou origem" />
           <Select value={selectedType} onValueChange={(value) => params.setType(value === 'ALL' ? '' : value)}>
@@ -76,9 +102,9 @@ export function FinancialPage() {
         </div>
       </PageHeader>
       <div className="grid gap-4 md:grid-cols-3">
-        <SummaryCard title="Saldo projetado" value={formatCurrency(income - expense)} icon={DollarSign} />
+        <SummaryCard title="Saldo projetado" value={formatCurrency(income - stockOutValue)} icon={DollarSign} />
         <SummaryCard title="Contas a receber" value={formatCurrency(income)} icon={TrendingUp} />
-        <SummaryCard title="Contas a pagar" value={formatCurrency(expense)} icon={TrendingDown} />
+        <SummaryCard title="Saída de estoque" value={formatCurrency(stockOutValue)} icon={PackageSearch} />
       </div>
       <Card>
         <CardContent className="p-0">
@@ -94,6 +120,7 @@ export function FinancialPage() {
                     <TableHead>Tipo</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Valor</TableHead>
+                    <TableHead>Data do pagamento</TableHead>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Origem</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
@@ -102,18 +129,45 @@ export function FinancialPage() {
                 <TableBody>
                   {filteredEntries.map((entry) => (
                     <TableRow key={entry.id}>
-                      <TableCell>{entry.serviceOrder ? formatServiceOrderNumber(entry.serviceOrder.orderNumber) : entry.description}</TableCell>
+                      <TableCell>
+                        {entry.serviceOrder ? formatServiceOrderNumber(entry.serviceOrder.orderNumber) : entry.description}
+                      </TableCell>
                       <TableCell>{entry.type === 'RECEIVABLE' ? 'Receber' : 'Pagar'}</TableCell>
                       <TableCell><StatusBadge status={entry.status} /></TableCell>
                       <TableCell>{formatCurrency(entry.amount)}</TableCell>
+                      <TableCell>
+                        {entry.paidAt ? (
+                          formatDate(entry.paidAt)
+                        ) : canRegisterPayment(entry.status) ? (
+                          <Input
+                            className="w-[170px]"
+                            type="date"
+                            value={paymentDates[entry.id] ?? today}
+                            onChange={(event) =>
+                              setPaymentDates((current) => ({
+                                ...current,
+                                [entry.id]: event.target.value,
+                              }))
+                            }
+                          />
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
                       <TableCell>{entry.client?.name ?? '-'}</TableCell>
-                      <TableCell>{entry.serviceOrder ? 'Ordem de serviço' : entry.client?.name ?? '-'}</TableCell>
+                      <TableCell>{getEntryOriginLabel(entry)}</TableCell>
                       <TableCell className="text-right">
                         {canRegisterPayment(entry.status) ? (
                           <Button
                             size="sm"
                             disabled={mutation.isPending}
-                            onClick={() => mutation.mutate({ id: entry.id, paymentMethod: 'PIX' })}
+                            onClick={() =>
+                              mutation.mutate({
+                                id: entry.id,
+                                paymentMethod: 'PIX',
+                                paidAt: toPaidAtIsoString(paymentDates[entry.id] ?? today),
+                              })
+                            }
                           >
                             Registrar pagamento
                           </Button>

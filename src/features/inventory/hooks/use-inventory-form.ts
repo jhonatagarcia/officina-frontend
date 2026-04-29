@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { inventoryItemSchema, type InventoryItemSchema } from '@/features/inventory/schemas/inventory-item-schema';
@@ -8,11 +8,11 @@ import { normalizeNullableString } from '@/lib/utils';
 import type { ApiErrorResponse } from '@/types/common';
 
 export function useInventoryForm(onSuccess: () => void) {
+  const queryClient = useQueryClient();
   const form = useForm<InventoryItemSchema>({
     resolver: zodResolver(inventoryItemSchema),
     values: {
       name: '',
-      internalCode: '',
       category: '',
       supplier: '',
       quantity: 0,
@@ -26,7 +26,6 @@ export function useInventoryForm(onSuccess: () => void) {
     mutationFn: async (values: InventoryItemSchema) =>
       inventoryService.create({
         name: values.name.trim(),
-        internalCode: values.internalCode.trim(),
         category: normalizeNullableString(values.category),
         supplier: normalizeNullableString(values.supplier),
         quantity: values.quantity,
@@ -35,18 +34,13 @@ export function useInventoryForm(onSuccess: () => void) {
         salePrice: values.salePrice,
       }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['estoque'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['financeiro'] });
       toast.success('Peça cadastrada com sucesso.');
       onSuccess();
     },
     onError: (error: ApiErrorResponse) => {
-      if (error.statusCode === 409) {
-        form.setError('internalCode', {
-          type: 'server',
-          message: error.message || 'Já existe uma peça cadastrada com este código interno.',
-        });
-        return;
-      }
-
       toast.error(error.message || 'Não foi possível salvar a peça.');
     },
   });

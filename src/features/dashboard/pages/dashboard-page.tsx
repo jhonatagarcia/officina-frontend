@@ -54,10 +54,11 @@ export function DashboardPage() {
         <SummaryCard title="Prontos para entrega" value={String(serviceOrders.readyForDelivery)} icon={Car} />
         <SummaryCard title="Orçamentos pendentes" value={String(budgets.pending)} icon={Receipt} />
         <SummaryCard title="Faturamento do mês" value={formatCurrency(financial.monthRevenue)} icon={DollarSign} />
+        <SummaryCard title="Saída de estoque" value={formatCurrency(financial.stockOutValue)} icon={PackageSearch} />
         <SummaryCard title="Estoque baixo" value={String(inventory.lowStockCount)} icon={PackageSearch} />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.6fr_0.8fr]">
+      <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <Card>
           <CardHeader>
             <CardTitle>Itens com estoque baixo</CardTitle>

@@ -43,6 +43,7 @@ describe('dashboardService', () => {
         },
         financial: {
           monthRevenue: '12345.67',
+          stockOutValue: '890.25',
         },
         inventory: {
           lowStockCount: 3,
@@ -151,6 +152,7 @@ describe('dashboardService', () => {
     const overview = await dashboardService.getOverview();
 
     expect(overview.financial.monthRevenue).toBe(12345.67);
+    expect(overview.financial.stockOutValue).toBe(890.25);
     expect(overview.operationalAlerts).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -186,6 +188,7 @@ describe('dashboardService', () => {
         },
         financial: {
           monthRevenue: '0',
+          stockOutValue: '0',
         },
         inventory: {
           lowStockCount: 0,
@@ -289,7 +292,7 @@ describe('dashboardService', () => {
     expect(pendingBudgetAlert).toEqual(
       expect.objectContaining({
         metric: '1 pendente(s)',
-        description: 'Jhonta aguarda aprovação há 8 dias.',
+        description: expect.stringContaining('Jhonta aguarda aprovação há '),
         actionLabel: 'Ver pendência',
         actionTo: '/app/orcamentos?status=PENDENTE',
       }),

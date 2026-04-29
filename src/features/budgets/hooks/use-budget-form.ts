@@ -12,7 +12,17 @@ const defaultBudgetValues: BudgetSchema = {
   problemDescription: '',
   notes: '',
   discount: 0,
-  items: [{ type: 'PART', serviceCatalogItemId: '', serviceCode: '', description: '', quantity: 1, unitPrice: 1 }],
+  items: [
+    {
+      type: 'LABOR',
+      serviceCatalogItemId: '',
+      inventoryItemId: '',
+      serviceCode: '',
+      description: '',
+      quantity: 1,
+      unitPrice: 1,
+    },
+  ],
 };
 
 export function useBudgetForm(mode: 'create' | 'view', id: string, onSuccess: () => void) {
@@ -34,6 +44,7 @@ export function useBudgetForm(mode: 'create' | 'view', id: string, onSuccess: ()
         items: budgetQuery.data.items.map((item) => ({
           type: item.type,
           serviceCatalogItemId: item.serviceCatalogItemId ?? '',
+          inventoryItemId: item.inventoryItemId ?? '',
           serviceCode: item.serviceCode ?? '',
           description: item.description,
           quantity: item.quantity,
@@ -56,6 +67,7 @@ export function useBudgetForm(mode: 'create' | 'view', id: string, onSuccess: ()
         items: values.items.map((item) => ({
           type: item.type,
           serviceCatalogItemId: item.serviceCatalogItemId || undefined,
+          inventoryItemId: item.inventoryItemId || undefined,
           description: item.description,
           quantity: item.quantity,
           unitPrice: item.unitPrice,

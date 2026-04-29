@@ -1,11 +1,12 @@
 export type BudgetStatus = 'PENDENTE' | 'APROVADO' | 'REPROVADO';
-export type BudgetItemType = 'PART' | 'LABOR';
+export type BudgetItemType = 'PART' | 'LABOR' | 'LABOR_AND_PART';
 
 export interface BudgetItem {
   id: string;
   budgetId: string;
   type: BudgetItemType;
   serviceCatalogItemId: string | null;
+  inventoryItemId: string | null;
   serviceCode: string | null;
   description: string;
   quantity: number;

@@ -19,6 +19,7 @@ interface DashboardSummaryApiResponse {
   };
   financial: {
     monthRevenue: number | string;
+    stockOutValue: number | string;
   };
   inventory: {
     lowStockCount: number;
@@ -38,6 +39,7 @@ function mapDashboardSummary(response: DashboardSummaryApiResponse): Omit<Dashbo
     budgets: response.budgets,
     financial: {
       monthRevenue: toNumber(response.financial.monthRevenue),
+      stockOutValue: toNumber(response.financial.stockOutValue),
     },
     inventory: response.inventory,
   };

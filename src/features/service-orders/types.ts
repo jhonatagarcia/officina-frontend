@@ -26,6 +26,10 @@ export interface ServiceOrder {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  partsTotal?: number;
+  laborTotal?: number;
+  discount?: number;
+  total?: number;
   client?: ServiceOrderClientSummary;
   vehicle?: ServiceOrderVehicleSummary;
   mechanic?: ServiceOrderMechanicSummary | null;
@@ -35,10 +39,18 @@ export interface ServiceOrder {
 
 export interface ServiceOrderBudgetItem {
   id: string;
-  type: 'PART' | 'LABOR';
+  type: 'PART' | 'LABOR' | 'LABOR_AND_PART';
+  inventoryItemId: string | null;
   serviceCode: string | null;
   description: string;
   quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  inventoryItem: {
+    id: string;
+    name: string;
+    internalCode: string;
+  } | null;
 }
 
 export interface ServiceOrderClientSummary {

@@ -143,7 +143,28 @@ export function ServiceOrderDetailsPage() {
   if (query.isLoading) return <LoadingState />;
   if (query.isError || !query.data) return <ErrorState onRetry={() => query.refetch()} />;
 
-  const budgetLaborItems = (query.data.budgetItems ?? []).filter((item) => item.type === 'LABOR');
+  const budgetLaborItems = (query.data.budgetItems ?? []).filter(
+    (item) => item.type === 'LABOR' || item.type === 'LABOR_AND_PART',
+  );
+  const appliedBudgetParts = (query.data.budgetItems ?? []).filter(
+    (item) => (item.type === 'PART' || item.type === 'LABOR_AND_PART') && item.inventoryItem,
+  );
+  const appliedParts =
+    query.data.parts?.length
+      ? query.data.parts.map((part) => ({
+          id: part.id,
+          quantity: part.quantity,
+          unitPrice: part.unitPrice,
+          totalPrice: part.totalPrice,
+          inventoryItem: part.inventoryItem,
+        }))
+      : appliedBudgetParts.map((item) => ({
+          id: item.id,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice,
+          inventoryItem: item.inventoryItem!,
+        }));
   const mechanicOptions = mechanicsQuery.data?.data ?? [];
   const whatsappUrl = buildWhatsAppUrl(query.data.client?.phone, 'Olá, seu carro está pronto!');
   const canSendWhatsAppNotification = query.data.status === 'FINALIZADA' && Boolean(whatsappUrl);
@@ -224,13 +245,13 @@ export function ServiceOrderDetailsPage() {
       y += 10;
 
       addLines([
-        `OS: ${formatServiceOrderNumber(query.data.orderNumber)}`,
         `Cliente: ${query.data.clientName}`,
         `Telefone: ${formatPhone(query.data.client?.phone)}`,
         `Veículo: ${query.data.vehicleLabel}`,
         `Status: ${formatServiceOrderStatusLabel(query.data.status)}`,
         `Previsão de entrega: ${query.data.expectedDeliveryAt ? formatDate(query.data.expectedDeliveryAt) : 'Não informada'}`,
         `Mecânico responsável: ${query.data.mechanicName ?? '-'}`,
+        `Valor a ser pago pelo cliente: ${formatCurrency(query.data.total ?? 0)}`,
       ]);
 
       addSectionTitle('Problema relatado');
@@ -251,15 +272,10 @@ export function ServiceOrderDetailsPage() {
       }
 
       addSectionTitle('Peças aplicadas');
-      if (query.data.parts?.length) {
-        query.data.parts.forEach((part) => {
+      if (appliedParts.length) {
+        appliedParts.forEach((part) => {
           addWrappedText(`- ${part.inventoryItem.internalCode} • ${part.inventoryItem.name}`);
-          addWrappedText(
-            `Quantidade: ${part.quantity} | Valor unitário: ${formatCurrency(part.unitPrice)} | Subtotal: ${formatCurrency(part.totalPrice)}`,
-            10,
-            5,
-            4,
-          );
+          addWrappedText(`Quantidade: ${part.quantity}`, 10, 5, 4);
         });
       } else {
         addWrappedText('Nenhuma peça lançada nesta OS.');
@@ -283,10 +299,9 @@ export function ServiceOrderDetailsPage() {
       <div className="grid gap-6 xl:grid-cols-[1.5fr_0.9fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Relatório da Execução</CardTitle>
+          <CardTitle>Relatório da Execução</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
-            <p><span className="font-medium">OS:</span> {formatServiceOrderNumber(query.data.orderNumber)}</p>
             <p><span className="font-medium">Cliente:</span> {query.data.clientName}</p>
             <p><span className="font-medium">Telefone:</span> {formatPhone(query.data.client?.phone)}</p>
             <p><span className="font-medium">Veículo:</span> {query.data.vehicleLabel}</p>
@@ -314,19 +329,18 @@ export function ServiceOrderDetailsPage() {
               {query.data.expectedDeliveryAt ? formatDate(query.data.expectedDeliveryAt) : 'Não informada'}
             </p>
             <p><span className="font-medium">Mecânico responsável:</span> {query.data.mechanicName ?? '-'}</p>
+            <p><span className="font-medium">Valor a ser pago pelo cliente:</span> {formatCurrency(query.data.total ?? 0)}</p>
             <p><span className="font-medium">Observações:</span> {query.data.notes ?? '-'}</p>
             <div className="space-y-2 rounded-xl border p-4">
               <p className="font-medium">Peças aplicadas</p>
-              {query.data.parts?.length ? (
-                query.data.parts.map((part) => (
+              {appliedParts.length ? (
+                appliedParts.map((part) => (
                   <div key={part.id} className="grid gap-1 rounded-lg border border-border/60 p-3 text-sm">
                     <p className="font-medium">
                       {part.inventoryItem.internalCode} • {part.inventoryItem.name}
                     </p>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
                       <span>Quantidade: {part.quantity}</span>
-                      <span>Valor unitário: {formatCurrency(part.unitPrice)}</span>
-                      <span>Subtotal: {formatCurrency(part.totalPrice)}</span>
                     </div>
                   </div>
                 ))

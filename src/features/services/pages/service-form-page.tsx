@@ -38,6 +38,12 @@ export function ServiceFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) 
   const materialSource = form.watch('materialSource');
   const productPriceLocked = billingType === 'LABOR_ONLY' || materialSource === 'NO_PARTS_REQUIRED';
   const suggestedTotalPrice = laborPrice + productPrice;
+  const availableBillingTypeOptions =
+    mode === 'create' ? billingTypeOptions.filter((option) => option.value !== 'FIXED_PRICE') : billingTypeOptions;
+  const availableMaterialSourceOptions =
+    mode === 'create'
+      ? materialSourceOptions.filter((option) => option.value !== 'FLEXIBLE' && option.value !== 'NO_PARTS_REQUIRED')
+      : materialSourceOptions;
 
   if (query.isLoading) return <LoadingState />;
   if (query.isError) return <ErrorState onRetry={() => query.refetch()} />;
@@ -64,7 +70,7 @@ export function ServiceFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) 
               name="billingType"
               label="Tipo de cobrança"
               disabled={isReadOnly}
-              options={billingTypeOptions}
+              options={availableBillingTypeOptions}
               error={form.formState.errors.billingType?.message}
             />
             <SelectField
@@ -72,7 +78,7 @@ export function ServiceFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) 
               name="materialSource"
               label="Origem do material"
               disabled={isReadOnly}
-              options={materialSourceOptions}
+              options={availableMaterialSourceOptions}
               error={form.formState.errors.materialSource?.message}
             />
             <div className="space-y-2">

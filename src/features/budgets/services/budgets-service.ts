@@ -9,6 +9,7 @@ interface BudgetItemApiResponse {
   budgetId: string;
   type: BudgetItemType;
   serviceCatalogItemId: string | null;
+  inventoryItemId: string | null;
   serviceCode: string | null;
   description: string;
   quantity: number;
@@ -82,6 +83,7 @@ export const budgetsService = {
     items: Array<{
       type: BudgetItemType;
       serviceCatalogItemId?: string;
+      inventoryItemId?: string;
       description: string;
       quantity: number;
       unitPrice: number;

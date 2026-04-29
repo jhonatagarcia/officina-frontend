@@ -1,7 +1,7 @@
 import { http } from '@/services/api/http';
 import { buildQueryParams, mapPaginatedResponse } from '@/services/api/query-string';
 import type { ApiPaginatedResponse, PaginatedResponse, QueryParams } from '@/types/common';
-import type { ServiceOrder, ServiceOrderPart, ServiceOrderStatus } from '@/features/service-orders/types';
+import type { ServiceOrder, ServiceOrderBudgetItem, ServiceOrderPart, ServiceOrderStatus } from '@/features/service-orders/types';
 import { toNumber } from '@/lib/utils';
 
 interface ServiceOrderPartApiResponse extends Omit<ServiceOrderPart, 'unitPrice' | 'totalPrice'> {
@@ -9,7 +9,22 @@ interface ServiceOrderPartApiResponse extends Omit<ServiceOrderPart, 'unitPrice'
   totalPrice: number | string;
 }
 
-interface ServiceOrderApiResponse extends Omit<ServiceOrder, 'clientName' | 'vehicleLabel' | 'mechanicName' | 'parts'> {
+interface ServiceOrderBudgetItemApiResponse
+  extends Omit<ServiceOrderBudgetItem, 'unitPrice' | 'totalPrice'> {
+  unitPrice: number | string;
+  totalPrice: number | string;
+}
+
+interface ServiceOrderApiResponse
+  extends Omit<
+    ServiceOrder,
+    'clientName' | 'vehicleLabel' | 'mechanicName' | 'parts' | 'budgetItems' | 'partsTotal' | 'laborTotal' | 'discount' | 'total'
+  > {
+  partsTotal?: number | string;
+  laborTotal?: number | string;
+  discount?: number | string;
+  total?: number | string;
+  budgetItems?: ServiceOrderBudgetItemApiResponse[];
   client?: ServiceOrder['client'];
   vehicle?: ServiceOrder['vehicle'];
   mechanic?: ServiceOrder['mechanic'] | null;
@@ -24,12 +39,25 @@ function mapServiceOrderPart(part: ServiceOrderPartApiResponse): ServiceOrderPar
   };
 }
 
+function mapServiceOrderBudgetItem(item: ServiceOrderBudgetItemApiResponse): ServiceOrderBudgetItem {
+  return {
+    ...item,
+    unitPrice: toNumber(item.unitPrice),
+    totalPrice: toNumber(item.totalPrice),
+  };
+}
+
 function mapServiceOrder(order: ServiceOrderApiResponse): ServiceOrder {
   return {
     ...order,
     clientName: order.client?.name ?? '-',
     vehicleLabel: order.vehicle ? `${order.vehicle.plate} • ${order.vehicle.brand} ${order.vehicle.model}` : '-',
     mechanicName: order.mechanic?.name ?? null,
+    partsTotal: order.partsTotal !== undefined ? toNumber(order.partsTotal) : undefined,
+    laborTotal: order.laborTotal !== undefined ? toNumber(order.laborTotal) : undefined,
+    discount: order.discount !== undefined ? toNumber(order.discount) : undefined,
+    total: order.total !== undefined ? toNumber(order.total) : undefined,
+    budgetItems: order.budgetItems?.map(mapServiceOrderBudgetItem),
     parts: order.parts?.map(mapServiceOrderPart),
   };
 }
