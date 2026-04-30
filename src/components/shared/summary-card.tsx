@@ -13,13 +13,13 @@ interface SummaryCardProps {
 
 export function SummaryCard({ title, value, icon: Icon, imageSrc, imageAlt, mediaClassName }: SummaryCardProps) {
   return (
-    <Card className="shadow-panel">
+    <Card className="overflow-hidden">
       <CardContent className="flex items-start justify-between p-6">
         <div>
-          <p className="text-sm text-muted-foreground">{title}</p>
-          <p className="mt-3 text-4xl font-extrabold tracking-tight">{value}</p>
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <p className="mt-3 text-4xl font-extrabold tracking-tight md:text-[2.5rem]">{value}</p>
         </div>
-        <div className={cn('rounded-xl bg-primary/10 p-3 text-primary', mediaClassName)}>
+        <div className={cn('rounded-2xl border border-primary/10 bg-gradient-to-br from-primary/15 to-orange-200/40 p-3 text-primary', mediaClassName)}>
           {imageSrc ? (
             <img alt={imageAlt ?? title} className="size-8 object-contain" src={imageSrc} />
           ) : Icon ? (

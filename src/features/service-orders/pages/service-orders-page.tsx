@@ -3,6 +3,7 @@ import { Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { serviceOrdersService } from '@/features/service-orders/services/service-orders-service';
 import { useListParams } from '@/hooks/use-list-params';
+import { useSortableData } from '@/hooks/use-sortable-data';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { SearchInput } from '@/components/shared/search-input';
@@ -14,7 +15,7 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export function ServiceOrdersPage() {
   const navigate = useNavigate();
@@ -31,6 +32,15 @@ export function ServiceOrdersPage() {
   const selectedStatus = params.status || 'ALL';
   const filteredOrders =
     query.data?.data.filter((item) => (selectedStatus !== 'ALL' ? item.status === selectedStatus : true)) ?? [];
+  const { sortedItems, sortState, requestSort } = useSortableData(filteredOrders, {
+    initialSort: { column: 'client', direction: 'asc' },
+    accessors: {
+      client: (item) => item.clientName,
+      vehicle: (item) => item.vehicleLabel,
+      mechanic: (item) => item.mechanicName,
+      status: (item) => item.status,
+    },
+  });
   const pagination = query.data;
 
   return (
@@ -62,15 +72,15 @@ export function ServiceOrdersPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Veículo</TableHead>
-                    <TableHead>Mecânico</TableHead>
-                    <TableHead>Status</TableHead>
+                    <SortableTableHead column="client" sortState={sortState} onSort={requestSort}>Cliente</SortableTableHead>
+                    <SortableTableHead column="vehicle" sortState={sortState} onSort={requestSort}>Veículo</SortableTableHead>
+                    <SortableTableHead column="mechanic" sortState={sortState} onSort={requestSort}>Mecânico</SortableTableHead>
+                    <SortableTableHead column="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map((item) => (
+                  {sortedItems.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>{item.clientName}</TableCell>
                       <TableCell>{item.vehicleLabel}</TableCell>

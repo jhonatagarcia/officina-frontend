@@ -224,8 +224,22 @@ export const appRoutes: AppRouteDefinition[] = [
   },
 ];
 
+const sidebarOrder = [
+  'dashboard',
+  'clientes-list',
+  'veiculos-list',
+  'orcamentos-list',
+  'ordens-servico-list',
+  'financeiro-list',
+  'servicos-list',
+  'estoque-list',
+  'mecanicos-list',
+] as const;
+
 export function getSidebarRoutes(role?: Role) {
   if (!role) return [];
 
-  return appRoutes.filter((route) => route.sidebar && route.roles.includes(role));
+  return appRoutes
+    .filter((route) => route.sidebar && route.roles.includes(role))
+    .sort((left, right) => sidebarOrder.indexOf(left.key as (typeof sidebarOrder)[number]) - sidebarOrder.indexOf(right.key as (typeof sidebarOrder)[number]));
 }

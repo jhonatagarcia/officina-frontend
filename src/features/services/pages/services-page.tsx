@@ -15,9 +15,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { servicesService } from '@/features/services/services/services-service';
 import { useListParams } from '@/hooks/use-list-params';
+import { useSortableData } from '@/hooks/use-sortable-data';
 import { formatCurrency } from '@/lib/utils';
 
 type ActiveFilter = 'ACTIVE' | 'INACTIVE' | 'ALL';
@@ -73,7 +74,18 @@ export function ServicesPage() {
     if (activeFilter === 'ALL') return true;
     return activeFilter === 'ACTIVE' ? item.active : !item.active;
   });
-  const listedItems = filteredItems.slice((params.page - 1) * params.pageSize, params.page * params.pageSize);
+  const { sortedItems, sortState, requestSort } = useSortableData(filteredItems, {
+    initialSort: { column: 'code', direction: 'asc' },
+    accessors: {
+      code: (item) => item.code,
+      service: (item) => item.name,
+      category: (item) => item.category,
+      billingType: (item) => billingTypeLabelMap[item.billingType],
+      suggestedTotalPrice: (item) => item.suggestedTotalPrice,
+      status: (item) => item.active,
+    },
+  });
+  const listedItems = sortedItems.slice((params.page - 1) * params.pageSize, params.page * params.pageSize);
   const totalItems = filteredItems.length;
   const activeCount = listedItems.filter((item) => item.active).length;
   const inactiveCount = listedItems.filter((item) => !item.active).length;
@@ -144,12 +156,12 @@ export function ServicesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Serviço</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Cobrança</TableHead>
-                    <TableHead>Total sugerido</TableHead>
-                    <TableHead>Status</TableHead>
+                    <SortableTableHead column="code" sortState={sortState} onSort={requestSort}>Código</SortableTableHead>
+                    <SortableTableHead column="service" sortState={sortState} onSort={requestSort}>Serviço</SortableTableHead>
+                    <SortableTableHead column="category" sortState={sortState} onSort={requestSort}>Categoria</SortableTableHead>
+                    <SortableTableHead column="billingType" sortState={sortState} onSort={requestSort}>Cobrança</SortableTableHead>
+                    <SortableTableHead column="suggestedTotalPrice" sortState={sortState} onSort={requestSort}>Total sugerido</SortableTableHead>
+                    <SortableTableHead column="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>

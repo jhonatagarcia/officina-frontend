@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { budgetsService } from '@/features/budgets/services/budgets-service';
 import { useListParams } from '@/hooks/use-list-params';
+import { useSortableData } from '@/hooks/use-sortable-data';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { Pagination } from '@/components/shared/pagination';
@@ -15,7 +16,7 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCurrency } from '@/lib/utils';
 
 export function BudgetsPage() {
@@ -56,6 +57,15 @@ export function BudgetsPage() {
   });
   const selectedStatus = params.status || 'ALL';
   const filteredBudgets = query.data?.data ?? [];
+  const { sortedItems, sortState, requestSort } = useSortableData(filteredBudgets, {
+    initialSort: { column: 'client', direction: 'asc' },
+    accessors: {
+      client: (budget) => budget.client?.name,
+      vehicle: (budget) => (budget.vehicle ? `${budget.vehicle.plate} ${budget.vehicle.brand} ${budget.vehicle.model}` : ''),
+      status: (budget) => budget.status,
+      total: (budget) => budget.total,
+    },
+  });
   const pagination = query.data;
   const rejectMutation = useMutation({
     mutationFn: budgetsService.reject,
@@ -79,7 +89,6 @@ export function BudgetsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">Todos</SelectItem>
-              <SelectItem value="PENDENTE">Pendente</SelectItem>
               <SelectItem value="APROVADO">Aprovado</SelectItem>
               <SelectItem value="REPROVADO">Reprovado</SelectItem>
             </SelectContent>
@@ -96,15 +105,15 @@ export function BudgetsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Veículo</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Total</TableHead>
+                    <SortableTableHead column="client" sortState={sortState} onSort={requestSort}>Cliente</SortableTableHead>
+                    <SortableTableHead column="vehicle" sortState={sortState} onSort={requestSort}>Veículo</SortableTableHead>
+                    <SortableTableHead column="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
+                    <SortableTableHead column="total" sortState={sortState} onSort={requestSort}>Total</SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredBudgets.map((budget) => (
+                  {sortedItems.map((budget) => (
                     <TableRow key={budget.id}>
                       <TableCell>{budget.client?.name ?? '-'}</TableCell>
                       <TableCell>{budget.vehicle ? `${budget.vehicle.plate} • ${budget.vehicle.brand} ${budget.vehicle.model}` : '-'}</TableCell>

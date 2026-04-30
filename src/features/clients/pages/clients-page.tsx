@@ -3,6 +3,7 @@ import { Eye, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { clientsService } from '@/features/clients/services/clients-service';
 import { useListParams } from '@/hooks/use-list-params';
+import { useSortableData } from '@/hooks/use-sortable-data';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { SearchInput } from '@/components/shared/search-input';
@@ -12,7 +13,7 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCpfCnpj, formatPhone } from '@/lib/utils';
 
 export function ClientsPage() {
@@ -27,6 +28,16 @@ export function ClientsPage() {
         pageSize: params.pageSize,
         search: params.search,
       }),
+  });
+  const clients = query.data?.data ?? [];
+  const { sortedItems, sortState, requestSort } = useSortableData(clients, {
+    initialSort: { column: 'name', direction: 'asc' },
+    accessors: {
+      name: (client) => client.name,
+      phone: (client) => client.phone,
+      document: (client) => client.document,
+      email: (client) => client.email,
+    },
   });
 
   return (
@@ -45,15 +56,15 @@ export function ClientsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead>CPF/CNPJ</TableHead>
-                    <TableHead>E-mail</TableHead>
+                    <SortableTableHead column="name" sortState={sortState} onSort={requestSort}>Nome</SortableTableHead>
+                    <SortableTableHead column="phone" sortState={sortState} onSort={requestSort}>Telefone</SortableTableHead>
+                    <SortableTableHead column="document" sortState={sortState} onSort={requestSort}>CPF/CNPJ</SortableTableHead>
+                    <SortableTableHead column="email" sortState={sortState} onSort={requestSort}>E-mail</SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {query.data.data.map((client) => (
+                  {sortedItems.map((client) => (
                     <TableRow key={client.id}>
                       <TableCell>{client.name}</TableCell>
                       <TableCell>{formatPhone(client.phone)}</TableCell>

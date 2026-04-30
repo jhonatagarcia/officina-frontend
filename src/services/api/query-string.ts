@@ -5,6 +5,8 @@ export function buildQueryParams(params: QueryParams) {
     page: params.page,
     limit: params.pageSize,
     search: params.search,
+    status: params.status,
+    type: params.type,
     category: params.category,
     active: params.active === undefined ? undefined : String(params.active),
     sortBy: params.sortBy,

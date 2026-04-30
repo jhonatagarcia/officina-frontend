@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { inventoryService } from '@/features/inventory/services/inventory-service';
 import type { InventoryItem } from '@/features/inventory/types';
 import { useListParams } from '@/hooks/use-list-params';
+import { useSortableData } from '@/hooks/use-sortable-data';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { SearchInput } from '@/components/shared/search-input';
@@ -16,7 +17,7 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertTriangle, Boxes, Pencil, Save, X } from 'lucide-react';
 import { formatCurrency, parseCurrencyInput } from '@/lib/utils';
 
@@ -65,6 +66,18 @@ export function InventoryPage() {
 
   const lowStock = query.data?.data.filter((item) => item.status !== 'OK').length ?? 0;
   const totalItems = query.data?.total ?? 0;
+  const inventoryItems = query.data?.data ?? [];
+  const { sortedItems, sortState, requestSort } = useSortableData(inventoryItems, {
+    initialSort: { column: 'internalCode', direction: 'asc' },
+    accessors: {
+      internalCode: (item) => item.internalCode,
+      item: (item) => item.name,
+      quantity: (item) => item.quantity,
+      minimumQuantity: (item) => item.minimumQuantity,
+      salePrice: (item) => item.salePrice,
+      status: (item) => item.status,
+    },
+  });
 
   function handleEditChange<K extends keyof InventoryEditForm>(field: K, value: InventoryEditForm[K]) {
     setEditingItem((current) => (current ? { ...current, [field]: value } : current));
@@ -111,17 +124,17 @@ export function InventoryPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Item</TableHead>
-                    <TableHead>Atual</TableHead>
-                    <TableHead>Mínimo</TableHead>
-                    <TableHead>Venda</TableHead>
-                    <TableHead>Status</TableHead>
+                    <SortableTableHead column="internalCode" sortState={sortState} onSort={requestSort}>ID</SortableTableHead>
+                    <SortableTableHead column="item" sortState={sortState} onSort={requestSort}>Item</SortableTableHead>
+                    <SortableTableHead column="quantity" sortState={sortState} onSort={requestSort}>Atual</SortableTableHead>
+                    <SortableTableHead column="minimumQuantity" sortState={sortState} onSort={requestSort}>Mínimo</SortableTableHead>
+                    <SortableTableHead column="salePrice" sortState={sortState} onSort={requestSort}>Venda</SortableTableHead>
+                    <SortableTableHead column="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {query.data.data.map((item) => (
+                  {sortedItems.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>{item.internalCode}</TableCell>
                       <TableCell>

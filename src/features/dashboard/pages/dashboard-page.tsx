@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, BellRing, Car, ClipboardList, DollarSign, PackageSearch, Receipt, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { dashboardService } from '@/features/dashboard/services/dashboard-service';
+import { useSortableData } from '@/hooks/use-sortable-data';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageContainer } from '@/components/shared/page-container';
@@ -10,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { SummaryCard } from '@/components/shared/summary-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { SortableTableHead, Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCurrency } from '@/lib/utils';
 import type { DashboardOperationalAlert } from '@/features/dashboard/types';
 
@@ -38,11 +39,21 @@ export function DashboardPage() {
     queryKey: ['dashboard'],
     queryFn: dashboardService.getOverview,
   });
+  const inventory = query.data?.inventory;
+  const { sortedItems, sortState, requestSort } = useSortableData(inventory?.lowStockItems ?? [], {
+    initialSort: { column: 'internalCode', direction: 'asc' },
+    accessors: {
+      internalCode: (item) => item.internalCode,
+      name: (item) => item.name,
+      quantity: (item) => item.quantity,
+      minimumQuantity: (item) => item.minimumQuantity,
+    },
+  });
 
   if (query.isLoading) return <LoadingState />;
   if (query.isError || !query.data) return <ErrorState onRetry={() => query.refetch()} />;
 
-  const { serviceOrders, budgets, financial, inventory, operationalAlerts } = query.data;
+  const { serviceOrders, budgets, financial, inventory: inventoryData, operationalAlerts } = query.data;
 
   return (
     <PageContainer>
@@ -55,7 +66,7 @@ export function DashboardPage() {
         <SummaryCard title="Orçamentos pendentes" value={String(budgets.pending)} icon={Receipt} />
         <SummaryCard title="Faturamento do mês" value={formatCurrency(financial.monthRevenue)} icon={DollarSign} />
         <SummaryCard title="Saída de estoque" value={formatCurrency(financial.stockOutValue)} icon={PackageSearch} />
-        <SummaryCard title="Estoque baixo" value={String(inventory.lowStockCount)} icon={PackageSearch} />
+        <SummaryCard title="Estoque baixo" value={String(inventoryData.lowStockCount)} icon={PackageSearch} />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
@@ -67,15 +78,15 @@ export function DashboardPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Item</TableHead>
-                  <TableHead>Atual</TableHead>
-                  <TableHead>Mínimo</TableHead>
+                  <SortableTableHead column="internalCode" sortState={sortState} onSort={requestSort}>Código</SortableTableHead>
+                  <SortableTableHead column="name" sortState={sortState} onSort={requestSort}>Item</SortableTableHead>
+                  <SortableTableHead column="quantity" sortState={sortState} onSort={requestSort}>Atual</SortableTableHead>
+                  <SortableTableHead column="minimumQuantity" sortState={sortState} onSort={requestSort}>Mínimo</SortableTableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {inventory.lowStockItems.length ? (
-                  inventory.lowStockItems.map((item) => (
+                {sortedItems.length ? (
+                  sortedItems.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>{item.internalCode}</TableCell>
                       <TableCell>{item.name}</TableCell>

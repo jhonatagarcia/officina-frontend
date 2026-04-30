@@ -28,4 +28,20 @@ describe('buildQueryParams', () => {
       active: 'true',
     });
   });
+
+  it('should keep status and type filters in query params', () => {
+    expect(
+      buildQueryParams({
+        page: 2,
+        pageSize: 20,
+        status: 'REPROVADO',
+        type: 'RECEIVABLE',
+      }),
+    ).toEqual({
+      page: 2,
+      limit: 20,
+      status: 'REPROVADO',
+      type: 'RECEIVABLE',
+    });
+  });
 });

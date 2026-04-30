@@ -14,9 +14,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { mechanicsService } from '@/features/mechanics/services/mechanics-service';
 import { useListParams } from '@/hooks/use-list-params';
+import { useSortableData } from '@/hooks/use-sortable-data';
 
 type ActiveFilter = 'ACTIVE' | 'INACTIVE' | 'ALL';
 
@@ -37,6 +38,13 @@ export function MechanicsPage() {
   });
 
   const listedItems = query.data?.data ?? [];
+  const { sortedItems, sortState, requestSort } = useSortableData(listedItems, {
+    initialSort: { column: 'name', direction: 'asc' },
+    accessors: {
+      name: (item) => item.name,
+      status: (item) => item.isActive,
+    },
+  });
   const activeCount = listedItems.filter((item) => item.isActive).length;
 
   return (
@@ -73,13 +81,13 @@ export function MechanicsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Status</TableHead>
+                    <SortableTableHead column="name" sortState={sortState} onSort={requestSort}>Nome</SortableTableHead>
+                    <SortableTableHead column="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {listedItems.map((item) => (
+                  {sortedItems.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>{item.name}</TableCell>
                       <TableCell>

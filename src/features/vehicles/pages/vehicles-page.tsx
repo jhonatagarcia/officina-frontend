@@ -3,6 +3,7 @@ import { Eye, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { vehiclesService } from '@/features/vehicles/services/vehicles-service';
 import { useListParams } from '@/hooks/use-list-params';
+import { useSortableData } from '@/hooks/use-sortable-data';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { SearchInput } from '@/components/shared/search-input';
@@ -12,7 +13,7 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export function VehiclesPage() {
   const navigate = useNavigate();
@@ -20,6 +21,16 @@ export function VehiclesPage() {
   const query = useQuery({
     queryKey: ['veiculos', params.page, params.search],
     queryFn: () => vehiclesService.list({ page: params.page, pageSize: params.pageSize, search: params.search }),
+  });
+  const vehicles = query.data?.data ?? [];
+  const { sortedItems, sortState, requestSort } = useSortableData(vehicles, {
+    initialSort: { column: 'plate', direction: 'asc' },
+    accessors: {
+      plate: (vehicle) => vehicle.plate,
+      model: (vehicle) => `${vehicle.brand} ${vehicle.model}`,
+      client: (vehicle) => vehicle.clientName,
+      year: (vehicle) => vehicle.year,
+    },
   });
 
   return (
@@ -37,15 +48,15 @@ export function VehiclesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Placa</TableHead>
-                    <TableHead>Modelo</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Ano</TableHead>
+                    <SortableTableHead column="plate" sortState={sortState} onSort={requestSort}>Placa</SortableTableHead>
+                    <SortableTableHead column="model" sortState={sortState} onSort={requestSort}>Modelo</SortableTableHead>
+                    <SortableTableHead column="client" sortState={sortState} onSort={requestSort}>Cliente</SortableTableHead>
+                    <SortableTableHead column="year" sortState={sortState} onSort={requestSort}>Ano</SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {query.data.data.map((vehicle) => (
+                  {sortedItems.map((vehicle) => (
                     <TableRow key={vehicle.id}>
                       <TableCell>{vehicle.plate}</TableCell>
                       <TableCell>{vehicle.brand} {vehicle.model}</TableCell>

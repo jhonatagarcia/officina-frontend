@@ -5,6 +5,7 @@ import { dashboardService } from '@/features/dashboard/services/dashboard-servic
 import { financialService } from '@/features/financial/services/financial-service';
 import type { FinancialEntry, PaymentMethod } from '@/features/financial/types';
 import { useListParams } from '@/hooks/use-list-params';
+import { useSortableData } from '@/hooks/use-sortable-data';
 import { formatCurrency, formatDate, formatServiceOrderNumber } from '@/lib/utils';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
@@ -19,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 function canRegisterPayment(status: string) {
   return status === 'PENDENTE' || status === 'VENCIDO';
@@ -73,6 +74,18 @@ export function FinancialPage() {
       const matchesStatus = selectedStatus !== 'ALL' ? item.status === selectedStatus : true;
       return matchesType && matchesStatus;
     }) ?? [];
+  const { sortedItems, sortState, requestSort } = useSortableData(filteredEntries, {
+    initialSort: { column: 'description', direction: 'asc' },
+    accessors: {
+      description: (entry) => (entry.serviceOrder ? entry.serviceOrder.orderNumber : entry.description),
+      type: (entry) => entry.type,
+      status: (entry) => entry.status,
+      amount: (entry) => entry.amount,
+      paidAt: (entry) => (entry.paidAt ? new Date(entry.paidAt) : null),
+      client: (entry) => entry.client?.name,
+      origin: (entry) => getEntryOriginLabel(entry),
+    },
+  });
   const pagination = query.data;
   const income = filteredEntries.filter((item) => item.type === 'RECEIVABLE').reduce((acc, item) => acc + item.amount, 0) ?? 0;
   const stockOutValue = dashboardQuery.data?.financial.stockOutValue ?? 0;
@@ -116,18 +129,18 @@ export function FinancialPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Data do pagamento</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Origem</TableHead>
+                    <SortableTableHead column="description" sortState={sortState} onSort={requestSort}>Descrição</SortableTableHead>
+                    <SortableTableHead column="type" sortState={sortState} onSort={requestSort}>Tipo</SortableTableHead>
+                    <SortableTableHead column="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
+                    <SortableTableHead column="amount" sortState={sortState} onSort={requestSort}>Valor</SortableTableHead>
+                    <SortableTableHead column="paidAt" sortState={sortState} onSort={requestSort}>Data do pagamento</SortableTableHead>
+                    <SortableTableHead column="client" sortState={sortState} onSort={requestSort}>Cliente</SortableTableHead>
+                    <SortableTableHead column="origin" sortState={sortState} onSort={requestSort}>Origem</SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredEntries.map((entry) => (
+                  {sortedItems.map((entry) => (
                     <TableRow key={entry.id}>
                       <TableCell>
                         {entry.serviceOrder ? formatServiceOrderNumber(entry.serviceOrder.orderNumber) : entry.description}
