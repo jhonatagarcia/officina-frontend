@@ -157,7 +157,13 @@ export const appRoutes: AppRouteDefinition[] = [
     key: 'estoque-create',
     path: 'estoque/novo',
     roles: ['ADMIN', 'ATENDENTE'],
-    element: <InventoryFormPage />,
+    element: <InventoryFormPage mode="create" />,
+  },
+  {
+    key: 'estoque-edit',
+    path: 'estoque/:id/editar',
+    roles: ['ADMIN', 'ATENDENTE'],
+    element: <InventoryFormPage mode="edit" />,
   },
   {
     key: 'servicos-list',

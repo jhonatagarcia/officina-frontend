@@ -80,8 +80,8 @@ export function BudgetsPage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Orçamentos" description="Criação, aprovação e conversão em OS." actionLabel="Novo orçamento" onAction={() => navigate('/app/orcamentos/novo')}>
-        <div className="flex gap-3">
+      <PageHeader title="Orçamentos" description="Criação, aprovação e conversão em OS.">
+        <div className="flex w-full flex-col gap-3 xl:w-auto xl:flex-row">
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por cliente, veículo ou problema" />
           <Select value={selectedStatus} onValueChange={(value) => params.setStatus(value === 'ALL' ? '' : value)}>
             <SelectTrigger className="w-[180px]">
@@ -94,6 +94,7 @@ export function BudgetsPage() {
             </SelectContent>
           </Select>
         </div>
+        <Button className="shrink-0" onClick={() => navigate('/app/orcamentos/novo')}>Novo orçamento</Button>
       </PageHeader>
       <Card>
         <CardContent className="p-0">

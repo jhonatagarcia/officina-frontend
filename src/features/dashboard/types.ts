@@ -1,3 +1,6 @@
+import type { Budget } from '@/features/budgets/types';
+import type { ServiceOrder } from '@/features/service-orders/types';
+
 export type DashboardAlertSeverity = 'danger' | 'warning' | 'info';
 
 export interface DashboardOperationalAlert {
@@ -33,5 +36,7 @@ export interface DashboardOverview {
       internalCode: string;
     }[];
   };
+  activeServiceOrders: ServiceOrder[];
+  pendingBudgets: Budget[];
   operationalAlerts: DashboardOperationalAlert[];
 }

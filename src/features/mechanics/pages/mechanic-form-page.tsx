@@ -17,6 +17,7 @@ export function MechanicFormPage({ mode }: { mode: 'create' | 'edit' | 'view' })
   const { id = '' } = useParams();
   const isReadOnly = mode === 'view';
   const { query, form, mutation } = useMechanicForm(mode, id, () => navigate('/app/mecanicos'));
+  const handleSubmit = form.handleSubmit((values) => mutation.mutate(values));
 
   if (query.isLoading) return <LoadingState />;
   if (query.isError) return <ErrorState onRetry={() => query.refetch()} />;
@@ -26,7 +27,7 @@ export function MechanicFormPage({ mode }: { mode: 'create' | 'edit' | 'view' })
       <PageHeader title={mode === 'create' ? 'Novo mecânico' : mode === 'edit' ? 'Editar mecânico' : 'Detalhes do mecânico'} />
       <Card>
         <CardContent className="p-6">
-          <form className="grid gap-4 md:grid-cols-2" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
+          <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
             <fieldset className="contents" disabled={isReadOnly}>
               <TextField
                 control={form.control}
@@ -41,7 +42,11 @@ export function MechanicFormPage({ mode }: { mode: 'create' | 'edit' | 'view' })
                 render={({ field }) => (
                   <div className="space-y-2">
                     <Label>Status</Label>
-                    <Select disabled={isReadOnly} onValueChange={(value) => field.onChange(value === 'true')} value={field.value ? 'true' : 'false'}>
+                    <Select
+                      disabled={isReadOnly || mutation.isPending}
+                      onValueChange={(value) => field.onChange(value === 'true')}
+                      value={field.value ? 'true' : 'false'}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o status" />
                       </SelectTrigger>

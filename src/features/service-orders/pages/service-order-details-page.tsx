@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { mechanicsService } from '@/features/mechanics/services/mechanics-service';
@@ -15,21 +15,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { buildWhatsAppUrl, formatCurrency, formatDate, formatPhone, formatServiceOrderNumber } from '@/lib/utils';
+import { formatCurrency, formatDateOnly, formatPhone, formatServiceOrderNumber } from '@/lib/utils';
 
 function toDateInputValue(value?: string | null) {
   if (!value) return '';
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
+  const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (match) return match[1];
 
-  return date.toISOString().slice(0, 10);
+  return '';
 }
 
 function getTodayDateInputMin() {
   const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  return toDateInputValue(now.toISOString());
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
 }
 
 function validateExpectedDeliveryAtValue(value: string) {
@@ -74,6 +77,29 @@ function formatServiceOrderStatusLabel(status: ServiceOrderStatus) {
   }
 }
 
+function buildServiceOrderStatusMessage(status: ServiceOrderStatus, clientName: string) {
+  const greeting = clientName ? `Olá, ${clientName}.` : 'Ola.';
+  const messages: Partial<Record<ServiceOrderStatus, string>> = {
+    EM_ANDAMENTO: `${greeting} o serviço do seu carro esta em andamento.`,
+    FINALIZADA: `${greeting} o seu carro esta pronto.`,
+    ENTREGUE: `${greeting} obrigado pela confiança de nossos serviços, volte sempre.`,
+  };
+
+  return messages[status] ?? `${greeting} O status da sua ordem de servico foi atualizado para ${formatServiceOrderStatusLabel(status)}.`;
+}
+
+function normalizeWhatsAppPhone(phone?: string | null) {
+  const digits = phone?.replace(/\D/g, '') ?? '';
+
+  if (!digits) return null;
+
+  return digits.length === 10 || digits.length === 11 ? `55${digits}` : digits;
+}
+
+function buildWhatsAppWebUrl(phone: string, message: string) {
+  return `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+}
+
 export function ServiceOrderDetailsPage() {
   const { id = '' } = useParams();
   const [nextStatus, setNextStatus] = useState<ServiceOrderStatus | ''>('');
@@ -81,6 +107,7 @@ export function ServiceOrderDetailsPage() {
   const [expectedDeliveryAtError, setExpectedDeliveryAtError] = useState<string | null>(null);
   const [selectedMechanicId, setSelectedMechanicId] = useState('');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const whatsappWindowRef = useRef<Window | null>(null);
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ['ordem-servico', id], queryFn: () => serviceOrdersService.getById(id) });
   const mechanicsQuery = useQuery({
@@ -89,18 +116,43 @@ export function ServiceOrderDetailsPage() {
   });
   const mutation = useMutation({
     mutationFn: (status: Parameters<typeof serviceOrdersService.updateStatus>[1]) => serviceOrdersService.updateStatus(id, status),
-    onSuccess: () => {
+    onSuccess: (updatedOrder, status) => {
       queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
+      queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
       queryClient.invalidateQueries({ queryKey: ['financeiro'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setNextStatus('');
       toast.success('Status atualizado com sucesso.');
+      const phone = normalizeWhatsAppPhone(updatedOrder.client?.phone ?? query.data?.client?.phone);
+      const clientName = updatedOrder.client?.name ?? query.data?.clientName ?? '';
+
+      if (phone) {
+        const whatsappUrl = buildWhatsAppWebUrl(phone, buildServiceOrderStatusMessage(status, clientName));
+
+        if (whatsappWindowRef.current && !whatsappWindowRef.current.closed) {
+          whatsappWindowRef.current.location.href = whatsappUrl;
+        } else {
+          window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+        }
+      } else {
+        whatsappWindowRef.current?.close();
+        toast.error('Cliente sem telefone cadastrado para abrir o WhatsApp.');
+      }
+
+      whatsappWindowRef.current = null;
       query.refetch();
+    },
+    onError: (error: { message?: string | string[] }) => {
+      whatsappWindowRef.current?.close();
+      whatsappWindowRef.current = null;
+      const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      toast.error(message || 'Não foi possível atualizar o status da ordem de serviço.');
     },
   });
   const deliveryEstimateMutation = useMutation({
     mutationFn: (value: string) =>
       serviceOrdersService.update(id, {
-        expectedDeliveryAt: value ? `${value}T00:00:00.000Z` : null,
+        expectedDeliveryAt: value || null,
       }),
     onSuccess: () => {
       setExpectedDeliveryAtError(null);
@@ -166,8 +218,6 @@ export function ServiceOrderDetailsPage() {
           inventoryItem: item.inventoryItem!,
         }));
   const mechanicOptions = mechanicsQuery.data?.data ?? [];
-  const whatsappUrl = buildWhatsAppUrl(query.data.client?.phone, 'Olá, seu carro está pronto!');
-  const canSendWhatsAppNotification = query.data.status === 'FINALIZADA' && Boolean(whatsappUrl);
   const canGeneratePdf = query.data.status === 'ENTREGUE';
   const minExpectedDeliveryAt = getTodayDateInputMin();
 
@@ -249,7 +299,7 @@ export function ServiceOrderDetailsPage() {
         `Telefone: ${formatPhone(query.data.client?.phone)}`,
         `Veículo: ${query.data.vehicleLabel}`,
         `Status: ${formatServiceOrderStatusLabel(query.data.status)}`,
-        `Previsão de entrega: ${query.data.expectedDeliveryAt ? formatDate(query.data.expectedDeliveryAt) : 'Não informada'}`,
+        `Previsão de entrega: ${query.data.expectedDeliveryAt ? formatDateOnly(query.data.expectedDeliveryAt) : 'Não informada'}`,
         `Mecânico responsável: ${query.data.mechanicName ?? '-'}`,
         `Valor a ser pago pelo cliente: ${formatCurrency(query.data.total ?? 0)}`,
       ]);
@@ -290,6 +340,15 @@ export function ServiceOrderDetailsPage() {
     }
   };
 
+  const handleUpdateStatus = () => {
+    if (!nextStatus || nextStatus === query.data.status) {
+      return;
+    }
+
+    whatsappWindowRef.current = window.open('about:blank', '_blank');
+    mutation.mutate(nextStatus);
+  };
+
   return (
     <PageContainer>
       <PageHeader
@@ -326,7 +385,7 @@ export function ServiceOrderDetailsPage() {
             </div>
             <p>
               <span className="font-medium">Previsão de entrega:</span>{' '}
-              {query.data.expectedDeliveryAt ? formatDate(query.data.expectedDeliveryAt) : 'Não informada'}
+              {query.data.expectedDeliveryAt ? formatDateOnly(query.data.expectedDeliveryAt) : 'Não informada'}
             </p>
             <p><span className="font-medium">Mecânico responsável:</span> {query.data.mechanicName ?? '-'}</p>
             <p><span className="font-medium">Valor a ser pago pelo cliente:</span> {formatCurrency(query.data.total ?? 0)}</p>
@@ -412,18 +471,12 @@ export function ServiceOrderDetailsPage() {
                 <SelectItem value="ENTREGUE">Entregue</SelectItem>
               </SelectContent>
             </Select>
-            <Button disabled={mutation.isPending || !nextStatus} className="w-full" onClick={() => nextStatus && mutation.mutate(nextStatus)}>
-              {mutation.isPending ? 'Atualizando...' : 'Atualizar andamento'}
-            </Button>
             <Button
+              disabled={mutation.isPending || !nextStatus || nextStatus === query.data.status}
               className="w-full"
-              disabled={!canSendWhatsAppNotification}
-              onClick={() => {
-                if (!whatsappUrl) return;
-                window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-              }}
+              onClick={handleUpdateStatus}
             >
-              Enviar notificação
+              {mutation.isPending ? 'Salvando status...' : 'Salvar status e abrir WhatsApp'}
             </Button>
             <Button className="w-full" disabled={!canGeneratePdf || isGeneratingPdf} variant="outline" onClick={handleGeneratePdf}>
               {isGeneratingPdf ? 'Gerando PDF...' : 'Gerar PDF'}

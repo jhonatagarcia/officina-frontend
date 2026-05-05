@@ -13,7 +13,6 @@ import { SummaryCard } from '@/components/shared/summary-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { servicesService } from '@/features/services/services/services-service';
@@ -49,17 +48,15 @@ export function ServicesPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const params = useListParams();
-  const [category, setCategory] = useState('');
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('ALL');
 
   const query = useQuery({
-    queryKey: ['servicos', params.search, category],
+    queryKey: ['servicos', params.search],
     queryFn: () =>
       servicesService.list({
         page: 1,
         pageSize: 100,
         search: params.search,
-        category: category || undefined,
       }),
   });
 
@@ -93,16 +90,8 @@ export function ServicesPage() {
   return (
     <PageContainer>
       <PageHeader title="Serviços" description="Catálogo padronizado de serviços para orçamento e ordem de serviço.">
-        <div className="flex flex-col gap-3 lg:flex-row">
+        <div className="flex w-full flex-col gap-3 xl:w-auto xl:flex-row">
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por nome ou código" />
-          <Input
-            value={category}
-            onChange={(event) => {
-              setCategory(event.target.value);
-              params.setPage(1);
-            }}
-            placeholder="Filtrar por categoria"
-          />
           <Select
             value={activeFilter}
             onValueChange={(value) => {
@@ -119,7 +108,7 @@ export function ServicesPage() {
               <SelectItem value="ALL">Todos</SelectItem>
             </SelectContent>
           </Select>
-          <Button type="button" onClick={() => navigate('/app/servicos/novo')}>
+          <Button className="shrink-0" type="button" onClick={() => navigate('/app/servicos/novo')}>
             Novo serviço
           </Button>
         </div>

@@ -42,10 +42,15 @@ export function ClientsPage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Clientes" description="Cadastro e consulta de clientes." actionLabel="Novo cliente" onAction={() => navigate('/app/clientes/novo')}>
-        <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por nome, telefone ou CPF/CNPJ" />
+      <PageHeader title="Clientes" description="Cadastro e consulta de clientes.">
+        <SearchInput
+          className="xl:min-w-[260px]"
+          value={params.search}
+          onChange={params.setSearch}
+          placeholder="Buscar por nome, telefone ou CPF/CNPJ"
+        />
+        <Button className="shrink-0" onClick={() => navigate('/app/clientes/novo')}>Novo cliente</Button>
       </PageHeader>
-
       <Card>
         <CardContent className="p-0">
           {query.isLoading ? <LoadingState /> : null}

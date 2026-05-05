@@ -35,8 +35,9 @@ export function VehiclesPage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Veículos" description="Controle da frota atendida pela oficina." actionLabel="Novo veículo" onAction={() => navigate('/app/veiculos/novo')}>
+      <PageHeader title="Veículos" description="Controle da frota atendida pela oficina.">
         <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por placa, marca, modelo ou cliente" />
+        <Button className="shrink-0" onClick={() => navigate('/app/veiculos/novo')}>Novo veículo</Button>
       </PageHeader>
       <Card>
         <CardContent className="p-0">

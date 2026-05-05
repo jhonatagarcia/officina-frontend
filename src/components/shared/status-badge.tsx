@@ -39,5 +39,11 @@ const labelMap: Record<string, string> = {
 };
 
 export function StatusBadge({ status }: { status: string }) {
-  return <Badge variant={variantMap[status] ?? 'default'}>{labelMap[status] ?? status.replace(/_/g, ' ')}</Badge>;
+  const normalizedStatus = status.toUpperCase();
+
+  return (
+    <Badge variant={variantMap[normalizedStatus] ?? 'default'}>
+      {labelMap[normalizedStatus] ?? status.replace(/_/g, ' ')}
+    </Badge>
+  );
 }

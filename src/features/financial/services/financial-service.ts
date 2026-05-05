@@ -58,6 +58,14 @@ export const financialService = {
     const response = await http.get<FinancialEntryApiResponse>(`/financial/${id}`);
     return mapFinancialEntry(response.data);
   },
+  async getSummary() {
+    const response = await http.get<{ receivablesValue: number | string; stockOutValue: number | string }>('/financial/summary');
+
+    return {
+      receivablesValue: toNumber(response.data.receivablesValue),
+      stockOutValue: toNumber(response.data.stockOutValue),
+    };
+  },
   async create(payload: {
     type: FinancialType;
     description: string;

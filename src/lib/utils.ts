@@ -30,6 +30,17 @@ export function formatDate(value: string) {
   return new Intl.DateTimeFormat('pt-BR').format(new Date(value));
 }
 
+export function formatDateOnly(value: string) {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+  if (!match) {
+    return formatDate(value);
+  }
+
+  const [, year, month, day] = match;
+  return `${day}/${month}/${year}`;
+}
+
 export function normalizePlate(value: string) {
   return value.toUpperCase().replace(/[^A-Z0-9]/g, '');
 }

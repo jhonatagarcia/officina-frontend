@@ -33,11 +33,7 @@ export function ServiceFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) 
   const { query, form, mutation } = useServiceForm(mode, id, () => navigate('/app/servicos'));
 
   const laborPrice = form.watch('laborPrice') || 0;
-  const productPrice = form.watch('productPrice') || 0;
-  const billingType = form.watch('billingType');
-  const materialSource = form.watch('materialSource');
-  const productPriceLocked = billingType === 'LABOR_ONLY' || materialSource === 'NO_PARTS_REQUIRED';
-  const suggestedTotalPrice = laborPrice + productPrice;
+  const suggestedTotalPrice = laborPrice;
   const availableBillingTypeOptions =
     mode === 'create' ? billingTypeOptions.filter((option) => option.value !== 'FIXED_PRICE') : billingTypeOptions;
   const availableMaterialSourceOptions =
@@ -92,19 +88,6 @@ export function ServiceFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) 
               />
               {form.formState.errors.laborPrice?.message ? (
                 <p className="text-xs text-destructive">{form.formState.errors.laborPrice.message}</p>
-              ) : null}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="productPrice">Valor sugerido de produto/peça</Label>
-              <Input
-                id="productPrice"
-                disabled={isReadOnly || productPriceLocked}
-                inputMode="numeric"
-                value={formatCurrency(form.watch('productPrice') ?? 0)}
-                onChange={(event) => form.setValue('productPrice', parseCurrencyInput(event.target.value), { shouldValidate: true, shouldDirty: true })}
-              />
-              {form.formState.errors.productPrice?.message ? (
-                <p className="text-xs text-destructive">{form.formState.errors.productPrice.message}</p>
               ) : null}
             </div>
             <div className="space-y-2">

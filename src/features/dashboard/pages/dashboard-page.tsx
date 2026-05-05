@@ -4,15 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import { dashboardService } from '@/features/dashboard/services/dashboard-service';
 import { useSortableData } from '@/hooks/use-sortable-data';
 import { ErrorState } from '@/components/shared/error-state';
+import { EmptyState } from '@/components/shared/empty-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
+import { StatusBadge } from '@/components/shared/status-badge';
 import { Badge } from '@/components/ui/badge';
 import { SummaryCard } from '@/components/shared/summary-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { SortableTableHead, Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import { formatCurrency } from '@/lib/utils';
+import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { formatCurrency, formatDateOnly, formatServiceOrderNumber } from '@/lib/utils';
 import type { DashboardOperationalAlert } from '@/features/dashboard/types';
 
 const alertVariantMap: Record<DashboardOperationalAlert['severity'], 'danger' | 'warning' | 'info'> = {
@@ -53,7 +55,7 @@ export function DashboardPage() {
   if (query.isLoading) return <LoadingState />;
   if (query.isError || !query.data) return <ErrorState onRetry={() => query.refetch()} />;
 
-  const { serviceOrders, budgets, financial, inventory: inventoryData, operationalAlerts } = query.data;
+  const { serviceOrders, budgets, financial, inventory: inventoryData, activeServiceOrders, pendingBudgets, operationalAlerts } = query.data;
 
   return (
     <PageContainer>
@@ -64,9 +66,83 @@ export function DashboardPage() {
         <SummaryCard title="Veículos em andamento" value={String(serviceOrders.inProgress)} icon={Wrench} />
         <SummaryCard title="Prontos para entrega" value={String(serviceOrders.readyForDelivery)} icon={Car} />
         <SummaryCard title="Orçamentos pendentes" value={String(budgets.pending)} icon={Receipt} />
-        <SummaryCard title="Faturamento do mês" value={formatCurrency(financial.monthRevenue)} icon={DollarSign} />
-        <SummaryCard title="Saída de estoque" value={formatCurrency(financial.stockOutValue)} icon={PackageSearch} />
+        <SummaryCard title="Faturamento do mês" value={formatCurrency(financial.monthRevenue)} icon={DollarSign} valueClassName="text-emerald-600" />
+        <SummaryCard title="Saída de estoque" value={formatCurrency(financial.stockOutValue)} icon={PackageSearch} valueClassName="text-rose-600" />
         <SummaryCard title="Estoque baixo" value={String(inventoryData.lowStockCount)} icon={PackageSearch} />
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
+            <CardTitle>Ordens em execução</CardTitle>
+            <Button size="sm" variant="outline" onClick={() => navigate('/app/ordens-servico')}>
+              Ver todas
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {activeServiceOrders.length ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>OS</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Veículo</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Previsão</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {activeServiceOrders.slice(0, 6).map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-medium">{formatServiceOrderNumber(order.orderNumber)}</TableCell>
+                      <TableCell>{order.clientName}</TableCell>
+                      <TableCell>{order.vehicleLabel}</TableCell>
+                      <TableCell><StatusBadge status={order.status} /></TableCell>
+                      <TableCell>{order.expectedDeliveryAt ? formatDateOnly(order.expectedDeliveryAt) : '-'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <EmptyState />
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
+            <CardTitle>Orçamentos pendentes</CardTitle>
+            <Button size="sm" variant="outline" onClick={() => navigate('/app/orcamentos?status=PENDENTE')}>
+              Ver todos
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {pendingBudgets.length ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Veículo</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Criado em</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingBudgets.map((budget) => (
+                    <TableRow key={budget.id}>
+                      <TableCell>{budget.client?.name ?? '-'}</TableCell>
+                      <TableCell>{budget.vehicle ? `${budget.vehicle.plate} • ${budget.vehicle.brand} ${budget.vehicle.model}` : '-'}</TableCell>
+                      <TableCell>{formatCurrency(budget.total)}</TableCell>
+                      <TableCell>{formatDateOnly(budget.createdAt)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <EmptyState />
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
@@ -75,34 +151,30 @@ export function DashboardPage() {
             <CardTitle>Itens com estoque baixo</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <SortableTableHead column="internalCode" sortState={sortState} onSort={requestSort}>Código</SortableTableHead>
-                  <SortableTableHead column="name" sortState={sortState} onSort={requestSort}>Item</SortableTableHead>
-                  <SortableTableHead column="quantity" sortState={sortState} onSort={requestSort}>Atual</SortableTableHead>
-                  <SortableTableHead column="minimumQuantity" sortState={sortState} onSort={requestSort}>Mínimo</SortableTableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedItems.length ? (
-                  sortedItems.map((item) => (
+            {sortedItems.length ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <SortableTableHead column="internalCode" sortState={sortState} onSort={requestSort}>Código</SortableTableHead>
+                    <SortableTableHead column="name" sortState={sortState} onSort={requestSort}>Item</SortableTableHead>
+                    <SortableTableHead column="quantity" sortState={sortState} onSort={requestSort}>Atual</SortableTableHead>
+                    <SortableTableHead column="minimumQuantity" sortState={sortState} onSort={requestSort}>Mínimo</SortableTableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedItems.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>{item.internalCode}</TableCell>
                       <TableCell>{item.name}</TableCell>
                       <TableCell>{item.quantity}</TableCell>
                       <TableCell>{item.minimumQuantity}</TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell className="py-8 text-center text-muted-foreground" colSpan={4}>
-                      Nenhum item com estoque crítico no momento.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <EmptyState />
+            )}
           </CardContent>
         </Card>
 

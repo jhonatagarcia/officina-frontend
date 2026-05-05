@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DollarSign, PackageSearch, TrendingUp } from 'lucide-react';
-import { dashboardService } from '@/features/dashboard/services/dashboard-service';
 import { financialService } from '@/features/financial/services/financial-service';
 import type { FinancialEntry, PaymentMethod } from '@/features/financial/types';
 import { useListParams } from '@/hooks/use-list-params';
@@ -49,7 +48,7 @@ export function FinancialPage() {
   const [paymentDates, setPaymentDates] = useState<Record<string, string>>({});
   const today = toDateInputValue(new Date());
   const query = useQuery({
-    queryKey: ['financeiro', params.page, params.search, params.status, params.type],
+    queryKey: ['financeiro', params.page, params.search, params.status],
     queryFn: () =>
       financialService.list({
         page: params.page,
@@ -57,28 +56,28 @@ export function FinancialPage() {
         search: params.search,
       }),
   });
-  const dashboardQuery = useQuery({
-    queryKey: ['dashboard', 'financial-summary'],
-    queryFn: dashboardService.getOverview,
+  const summaryQuery = useQuery({
+    queryKey: ['financeiro', 'summary'],
+    queryFn: financialService.getSummary,
   });
   const mutation = useMutation({
     mutationFn: ({ id, paymentMethod, paidAt }: { id: string; paymentMethod: PaymentMethod; paidAt: string }) =>
       financialService.markAsPaid(id, { paymentMethod, paidAt }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['financeiro'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['financeiro'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
   });
-  const selectedType = params.type || 'ALL';
   const selectedStatus = params.status || 'ALL';
   const filteredEntries =
     query.data?.data.filter((item) => {
-      const matchesType = selectedType !== 'ALL' ? item.type === selectedType : true;
       const matchesStatus = selectedStatus !== 'ALL' ? item.status === selectedStatus : true;
-      return matchesType && matchesStatus;
+      return matchesStatus;
     }) ?? [];
   const { sortedItems, sortState, requestSort } = useSortableData(filteredEntries, {
     initialSort: { column: 'description', direction: 'asc' },
     accessors: {
       description: (entry) => (entry.serviceOrder ? entry.serviceOrder.orderNumber : entry.description),
-      type: (entry) => entry.type,
       status: (entry) => entry.status,
       amount: (entry) => entry.amount,
       paidAt: (entry) => (entry.paidAt ? new Date(entry.paidAt) : null),
@@ -87,22 +86,14 @@ export function FinancialPage() {
     },
   });
   const pagination = query.data;
-  const income = filteredEntries.filter((item) => item.type === 'RECEIVABLE').reduce((acc, item) => acc + item.amount, 0) ?? 0;
-  const stockOutValue = dashboardQuery.data?.financial.stockOutValue ?? 0;
+  const income = summaryQuery.data?.receivablesValue ?? filteredEntries.filter((item) => item.type === 'RECEIVABLE').reduce((acc, item) => acc + item.amount, 0) ?? 0;
+  const stockOutValue = summaryQuery.data?.stockOutValue ?? 0;
 
   return (
     <PageContainer>
       <PageHeader title="Financeiro" description="Contas a receber, saída de estoque e conciliação.">
         <div className="flex gap-3">
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por descrição ou origem" />
-          <Select value={selectedType} onValueChange={(value) => params.setType(value === 'ALL' ? '' : value)}>
-            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos</SelectItem>
-              <SelectItem value="RECEIVABLE">Receber</SelectItem>
-              <SelectItem value="PAYABLE">Pagar</SelectItem>
-            </SelectContent>
-          </Select>
           <Select value={selectedStatus} onValueChange={(value) => params.setStatus(value === 'ALL' ? '' : value)}>
             <SelectTrigger className="w-[180px]"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
@@ -115,9 +106,9 @@ export function FinancialPage() {
         </div>
       </PageHeader>
       <div className="grid gap-4 md:grid-cols-3">
-        <SummaryCard title="Saldo projetado" value={formatCurrency(income - stockOutValue)} icon={DollarSign} />
-        <SummaryCard title="Contas a receber" value={formatCurrency(income)} icon={TrendingUp} />
-        <SummaryCard title="Saída de estoque" value={formatCurrency(stockOutValue)} icon={PackageSearch} />
+        <SummaryCard title="Saldo projetado" value={formatCurrency(income - stockOutValue)} icon={DollarSign} valueClassName="text-sky-600" />
+        <SummaryCard title="Contas a receber" value={formatCurrency(income)} icon={TrendingUp} valueClassName="text-emerald-600" />
+        <SummaryCard title="Saída de estoque" value={formatCurrency(stockOutValue)} icon={PackageSearch} valueClassName="text-rose-600" />
       </div>
       <Card>
         <CardContent className="p-0">
@@ -130,7 +121,6 @@ export function FinancialPage() {
                 <TableHeader>
                   <TableRow>
                     <SortableTableHead column="description" sortState={sortState} onSort={requestSort}>Descrição</SortableTableHead>
-                    <SortableTableHead column="type" sortState={sortState} onSort={requestSort}>Tipo</SortableTableHead>
                     <SortableTableHead column="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
                     <SortableTableHead column="amount" sortState={sortState} onSort={requestSort}>Valor</SortableTableHead>
                     <SortableTableHead column="paidAt" sortState={sortState} onSort={requestSort}>Data do pagamento</SortableTableHead>
@@ -145,7 +135,6 @@ export function FinancialPage() {
                       <TableCell>
                         {entry.serviceOrder ? formatServiceOrderNumber(entry.serviceOrder.orderNumber) : entry.description}
                       </TableCell>
-                      <TableCell>{entry.type === 'RECEIVABLE' ? 'Receber' : 'Pagar'}</TableCell>
                       <TableCell><StatusBadge status={entry.status} /></TableCell>
                       <TableCell>{formatCurrency(entry.amount)}</TableCell>
                       <TableCell>

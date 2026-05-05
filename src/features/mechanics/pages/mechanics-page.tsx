@@ -25,6 +25,10 @@ export function MechanicsPage() {
   const navigate = useNavigate();
   const params = useListParams();
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('ALL');
+  const handleActiveFilterChange = (value: ActiveFilter) => {
+    setActiveFilter(value);
+    params.setPage(1);
+  };
 
   const query = useQuery({
     queryKey: ['mecanicos', params.page, params.search, activeFilter],
@@ -50,9 +54,9 @@ export function MechanicsPage() {
   return (
     <PageContainer>
       <PageHeader title="Mecânicos" description="Cadastro e gestão dos mecânicos da oficina.">
-        <div className="flex flex-col gap-3 lg:flex-row">
+        <div className="flex w-full flex-col gap-3 xl:w-auto xl:flex-row">
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por nome ou e-mail" />
-          <Select value={activeFilter} onValueChange={(value) => setActiveFilter(value as ActiveFilter)}>
+          <Select value={activeFilter} onValueChange={(value) => handleActiveFilterChange(value as ActiveFilter)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Situação" />
             </SelectTrigger>
@@ -62,7 +66,7 @@ export function MechanicsPage() {
               <SelectItem value="ALL">Todos</SelectItem>
             </SelectContent>
           </Select>
-          <Button type="button" onClick={() => navigate('/app/mecanicos/novo')}>
+          <Button className="shrink-0" type="button" onClick={() => navigate('/app/mecanicos/novo')}>
             Novo mecânico
           </Button>
         </div>

@@ -33,7 +33,9 @@ interface DashboardSummaryApiResponse {
   };
 }
 
-function mapDashboardSummary(response: DashboardSummaryApiResponse): Omit<DashboardOverview, 'operationalAlerts'> {
+type DashboardSummary = Omit<DashboardOverview, 'activeServiceOrders' | 'pendingBudgets' | 'operationalAlerts'>;
+
+function mapDashboardSummary(response: DashboardSummaryApiResponse): DashboardSummary {
   return {
     serviceOrders: response.serviceOrders,
     budgets: response.budgets,
@@ -84,7 +86,7 @@ function describeCriticalItems(items: InventoryItem[]) {
 }
 
 function buildOperationalAlerts(params: {
-  summary: Omit<DashboardOverview, 'operationalAlerts'>;
+  summary: DashboardSummary;
   lowStockItems: InventoryItem[];
   activeServiceOrders: ServiceOrder[];
   pendingBudgets: Budget[];
@@ -213,6 +215,8 @@ export const dashboardService = {
 
     return {
       ...summary,
+      activeServiceOrders: [...openOrders.data, ...inProgressOrders.data],
+      pendingBudgets: pendingBudgets.data,
       operationalAlerts,
     };
   },
