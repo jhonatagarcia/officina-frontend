@@ -1,6 +1,6 @@
 import { http } from '@/services/api/http';
 import { buildQueryParams, mapPaginatedResponse } from '@/services/api/query-string';
-import type { ApiPaginatedResponse, PaginatedResponse, QueryParams } from '@/types/common';
+import type { ApiPaginatedResponse, QueryParams } from '@/types/common';
 import type { ServiceOrder, ServiceOrderBudgetItem, ServiceOrderPart, ServiceOrderStatus } from '@/features/service-orders/types';
 import { toNumber } from '@/lib/utils';
 
@@ -71,7 +71,7 @@ export const serviceOrdersService = {
     return mapPaginatedResponse({
       ...response.data,
       data: response.data.data.map(mapServiceOrder),
-    }) as PaginatedResponse<ServiceOrder>;
+    });
   },
   async getById(id: string) {
     const response = await http.get<ServiceOrderApiResponse>(`/service-orders/${id}`);

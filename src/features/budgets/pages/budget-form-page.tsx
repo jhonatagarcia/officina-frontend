@@ -47,7 +47,15 @@ export function BudgetFormPage({ mode }: { mode: 'create' | 'view' }) {
 
   if (clientOptionsQuery.isLoading || vehicleOptionsQuery.isLoading || budgetQuery.isLoading) return <LoadingState />;
   if (clientOptionsQuery.isError || vehicleOptionsQuery.isError || budgetQuery.isError) {
-    return <ErrorState onRetry={() => budgetQuery.refetch()} />;
+    return (
+      <ErrorState
+        onRetry={() => {
+          clientOptionsQuery.refetch();
+          vehicleOptionsQuery.refetch();
+          budgetQuery.refetch();
+        }}
+      />
+    );
   }
 
   return (
@@ -83,11 +91,14 @@ export function BudgetFormPage({ mode }: { mode: 'create' | 'view' }) {
                 error={form.formState.errors.problemDescription?.message}
                 transformValue={capitalizeFirstLetter}
               />
-              <TextAreaField control={form.control} 
-                name="notes" disabled={isReadOnly} 
-                label="Observações" 
-                error={form.formState.errors.notes?.message} 
-                transformValue={capitalizeFirstLetter}/>
+              <TextAreaField
+                control={form.control}
+                name="notes"
+                disabled={isReadOnly}
+                label="Observações"
+                error={form.formState.errors.notes?.message}
+                transformValue={capitalizeFirstLetter}
+              />
               <BudgetItemsEditor fieldArray={fieldArray} form={form} items={items} readOnly={isReadOnly} />
               <div className="space-y-2">
                 <Label htmlFor="discount">Desconto</Label>
@@ -96,13 +107,17 @@ export function BudgetFormPage({ mode }: { mode: 'create' | 'view' }) {
                   disabled={isReadOnly}
                   inputMode="numeric"
                   value={formatCurrency(form.watch('discount') ?? 0)}
-                  onChange={(event) => form.setValue('discount', parseCurrencyInput(event.target.value), { shouldValidate: true })}
+                  onChange={(event) =>
+                    form.setValue('discount', parseCurrencyInput(event.target.value), { shouldValidate: true })
+                  }
                 />
                 {form.formState.errors.discount?.message ? (
                   <p className="text-xs text-destructive">{form.formState.errors.discount.message}</p>
                 ) : null}
               </div>
-              {!isReadOnly ? <Button disabled={mutation.isPending}>{mutation.isPending ? 'Salvando...' : 'Salvar orçamento'}</Button> : null}
+              {!isReadOnly ? (
+                <Button disabled={mutation.isPending}>{mutation.isPending ? 'Salvando...' : 'Salvar orçamento'}</Button>
+              ) : null}
             </form>
           </CardContent>
         </Card>

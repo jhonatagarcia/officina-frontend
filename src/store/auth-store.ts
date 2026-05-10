@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { AuthSession } from '@/types/auth';
+import type { AuthSession, Role } from '@/types/auth';
 
 interface AuthState {
   session: AuthSession | null;
@@ -10,12 +10,30 @@ interface AuthState {
   logout: () => void;
 }
 
+const validRoles = new Set<Role>(['ADMIN', 'ATENDENTE', 'MECANICO', 'FINANCEIRO']);
+
+function normalizeSession(session: AuthSession | null): AuthSession | null {
+  if (!session?.accessToken || !validRoles.has(session.user?.role)) {
+    return null;
+  }
+
+  return {
+    accessToken: session.accessToken,
+    user: {
+      id: session.user.id,
+      name: session.user.name,
+      email: session.user.email,
+      role: session.user.role,
+    },
+  };
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       session: null,
       hydrated: false,
-      setSession: (session) => set({ session }),
+      setSession: (session) => set({ session: normalizeSession(session) }),
       setHydrated: (hydrated) => set({ hydrated }),
       logout: () => set({ session: null }),
     }),
@@ -24,6 +42,7 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({ session: state.session }),
       onRehydrateStorage: () => (state) => {
+        state?.setSession(normalizeSession(state.session));
         state?.setHydrated(true);
       },
     },

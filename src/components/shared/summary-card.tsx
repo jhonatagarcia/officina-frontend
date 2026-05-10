@@ -10,21 +10,24 @@ interface SummaryCardProps {
   imageAlt?: string;
   mediaClassName?: string;
   valueClassName?: string;
+  size?: 'default' | 'compact';
 }
 
-export function SummaryCard({ title, value, icon: Icon, imageSrc, imageAlt, mediaClassName, valueClassName }: SummaryCardProps) {
+export function SummaryCard({ title, value, icon: Icon, imageSrc, imageAlt, mediaClassName, valueClassName, size = 'default' }: SummaryCardProps) {
+  const isCompact = size === 'compact';
+
   return (
     <Card className="overflow-hidden">
-      <CardContent className="flex items-start justify-between p-6">
+      <CardContent className={cn('flex items-start justify-between', isCompact ? 'gap-3 p-4' : 'p-6')}>
         <div>
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className={cn('mt-3 text-4xl font-extrabold tracking-tight md:text-[2.5rem]', valueClassName)}>{value}</p>
+          <p className={cn('font-medium text-muted-foreground', isCompact ? 'text-xs leading-tight' : 'text-sm')}>{title}</p>
+          <p className={cn('font-extrabold tracking-tight', isCompact ? 'mt-2 text-3xl md:text-[2rem]' : 'mt-3 text-4xl md:text-[2.5rem]', valueClassName)}>{value}</p>
         </div>
-        <div className={cn('rounded-2xl border border-primary/10 bg-gradient-to-br from-primary/15 to-orange-200/40 p-3 text-primary', mediaClassName)}>
+        <div className={cn('border border-primary/10 bg-gradient-to-br from-primary/15 to-orange-200/40 text-primary', isCompact ? 'rounded-xl p-2' : 'rounded-2xl p-3', mediaClassName)}>
           {imageSrc ? (
-            <img alt={imageAlt ?? title} className="size-8 object-contain" src={imageSrc} />
+            <img alt={imageAlt ?? title} className={cn('object-contain', isCompact ? 'size-6' : 'size-8')} src={imageSrc} />
           ) : Icon ? (
-            <Icon className="size-5" />
+            <Icon className={cn(isCompact ? 'size-4' : 'size-5')} />
           ) : null}
         </div>
       </CardContent>

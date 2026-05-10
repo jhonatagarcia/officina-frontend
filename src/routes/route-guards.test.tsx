@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { ProtectedRoute, RoleGuard } from '@/routes/route-guards';
+import { GuestRoute, ProtectedRoute, RoleGuard } from '@/routes/route-guards';
 import { useAuthStore } from '@/store/auth-store';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -60,5 +60,31 @@ describe('route guards', () => {
     );
 
     expect(screen.getByText(/acesso não autorizado/i)).toBeInTheDocument();
+  });
+
+  it('aguarda hidratacao antes de decidir rota de visitante', () => {
+    useAuthStore.setState({
+      session: {
+        accessToken: 'token',
+        user: {
+          id: '1',
+          name: 'Atendente',
+          email: 'atendente@oficina.com',
+          role: 'ATENDENTE',
+        },
+      },
+      hydrated: false,
+    });
+
+    const { container } = renderWithQuery(
+      <Routes>
+        <Route element={<GuestRoute />}>
+          <Route path="/login" element={<div>Tela de login</div>} />
+        </Route>
+      </Routes>,
+      ['/login'],
+    );
+
+    expect(container).toBeEmptyDOMElement();
   });
 });

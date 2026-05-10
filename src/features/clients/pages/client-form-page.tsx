@@ -7,46 +7,7 @@ import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
-function onlyDigits(value: string) {
-  return value.replace(/\D/g, '');
-}
-
-function capitalizeFirstLetter(value: string) {
-  if (!value) return value;
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function formatPhone(value: string) {
-  const digits = onlyDigits(value).slice(0, 11);
-
-  if (digits.length <= 10) {
-    return digits
-      .replace(/^(\d{2})(\d)/, '($1) $2')
-      .replace(/(\d{4})(\d)/, '$1-$2');
-  }
-
-  return digits
-    .replace(/^(\d{2})(\d)/, '($1) $2')
-    .replace(/(\d{5})(\d)/, '$1-$2');
-}
-
-function formatCpfCnpj(value: string) {
-  const digits = onlyDigits(value).slice(0, 14);
-
-  if (digits.length <= 11) {
-    return digits
-      .replace(/^(\d{3})(\d)/, '$1.$2')
-      .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
-      .replace(/\.(\d{3})(\d)/, '.$1-$2');
-  }
-
-  return digits
-    .replace(/^(\d{2})(\d)/, '$1.$2')
-    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/\.(\d{3})(\d)/, '.$1/$2')
-    .replace(/(\d{4})(\d)/, '$1-$2');
-}
+import { capitalizeFirstLetter, formatCpfCnpj, formatPhone } from '@/lib/utils';
 
 export function ClientFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
   const navigate = useNavigate();

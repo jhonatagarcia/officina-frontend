@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { capitalizeFirstLetter } from '@/lib/utils';
-import { Option } from '@/types/common';
+import type { Option } from '@/types/common';
 
 interface FieldWrapperProps {
   label: string;

@@ -1,4 +1,5 @@
 import { LogOut } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { useAuthState } from '@/features/auth/hooks/use-auth-state';
 
@@ -11,6 +12,12 @@ const roleLabelMap: Record<string, string> = {
 
 export function Header() {
   const { session, logout } = useAuthState();
+  const queryClient = useQueryClient();
+
+  function handleLogout() {
+    queryClient.clear();
+    logout();
+  }
 
   return (
     <header className="sticky top-0 z-30 px-4 pt-4 md:px-6 md:pt-5">
@@ -24,7 +31,7 @@ export function Header() {
             <p className="text-sm font-semibold">{session?.user.name}</p>
             <p className="text-xs uppercase tracking-wide text-muted-foreground">{roleLabelMap[session?.user.role ?? ''] ?? session?.user.role}</p>
           </div>
-          <Button variant="outline" size="icon" onClick={logout} aria-label="Sair" className="rounded-2xl bg-white/80">
+          <Button variant="outline" size="icon" onClick={handleLogout} aria-label="Sair" className="rounded-2xl bg-white/80">
             <LogOut className="size-4" />
           </Button>
         </div>

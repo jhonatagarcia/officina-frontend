@@ -4,29 +4,8 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { clientSchema, type ClientSchema } from '@/features/clients/schemas/client-schema';
 import { clientsService } from '@/features/clients/services/clients-service';
-import { normalizeNullableString } from '@/lib/utils';
-import { ApiErrorResponse } from '@/types/common';
-
-function onlyDigits(value: string | null | undefined) {
-  return value?.replace(/\D/g, '') ?? '';
-}
-
-function formatCpfCnpj(value: string | null | undefined) {
-  const digits = onlyDigits(value).slice(0, 14);
-
-  if (digits.length <= 11) {
-    return digits
-      .replace(/^(\d{3})(\d)/, '$1.$2')
-      .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
-      .replace(/\.(\d{3})(\d)/, '.$1-$2');
-  }
-
-  return digits
-    .replace(/^(\d{2})(\d)/, '$1.$2')
-    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/\.(\d{3})(\d)/, '.$1/$2')
-    .replace(/(\d{4})(\d)/, '$1-$2');
-}
+import { formatCpfCnpj, normalizeNullableString, onlyDigits } from '@/lib/utils';
+import type { ApiErrorResponse } from '@/types/common';
 
 export function useClientForm(mode: 'create' | 'edit' | 'view', id: string, onSuccess: () => void) {
   const query = useQuery({
@@ -70,18 +49,17 @@ export function useClientForm(mode: 'create' | 'edit' | 'view', id: string, onSu
       toast.success('Cliente salvo com sucesso.');
       onSuccess();
     },
-
     onError: (error: ApiErrorResponse) => {
-    if (error.statusCode === 409) {
-      form.setError('document', {
-        type: 'server',
-        message: error.message || 'Já existe um cliente cadastrado com este CPF/CNPJ.',
-      });
-      return;
-    }
+      if (error.statusCode === 409) {
+        form.setError('document', {
+          type: 'server',
+          message: error.message || 'Já existe um cliente cadastrado com este CPF/CNPJ.',
+        });
+        return;
+      }
 
-    toast.error(error.message || 'Não foi possível salvar o cliente.');
-  },
+      toast.error(error.message || 'Não foi possível salvar o cliente.');
+    },
   });
 
   return { query, form, mutation };

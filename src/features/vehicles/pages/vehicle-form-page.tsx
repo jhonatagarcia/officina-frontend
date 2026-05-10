@@ -18,7 +18,16 @@ export function VehicleFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) 
   const { query, form, mutation } = useVehicleForm(mode, id, () => navigate('/app/veiculos'));
 
   if (query.isLoading || clientOptionsQuery.isLoading) return <LoadingState />;
-  if (query.isError || clientOptionsQuery.isError) return <ErrorState onRetry={() => query.refetch()} />;
+  if (query.isError || clientOptionsQuery.isError) {
+    return (
+      <ErrorState
+        onRetry={() => {
+          query.refetch();
+          clientOptionsQuery.refetch();
+        }}
+      />
+    );
+  }
 
   return (
     <PageContainer>

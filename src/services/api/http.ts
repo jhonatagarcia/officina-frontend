@@ -8,6 +8,49 @@ export const http = axios.create({
   baseURL: env.VITE_API_BASE_URL,
 });
 
+const defaultApiErrorMessage = 'Não foi possível processar a solicitação.';
+const safeBackendMessageStatuses = new Set([400, 404, 409, 422]);
+
+function normalizeMessageValue(message: unknown) {
+  const value = Array.isArray(message) ? message[0] : message;
+  if (typeof value !== 'string') return null;
+
+  const withoutTags = value.replace(/<[^>]*>/g, '');
+  const normalized = Array.from(withoutTags)
+    .map((character) => {
+      const code = character.charCodeAt(0);
+      return code < 32 || code === 127 ? ' ' : character;
+    })
+    .join('')
+    .trim();
+  return normalized ? normalized.slice(0, 180) : null;
+}
+
+export function normalizeApiErrorResponse(status?: number, payload?: ApiErrorResponse): ApiErrorResponse {
+  if (status === 401) {
+    return {
+      message: 'Sua sessão expirou. Faça login novamente.',
+      statusCode: status,
+    };
+  }
+
+  if (status === 403) {
+    return {
+      message: 'Você não possui permissão para executar esta ação.',
+      statusCode: status,
+    };
+  }
+
+  const safeBackendMessage = safeBackendMessageStatuses.has(status ?? 0)
+    ? normalizeMessageValue(payload?.message)
+    : null;
+
+  return {
+    message: safeBackendMessage ?? defaultApiErrorMessage,
+    statusCode: status,
+  };
+}
+
 http.interceptors.request.use((config) => {
   const token = useAuthStore.getState().session?.accessToken;
   if (token) {
@@ -21,6 +64,7 @@ http.interceptors.response.use(
   (error) => {
     const status = error.response?.status as number | undefined;
     const payload = error.response?.data as ApiErrorResponse | undefined;
+    const normalizedError = normalizeApiErrorResponse(status, payload);
 
     if (status === 401) {
       useAuthStore.getState().logout();
@@ -29,11 +73,6 @@ http.interceptors.response.use(
       emitAuthEvent({ type: 'FORBIDDEN' });
     }
 
-    return Promise.reject(
-      payload ?? {
-        message: 'Não foi possível processar a solicitação.',
-        statusCode: status,
-      },
-    );
+    return Promise.reject(normalizedError);
   },
 );

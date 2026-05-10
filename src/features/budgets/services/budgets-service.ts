@@ -1,6 +1,6 @@
 import { http } from '@/services/api/http';
 import { buildQueryParams, mapPaginatedResponse } from '@/services/api/query-string';
-import type { ApiPaginatedResponse, PaginatedResponse, QueryParams } from '@/types/common';
+import type { ApiPaginatedResponse, QueryParams } from '@/types/common';
 import type { Budget, BudgetItem, BudgetItemType } from '@/features/budgets/types';
 import { toNumber } from '@/lib/utils';
 
@@ -68,7 +68,7 @@ export const budgetsService = {
     return mapPaginatedResponse({
       ...response.data,
       data: response.data.data.map(mapBudget),
-    }) as PaginatedResponse<Budget>;
+    });
   },
   async getById(id: string) {
     const response = await http.get<BudgetApiResponse>(`/budgets/${id}`);
@@ -101,7 +101,9 @@ export const budgetsService = {
     return mapBudget(response.data);
   },
   async convert(id: string) {
-    const response = await http.post(`/budgets/${id}/convert-to-service-order`);
+    const response = await http.post<{ serviceOrder?: { id: string } | null }>(
+      `/budgets/${id}/convert-to-service-order`,
+    );
     return response.data;
   },
 };

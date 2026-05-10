@@ -10,6 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TextField } from '@/components/shared/form-fields';
 import { env } from '@/lib/env';
 
+function getSafePostLoginPath(state: unknown) {
+  const pathname = (state as { from?: { pathname?: unknown } } | null)?.from?.pathname;
+
+  return typeof pathname === 'string' && pathname.startsWith('/app/') ? pathname : '/app/dashboard';
+}
+
 export function LoginPage() {
   const { login, isLoggingIn } = useLogin();
   const navigate = useNavigate();
@@ -26,10 +32,9 @@ export function LoginPage() {
     try {
       await login(values);
       toast.success('Acesso realizado com sucesso.');
-      navigate(location.state?.from?.pathname ?? '/app/dashboard', { replace: true });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Credenciais inválidas.';
-      toast.error(message);
+      navigate(getSafePostLoginPath(location.state), { replace: true });
+    } catch {
+      toast.error('Credenciais inválidas.');
     }
   }
 

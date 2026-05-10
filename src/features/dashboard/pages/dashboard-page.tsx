@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, BellRing, Car, ClipboardList, DollarSign, PackageSearch, Receipt, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -11,11 +12,14 @@ import { PageHeader } from '@/components/shared/page-header';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { Badge } from '@/components/ui/badge';
 import { SummaryCard } from '@/components/shared/summary-card';
+import { Pagination } from '@/components/shared/pagination';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatCurrency, formatDateOnly, formatServiceOrderNumber } from '@/lib/utils';
 import type { DashboardOperationalAlert } from '@/features/dashboard/types';
+
+const ACTIVE_SERVICE_ORDERS_PAGE_SIZE = 3;
 
 const alertVariantMap: Record<DashboardOperationalAlert['severity'], 'danger' | 'warning' | 'info'> = {
   danger: 'danger',
@@ -37,10 +41,12 @@ const alertContainerMap: Record<DashboardOperationalAlert['severity'], string> =
 
 export function DashboardPage() {
   const navigate = useNavigate();
+  const [activeServiceOrdersPage, setActiveServiceOrdersPage] = useState(1);
   const query = useQuery({
     queryKey: ['dashboard'],
     queryFn: dashboardService.getOverview,
   });
+  const activeServiceOrdersTotalPages = Math.max(1, Math.ceil((query.data?.activeServiceOrders.length ?? 0) / ACTIVE_SERVICE_ORDERS_PAGE_SIZE));
   const inventory = query.data?.inventory;
   const { sortedItems, sortState, requestSort } = useSortableData(inventory?.lowStockItems ?? [], {
     initialSort: { column: 'internalCode', direction: 'asc' },
@@ -52,24 +58,36 @@ export function DashboardPage() {
     },
   });
 
+  useEffect(() => {
+    setActiveServiceOrdersPage((page) => Math.min(page, activeServiceOrdersTotalPages));
+  }, [activeServiceOrdersTotalPages]);
+
   if (query.isLoading) return <LoadingState />;
   if (query.isError || !query.data) return <ErrorState onRetry={() => query.refetch()} />;
 
   const { serviceOrders, budgets, financial, inventory: inventoryData, activeServiceOrders, pendingBudgets, operationalAlerts } = query.data;
+  const currentActiveServiceOrdersPage = Math.min(activeServiceOrdersPage, activeServiceOrdersTotalPages);
+  const activeServiceOrdersStartIndex = (currentActiveServiceOrdersPage - 1) * ACTIVE_SERVICE_ORDERS_PAGE_SIZE;
+  const paginatedActiveServiceOrders = activeServiceOrders.slice(activeServiceOrdersStartIndex, activeServiceOrdersStartIndex + ACTIVE_SERVICE_ORDERS_PAGE_SIZE);
 
   return (
     <PageContainer>
       <PageHeader title="Dashboard" description="Visão operacional da oficina em tempo real." />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <SummaryCard title="OS abertas" value={String(serviceOrders.open)} icon={ClipboardList} />
-        <SummaryCard title="Veículos em andamento" value={String(serviceOrders.inProgress)} icon={Wrench} />
-        <SummaryCard title="Prontos para entrega" value={String(serviceOrders.readyForDelivery)} icon={Car} />
-        <SummaryCard title="Orçamentos pendentes" value={String(budgets.pending)} icon={Receipt} />
-        <SummaryCard title="Faturamento do mês" value={formatCurrency(financial.monthRevenue)} icon={DollarSign} valueClassName="text-emerald-600" />
-        <SummaryCard title="Saída de estoque" value={formatCurrency(financial.stockOutValue)} icon={PackageSearch} valueClassName="text-rose-600" />
-        <SummaryCard title="Estoque baixo" value={String(inventoryData.lowStockCount)} icon={PackageSearch} />
-      </div>
+      <section className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <SummaryCard title="OS abertas" value={String(serviceOrders.open)} icon={ClipboardList} size="compact" />
+          <SummaryCard title="Veículos em andamento" value={String(serviceOrders.inProgress)} icon={Wrench} size="compact" />
+          <SummaryCard title="Prontos para entrega" value={String(serviceOrders.readyForDelivery)} icon={Car} size="compact" />
+          <SummaryCard title="Orçamentos pendentes" value={String(budgets.pending)} icon={Receipt} size="compact" />
+          <SummaryCard title="Estoque baixo" value={String(inventoryData.lowStockCount)} icon={PackageSearch} size="compact" />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <SummaryCard title="Faturamento do mês" value={formatCurrency(financial.monthRevenue)} icon={DollarSign} valueClassName="text-emerald-600" />
+          <SummaryCard title="Saída de estoque" value={formatCurrency(financial.stockOutValue)} icon={PackageSearch} valueClassName="text-rose-600" />
+        </div>
+      </section>
 
       <div className="grid gap-4 xl:grid-cols-2">
         <Card>
@@ -81,28 +99,36 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             {activeServiceOrders.length ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>OS</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Veículo</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Previsão</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {activeServiceOrders.slice(0, 6).map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{formatServiceOrderNumber(order.orderNumber)}</TableCell>
-                      <TableCell>{order.clientName}</TableCell>
-                      <TableCell>{order.vehicleLabel}</TableCell>
-                      <TableCell><StatusBadge status={order.status} /></TableCell>
-                      <TableCell>{order.expectedDeliveryAt ? formatDateOnly(order.expectedDeliveryAt) : '-'}</TableCell>
+              <div className="space-y-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>OS</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Veículo</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Previsão</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedActiveServiceOrders.map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-medium">{formatServiceOrderNumber(order.orderNumber)}</TableCell>
+                        <TableCell>{order.clientName}</TableCell>
+                        <TableCell>{order.vehicleLabel}</TableCell>
+                        <TableCell><StatusBadge status={order.status} /></TableCell>
+                        <TableCell>{order.expectedDeliveryAt ? formatDateOnly(order.expectedDeliveryAt) : '-'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <Pagination
+                  page={currentActiveServiceOrdersPage}
+                  total={activeServiceOrders.length}
+                  pageSize={ACTIVE_SERVICE_ORDERS_PAGE_SIZE}
+                  onPageChange={setActiveServiceOrdersPage}
+                />
+              </div>
             ) : (
               <EmptyState />
             )}

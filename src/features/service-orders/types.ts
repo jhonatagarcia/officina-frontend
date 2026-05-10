@@ -26,6 +26,7 @@ export interface ServiceOrder {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  whatsappNotification?: ServiceOrderWhatsAppNotification;
   partsTotal?: number;
   laborTotal?: number;
   discount?: number;
@@ -35,6 +36,11 @@ export interface ServiceOrder {
   mechanic?: ServiceOrderMechanicSummary | null;
   budgetItems?: ServiceOrderBudgetItem[];
   parts?: ServiceOrderPart[];
+}
+
+export interface ServiceOrderWhatsAppNotification {
+  status: 'SENT' | 'SKIPPED' | 'FAILED';
+  reason?: string;
 }
 
 export interface ServiceOrderBudgetItem {

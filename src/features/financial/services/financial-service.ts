@@ -1,6 +1,6 @@
 import { http } from '@/services/api/http';
 import { buildQueryParams, mapPaginatedResponse } from '@/services/api/query-string';
-import type { ApiPaginatedResponse, PaginatedResponse, QueryParams } from '@/types/common';
+import type { ApiPaginatedResponse, QueryParams } from '@/types/common';
 import type { FinancialEntry, FinancialStatus, FinancialType, PaymentMethod } from '@/features/financial/types';
 import { toNumber } from '@/lib/utils';
 
@@ -52,7 +52,7 @@ export const financialService = {
     return mapPaginatedResponse({
       ...response.data,
       data: response.data.data.map(mapFinancialEntry),
-    }) as PaginatedResponse<FinancialEntry>;
+    });
   },
   async getById(id: string) {
     const response = await http.get<FinancialEntryApiResponse>(`/financial/${id}`);

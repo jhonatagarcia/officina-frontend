@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { vehicleSchema, type VehicleSchema } from '@/features/vehicles/schemas/vehicle-schema';
 import { vehiclesService } from '@/features/vehicles/services/vehicles-service';
 import { normalizeNullableString, normalizePlate } from '@/lib/utils';
-import { ApiErrorResponse } from '@/types/common';
+import type { ApiErrorResponse } from '@/types/common';
 
 export function useVehicleForm(mode: 'create' | 'edit' | 'view', id: string, onSuccess: () => void) {
   const query = useQuery({
@@ -57,16 +57,17 @@ export function useVehicleForm(mode: 'create' | 'edit' | 'view', id: string, onS
       toast.success('Veículo salvo com sucesso.');
       onSuccess();
     },
-
-      onError: (error: ApiErrorResponse) => {
-        if (error.statusCode === 409) {
-          form.setError('plate', {
-            type: 'server',
-            message: error.message || 'Já existe um veículo cadastrado com esta placa.'
-          })
-        }
-        toast.error(error.message || 'Não foi possível salvar o veículo.')
+    onError: (error: ApiErrorResponse) => {
+      if (error.statusCode === 409) {
+        form.setError('plate', {
+          type: 'server',
+          message: error.message || 'Já existe um veículo cadastrado com esta placa.',
+        });
+        return;
       }
+
+      toast.error(error.message || 'Não foi possível salvar o veículo.');
+    },
   });
 
   return { query, form, mutation };
