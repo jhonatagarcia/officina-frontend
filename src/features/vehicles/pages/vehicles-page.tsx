@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Eye, Pencil } from 'lucide-react';
+import { CalendarDays, Car, Eye, Gauge, Hash, Pencil, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { vehiclesService } from '@/features/vehicles/services/vehicles-service';
 import { useListParams } from '@/hooks/use-list-params';
@@ -8,21 +8,63 @@ import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { SearchInput } from '@/components/shared/search-input';
 import { Pagination } from '@/components/shared/pagination';
+import { CustomizableSummaryCards } from '@/components/shared/customizable-widgets';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 
 export function VehiclesPage() {
   const navigate = useNavigate();
   const params = useListParams();
   const query = useQuery({
-    queryKey: ['veiculos', params.page, params.search],
-    queryFn: () => vehiclesService.list({ page: params.page, pageSize: params.pageSize, search: params.search }),
+    queryKey: ['veiculos', params.page, DEFAULT_TABLE_PAGE_SIZE, params.search],
+    queryFn: () => vehiclesService.list({ page: params.page, pageSize: DEFAULT_TABLE_PAGE_SIZE, search: params.search }),
   });
   const vehicles = query.data?.data ?? [];
+  const vehiclesWithClientCount = vehicles.filter((vehicle) => vehicle.clientName).length;
+  const vehiclesWithMileageCount = vehicles.filter((vehicle) => vehicle.mileage !== null).length;
+  const newestVehicleYear = vehicles.length ? Math.max(...vehicles.map((vehicle) => vehicle.year)) : null;
+  const summaryCards = [
+    {
+      id: 'total',
+      title: 'Veículos cadastrados',
+      value: String(query.data?.total ?? 0),
+      icon: Car,
+      mediaClassName: 'bg-blue-100 text-blue-700',
+    },
+    {
+      id: 'page',
+      title: 'Veículos na página',
+      value: String(vehicles.length),
+      icon: Hash,
+      mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    },
+    {
+      id: 'with-client',
+      title: 'Com cliente vinculado',
+      value: String(vehiclesWithClientCount),
+      icon: Users,
+      mediaClassName: 'border-sky-200 bg-sky-50 text-sky-700',
+    },
+    {
+      id: 'with-mileage',
+      title: 'Com quilometragem',
+      value: String(vehiclesWithMileageCount),
+      icon: Gauge,
+      mediaClassName: 'border-amber-200 bg-amber-50 text-amber-700',
+    },
+    {
+      id: 'newest-year',
+      title: 'Ano mais recente',
+      value: newestVehicleYear ? String(newestVehicleYear) : '-',
+      icon: CalendarDays,
+      mediaClassName: 'border-violet-200 bg-violet-50 text-violet-700',
+    },
+  ];
   const { sortedItems, sortState, requestSort } = useSortableData(vehicles, {
     initialSort: { column: 'plate', direction: 'asc' },
     accessors: {
@@ -39,6 +81,12 @@ export function VehiclesPage() {
         <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por placa, marca, modelo ou cliente" />
         <Button className="shrink-0" onClick={() => navigate('/app/veiculos/novo')}>Novo veículo</Button>
       </PageHeader>
+      <CustomizableSummaryCards
+        storageKey="oficina:veiculos:summary-cards:v1"
+        cards={summaryCards}
+        defaultVisibleIds={['total', 'page']}
+        gridClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+      />
       <Card>
         <CardContent className="p-0">
           {query.isLoading ? <LoadingState /> : null}

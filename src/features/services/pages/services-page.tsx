@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Eye, Pencil, Wrench } from 'lucide-react';
+import { CheckCircle2, DollarSign, Eye, PackageSearch, Pencil, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -9,13 +9,14 @@ import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { Pagination } from '@/components/shared/pagination';
 import { SearchInput } from '@/components/shared/search-input';
-import { SummaryCard } from '@/components/shared/summary-card';
+import { CustomizableSummaryCards } from '@/components/shared/customizable-widgets';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { servicesService } from '@/features/services/services/services-service';
+import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 import { useListParams } from '@/hooks/use-list-params';
 import { useSortableData } from '@/hooks/use-sortable-data';
 import { formatCurrency } from '@/lib/utils';
@@ -82,10 +83,60 @@ export function ServicesPage() {
       status: (item) => item.active,
     },
   });
-  const listedItems = sortedItems.slice((params.page - 1) * params.pageSize, params.page * params.pageSize);
+  const listedItems = sortedItems.slice((params.page - 1) * DEFAULT_TABLE_PAGE_SIZE, params.page * DEFAULT_TABLE_PAGE_SIZE);
   const totalItems = filteredItems.length;
   const activeCount = listedItems.filter((item) => item.active).length;
   const inactiveCount = listedItems.filter((item) => !item.active).length;
+  const fixedPriceCount = listedItems.filter((item) => item.billingType === 'FIXED_PRICE').length;
+  const partsAndLaborCount = listedItems.filter((item) => item.billingType === 'PARTS_AND_LABOR').length;
+  const suggestedTotal = listedItems.reduce((total, item) => total + item.suggestedTotalPrice, 0);
+  const summaryCards = [
+    {
+      id: 'total',
+      title: 'Serviços listados',
+      value: String(totalItems),
+      icon: Wrench,
+      mediaClassName: 'bg-blue-100 text-blue-700',
+    },
+    {
+      id: 'active',
+      title: 'Ativos na página',
+      value: String(activeCount),
+      imageAlt: 'Serviços ativos',
+      imageSrc: activeImageSrc,
+      mediaClassName: 'border border-emerald-200 bg-emerald-50 p-2',
+    },
+    {
+      id: 'inactive',
+      title: 'Inativos na página',
+      value: String(inactiveCount),
+      imageAlt: 'Serviços inativos',
+      imageSrc: inactiveImageSrc,
+      mediaClassName: 'border border-rose-200 bg-rose-50 p-2',
+    },
+    {
+      id: 'fixed-price',
+      title: 'Preço fixo',
+      value: String(fixedPriceCount),
+      icon: DollarSign,
+      mediaClassName: 'border-amber-200 bg-amber-50 text-amber-700',
+    },
+    {
+      id: 'parts-labor',
+      title: 'Peças e mão de obra',
+      value: String(partsAndLaborCount),
+      icon: PackageSearch,
+      mediaClassName: 'border-sky-200 bg-sky-50 text-sky-700',
+    },
+    {
+      id: 'suggested-total',
+      title: 'Total sugerido',
+      value: formatCurrency(suggestedTotal),
+      icon: CheckCircle2,
+      valueClassName: 'text-emerald-600',
+      mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    },
+  ];
 
   return (
     <PageContainer>
@@ -113,28 +164,12 @@ export function ServicesPage() {
           </Button>
         </div>
       </PageHeader>
-      <div className="grid gap-4 md:grid-cols-3">
-        <SummaryCard
-          title="Serviços listados"
-          value={String(totalItems)}
-          icon={Wrench}
-          mediaClassName="bg-blue-100 text-blue-700"
-        />
-        <SummaryCard
-          title="Ativos na página"
-          value={String(activeCount)}
-          imageAlt="Serviços ativos"
-          imageSrc={activeImageSrc}
-          mediaClassName="border border-emerald-200 bg-emerald-50 p-2"
-        />
-        <SummaryCard
-          title="Inativos na página"
-          value={String(inactiveCount)}
-          imageAlt="Serviços inativos"
-          imageSrc={inactiveImageSrc}
-          mediaClassName="border border-rose-200 bg-rose-50 p-2"
-        />
-      </div>
+      <CustomizableSummaryCards
+        storageKey="oficina:servicos:summary-cards:v1"
+        cards={summaryCards}
+        defaultVisibleIds={['total', 'active', 'inactive']}
+        gridClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+      />
       <Card>
         <CardContent className="p-0">
           {query.isLoading ? <LoadingState /> : null}
@@ -195,7 +230,7 @@ export function ServicesPage() {
                 </TableBody>
               </Table>
               <div className="mt-6">
-                <Pagination page={params.page} total={totalItems} pageSize={params.pageSize} onPageChange={params.setPage} />
+                <Pagination page={params.page} total={totalItems} pageSize={DEFAULT_TABLE_PAGE_SIZE} onPageChange={params.setPage} />
               </div>
             </div>
           ) : null}

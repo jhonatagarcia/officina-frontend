@@ -7,7 +7,7 @@ import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { SearchInput } from '@/components/shared/search-input';
 import { Pagination } from '@/components/shared/pagination';
-import { SummaryCard } from '@/components/shared/summary-card';
+import { CustomizableSummaryCards } from '@/components/shared/customizable-widgets';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
@@ -15,20 +15,70 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, Boxes, Pencil } from 'lucide-react';
+import { AlertTriangle, Boxes, CheckCircle2, DollarSign, Hash, Pencil } from 'lucide-react';
+import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 import { formatCurrency } from '@/lib/utils';
 
 export function InventoryPage() {
   const navigate = useNavigate();
   const params = useListParams();
   const query = useQuery({
-    queryKey: ['estoque', params.page, params.search],
-    queryFn: () => inventoryService.list({ page: params.page, pageSize: params.pageSize, search: params.search }),
+    queryKey: ['estoque', params.page, DEFAULT_TABLE_PAGE_SIZE, params.search],
+    queryFn: () => inventoryService.list({ page: params.page, pageSize: DEFAULT_TABLE_PAGE_SIZE, search: params.search }),
   });
 
-  const lowStock = query.data?.data.filter((item) => item.status !== 'OK').length ?? 0;
+  const lowStock = query.data?.data.filter((item) => item.status === 'BAIXO').length ?? 0;
   const totalItems = query.data?.total ?? 0;
   const inventoryItems = query.data?.data ?? [];
+  const okStock = inventoryItems.filter((item) => item.status === 'OK').length;
+  const criticalStock = inventoryItems.filter((item) => item.status === 'CRITICO').length;
+  const pageItemsCount = inventoryItems.length;
+  const inventoryValue = inventoryItems.reduce((total, item) => total + item.quantity * item.salePrice, 0);
+  const summaryCards = [
+    {
+      id: 'total',
+      title: 'Itens cadastrados',
+      value: String(totalItems),
+      icon: Boxes,
+      mediaClassName: 'bg-blue-100 text-blue-700',
+    },
+    {
+      id: 'alert',
+      title: 'Estoque baixo',
+      value: String(lowStock),
+      icon: AlertTriangle,
+      mediaClassName: 'border-amber-200 bg-amber-50 text-amber-700',
+    },
+    {
+      id: 'critical',
+      title: 'Estoque crítico',
+      value: String(criticalStock),
+      icon: AlertTriangle,
+      mediaClassName: 'border-rose-200 bg-rose-50 text-rose-700',
+    },
+    {
+      id: 'quantity',
+      title: 'Itens na página',
+      value: String(pageItemsCount),
+      icon: Hash,
+      mediaClassName: 'border-sky-200 bg-sky-50 text-sky-700',
+    },
+    {
+      id: 'ok',
+      title: 'Estoque OK',
+      value: String(okStock),
+      icon: CheckCircle2,
+      mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    },
+    {
+      id: 'value',
+      title: 'Valor da página',
+      value: formatCurrency(inventoryValue),
+      icon: DollarSign,
+      valueClassName: 'text-emerald-600',
+      mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    },
+  ];
   const { sortedItems, sortState, requestSort } = useSortableData(inventoryItems, {
     initialSort: { column: 'internalCode', direction: 'asc' },
     accessors: {
@@ -51,10 +101,12 @@ export function InventoryPage() {
           </Button>
         </div>
       </PageHeader>
-      <div className="grid gap-4 md:grid-cols-2">
-        <SummaryCard title="Itens cadastrados" value={String(totalItems)} icon={Boxes} />
-        <SummaryCard title="Estoque em alerta" value={String(lowStock)} icon={AlertTriangle} />
-      </div>
+      <CustomizableSummaryCards
+        storageKey="oficina:estoque:summary-cards:v1"
+        cards={summaryCards}
+        defaultVisibleIds={['total', 'alert']}
+        gridClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+      />
       <Card>
         <CardContent className="p-0">
           {query.isLoading ? <LoadingState /> : null}

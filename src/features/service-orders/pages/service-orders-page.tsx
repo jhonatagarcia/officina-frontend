@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Eye } from 'lucide-react';
+import { CalendarDays, CheckCircle2, ClipboardList, Clock, Eye, UserCheck, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { serviceOrdersService } from '@/features/service-orders/services/service-orders-service';
 import { useListParams } from '@/hooks/use-list-params';
@@ -8,6 +8,7 @@ import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { SearchInput } from '@/components/shared/search-input';
 import { Pagination } from '@/components/shared/pagination';
+import { CustomizableSummaryCards } from '@/components/shared/customizable-widgets';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
@@ -16,17 +17,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 
 export function ServiceOrdersPage() {
   const navigate = useNavigate();
   const params = useListParams();
   const query = useQuery({
-    queryKey: ['ordens-servico', params.page, params.search, params.status],
+    queryKey: ['ordens-servico', params.page, DEFAULT_TABLE_PAGE_SIZE, params.search, params.status],
     queryFn: () =>
       serviceOrdersService.list({
         page: params.page,
-        pageSize: params.pageSize,
+        pageSize: DEFAULT_TABLE_PAGE_SIZE,
         search: params.search,
+        status: params.status,
       }),
   });
   const selectedStatus = params.status || 'ALL';
@@ -42,6 +45,57 @@ export function ServiceOrdersPage() {
     },
   });
   const pagination = query.data;
+  const openOrdersCount = filteredOrders.filter((item) => item.status === 'ABERTA').length;
+  const inProgressOrdersCount = filteredOrders.filter((item) => item.status === 'EM_ANDAMENTO').length;
+  const completedOrdersCount = filteredOrders.filter(
+    (item) => item.status === 'FINALIZADA' || item.status === 'ENTREGUE',
+  ).length;
+  const withMechanicCount = filteredOrders.filter((item) => item.mechanicName).length;
+  const withDeliveryEstimateCount = filteredOrders.filter((item) => item.expectedDeliveryAt).length;
+  const summaryCards = [
+    {
+      id: 'total',
+      title: 'Ordens listadas',
+      value: String(query.data?.total ?? 0),
+      icon: ClipboardList,
+      mediaClassName: 'bg-blue-100 text-blue-700',
+    },
+    {
+      id: 'open',
+      title: 'OS abertas',
+      value: String(openOrdersCount),
+      icon: Clock,
+      mediaClassName: 'border-amber-200 bg-amber-50 text-amber-700',
+    },
+    {
+      id: 'in-progress',
+      title: 'Em andamento na página',
+      value: String(inProgressOrdersCount),
+      icon: Wrench,
+      mediaClassName: 'border-sky-200 bg-sky-50 text-sky-700',
+    },
+    {
+      id: 'completed',
+      title: 'Concluídas na página',
+      value: String(completedOrdersCount),
+      icon: CheckCircle2,
+      mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    },
+    {
+      id: 'with-mechanic',
+      title: 'Com mecânico',
+      value: String(withMechanicCount),
+      icon: UserCheck,
+      mediaClassName: 'border-violet-200 bg-violet-50 text-violet-700',
+    },
+    {
+      id: 'with-delivery-estimate',
+      title: 'Com previsão',
+      value: String(withDeliveryEstimateCount),
+      icon: CalendarDays,
+      mediaClassName: 'border-cyan-200 bg-cyan-50 text-cyan-700',
+    },
+  ];
 
   return (
     <PageContainer>
@@ -62,6 +116,11 @@ export function ServiceOrdersPage() {
           </Select>
         </div>
       </PageHeader>
+      <CustomizableSummaryCards
+        storageKey="oficina:ordens-servico:summary-cards:v1"
+        cards={summaryCards}
+        defaultVisibleIds={['total', 'open', 'in-progress', 'completed']}
+      />
       <Card>
         <CardContent className="p-0">
           {query.isLoading ? <LoadingState /> : null}

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Eye, Pencil } from 'lucide-react';
+import { CheckCircle2, Eye, FileText, Hash, Mail, Pencil, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { clientsService } from '@/features/clients/services/clients-service';
 import { useListParams } from '@/hooks/use-list-params';
@@ -8,12 +8,14 @@ import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { SearchInput } from '@/components/shared/search-input';
 import { Pagination } from '@/components/shared/pagination';
+import { CustomizableSummaryCards } from '@/components/shared/customizable-widgets';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 import { formatCpfCnpj, formatPhone } from '@/lib/utils';
 
 export function ClientsPage() {
@@ -21,15 +23,55 @@ export function ClientsPage() {
   const params = useListParams();
 
   const query = useQuery({
-    queryKey: ['clientes', params.page, params.search],
+    queryKey: ['clientes', params.page, DEFAULT_TABLE_PAGE_SIZE, params.search],
     queryFn: () =>
       clientsService.list({
         page: params.page,
-        pageSize: params.pageSize,
+        pageSize: DEFAULT_TABLE_PAGE_SIZE,
         search: params.search,
       }),
   });
   const clients = query.data?.data ?? [];
+  const activeClientsCount = clients.filter((client) => client.isActive).length;
+  const clientsWithDocumentCount = clients.filter((client) => client.document).length;
+  const clientsWithEmailCount = clients.filter((client) => client.email).length;
+  const summaryCards = [
+    {
+      id: 'total',
+      title: 'Clientes cadastrados',
+      value: String(query.data?.total ?? 0),
+      icon: Users,
+      mediaClassName: 'bg-blue-100 text-blue-700',
+    },
+    {
+      id: 'page',
+      title: 'Clientes na página',
+      value: String(clients.length),
+      icon: Hash,
+      mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    },
+    {
+      id: 'active',
+      title: 'Ativos na página',
+      value: String(activeClientsCount),
+      icon: CheckCircle2,
+      mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    },
+    {
+      id: 'document',
+      title: 'Com CPF/CNPJ',
+      value: String(clientsWithDocumentCount),
+      icon: FileText,
+      mediaClassName: 'border-sky-200 bg-sky-50 text-sky-700',
+    },
+    {
+      id: 'email',
+      title: 'Com e-mail',
+      value: String(clientsWithEmailCount),
+      icon: Mail,
+      mediaClassName: 'border-amber-200 bg-amber-50 text-amber-700',
+    },
+  ];
   const { sortedItems, sortState, requestSort } = useSortableData(clients, {
     initialSort: { column: 'name', direction: 'asc' },
     accessors: {
@@ -51,6 +93,12 @@ export function ClientsPage() {
         />
         <Button className="shrink-0" onClick={() => navigate('/app/clientes/novo')}>Novo cliente</Button>
       </PageHeader>
+      <CustomizableSummaryCards
+        storageKey="oficina:clientes:summary-cards:v1"
+        cards={summaryCards}
+        defaultVisibleIds={['total', 'page']}
+        gridClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+      />
       <Card>
         <CardContent className="p-0">
           {query.isLoading ? <LoadingState /> : null}

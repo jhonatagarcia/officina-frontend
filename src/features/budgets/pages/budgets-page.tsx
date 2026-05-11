@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Eye } from 'lucide-react';
+import { CheckCircle2, Clock, DollarSign, Eye, FileText, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { budgetsService } from '@/features/budgets/services/budgets-service';
@@ -9,6 +9,7 @@ import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { Pagination } from '@/components/shared/pagination';
 import { SearchInput } from '@/components/shared/search-input';
+import { CustomizableSummaryCards } from '@/components/shared/customizable-widgets';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
@@ -17,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 import { formatCurrency } from '@/lib/utils';
 
 export function BudgetsPage() {
@@ -24,11 +26,11 @@ export function BudgetsPage() {
   const queryClient = useQueryClient();
   const params = useListParams();
   const query = useQuery({
-    queryKey: ['orcamentos', params.page, params.search, params.status],
+    queryKey: ['orcamentos', params.page, DEFAULT_TABLE_PAGE_SIZE, params.search, params.status],
     queryFn: () =>
       budgetsService.list({
         page: params.page,
-        pageSize: params.pageSize,
+        pageSize: DEFAULT_TABLE_PAGE_SIZE,
         search: params.search,
         status: params.status,
       }),
@@ -67,6 +69,56 @@ export function BudgetsPage() {
     },
   });
   const pagination = query.data;
+  const pendingBudgetsCount = filteredBudgets.filter((budget) => budget.status === 'PENDENTE').length;
+  const approvedBudgetsCount = filteredBudgets.filter((budget) => budget.status === 'APROVADO').length;
+  const rejectedBudgetsCount = filteredBudgets.filter((budget) => budget.status === 'REPROVADO').length;
+  const convertedBudgetsCount = filteredBudgets.filter((budget) => budget.convertedToServiceOrder).length;
+  const pageTotal = filteredBudgets.reduce((total, budget) => total + budget.total, 0);
+  const summaryCards = [
+    {
+      id: 'total',
+      title: 'Orçamentos listados',
+      value: String(query.data?.total ?? 0),
+      icon: FileText,
+      mediaClassName: 'bg-blue-100 text-blue-700',
+    },
+    {
+      id: 'pending',
+      title: 'Pendentes na página',
+      value: String(pendingBudgetsCount),
+      icon: Clock,
+      mediaClassName: 'border-amber-200 bg-amber-50 text-amber-700',
+    },
+    {
+      id: 'approved',
+      title: 'Aprovados na página',
+      value: String(approvedBudgetsCount),
+      icon: CheckCircle2,
+      mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    },
+    {
+      id: 'rejected',
+      title: 'Reprovados na página',
+      value: String(rejectedBudgetsCount),
+      icon: XCircle,
+      mediaClassName: 'border-rose-200 bg-rose-50 text-rose-700',
+    },
+    {
+      id: 'converted',
+      title: 'Convertidos na página',
+      value: String(convertedBudgetsCount),
+      icon: CheckCircle2,
+      mediaClassName: 'border-sky-200 bg-sky-50 text-sky-700',
+    },
+    {
+      id: 'page-total',
+      title: 'Total da página',
+      value: formatCurrency(pageTotal),
+      icon: DollarSign,
+      valueClassName: 'text-emerald-600',
+      mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    },
+  ];
   const rejectMutation = useMutation({
     mutationFn: budgetsService.reject,
     onSuccess: () => {
@@ -96,6 +148,11 @@ export function BudgetsPage() {
         </div>
         <Button className="shrink-0" onClick={() => navigate('/app/orcamentos/novo')}>Novo orçamento</Button>
       </PageHeader>
+      <CustomizableSummaryCards
+        storageKey="oficina:orcamentos:summary-cards:v1"
+        cards={summaryCards}
+        defaultVisibleIds={['total', 'pending', 'approved', 'rejected']}
+      />
       <Card>
         <CardContent className="p-0">
           {query.isLoading ? <LoadingState /> : null}

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Eye, Pencil, Wrench } from 'lucide-react';
+import { CheckCircle2, Clock, Eye, Pencil, Wrench, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -9,13 +9,14 @@ import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { Pagination } from '@/components/shared/pagination';
 import { SearchInput } from '@/components/shared/search-input';
-import { SummaryCard } from '@/components/shared/summary-card';
+import { CustomizableSummaryCards } from '@/components/shared/customizable-widgets';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { mechanicsService } from '@/features/mechanics/services/mechanics-service';
+import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 import { useListParams } from '@/hooks/use-list-params';
 import { useSortableData } from '@/hooks/use-sortable-data';
 
@@ -31,11 +32,11 @@ export function MechanicsPage() {
   };
 
   const query = useQuery({
-    queryKey: ['mecanicos', params.page, params.search, activeFilter],
+    queryKey: ['mecanicos', params.page, DEFAULT_TABLE_PAGE_SIZE, params.search, activeFilter],
     queryFn: () =>
       mechanicsService.list({
         page: params.page,
-        pageSize: params.pageSize,
+        pageSize: DEFAULT_TABLE_PAGE_SIZE,
         search: params.search,
         active: activeFilter === 'ALL' ? undefined : activeFilter === 'ACTIVE',
       }),
@@ -50,6 +51,38 @@ export function MechanicsPage() {
     },
   });
   const activeCount = listedItems.filter((item) => item.isActive).length;
+  const inactiveCount = listedItems.filter((item) => !item.isActive).length;
+  const withLastLoginCount = listedItems.filter((item) => item.lastLoginAt).length;
+  const summaryCards = [
+    {
+      id: 'total',
+      title: 'Mecânicos listados',
+      value: String(query.data?.total ?? 0),
+      icon: Wrench,
+      mediaClassName: 'bg-blue-100 text-blue-700',
+    },
+    {
+      id: 'active',
+      title: 'Ativos na página',
+      value: String(activeCount),
+      icon: CheckCircle2,
+      mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    },
+    {
+      id: 'inactive',
+      title: 'Inativos na página',
+      value: String(inactiveCount),
+      icon: XCircle,
+      mediaClassName: 'border-rose-200 bg-rose-50 text-rose-700',
+    },
+    {
+      id: 'last-login',
+      title: 'Com último acesso',
+      value: String(withLastLoginCount),
+      icon: Clock,
+      mediaClassName: 'border-sky-200 bg-sky-50 text-sky-700',
+    },
+  ];
 
   return (
     <PageContainer>
@@ -71,10 +104,12 @@ export function MechanicsPage() {
           </Button>
         </div>
       </PageHeader>
-      <div className="grid gap-4 md:grid-cols-2">
-        <SummaryCard title="Mecânicos listados" value={String(query.data?.total ?? 0)} icon={Wrench} />
-        <SummaryCard title="Ativos na página" value={String(activeCount)} icon={Wrench} />
-      </div>
+      <CustomizableSummaryCards
+        storageKey="oficina:mecanicos:summary-cards:v1"
+        cards={summaryCards}
+        defaultVisibleIds={['total', 'active']}
+        gridClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+      />
       <Card>
         <CardContent className="p-0">
           {query.isLoading ? <LoadingState /> : null}

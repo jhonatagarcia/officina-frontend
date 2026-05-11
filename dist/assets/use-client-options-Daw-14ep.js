@@ -1,1 +1,0 @@
-import{c as r}from"./query-vendor-MTb-VxmE.js";import{c as s}from"./clients-service-BvU_ZIhl.js";function i(){return r({queryKey:["reference","clientes","options"],queryFn:async()=>(await s.list({page:1,pageSize:100})).data.map(e=>({label:e.name,value:e.id}))})}export{i as u};

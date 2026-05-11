@@ -229,7 +229,7 @@ describe('dashboardService', () => {
     });
     expect(budgetsService.list).toHaveBeenCalledWith({
       page: 1,
-      pageSize: 5,
+      pageSize: 100,
       status: 'PENDENTE',
       sortBy: 'createdAt',
       sortOrder: 'asc',

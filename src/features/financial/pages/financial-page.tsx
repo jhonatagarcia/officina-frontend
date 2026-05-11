@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { DollarSign, PackageSearch, TrendingUp } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, DollarSign, PackageSearch, TrendingUp } from 'lucide-react';
 import { financialService } from '@/features/financial/services/financial-service';
 import type { FinancialEntry, PaymentMethod } from '@/features/financial/types';
 import { useListParams } from '@/hooks/use-list-params';
@@ -10,7 +10,7 @@ import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { SearchInput } from '@/components/shared/search-input';
 import { Pagination } from '@/components/shared/pagination';
-import { SummaryCard } from '@/components/shared/summary-card';
+import { CustomizableSummaryCards } from '@/components/shared/customizable-widgets';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
@@ -20,6 +20,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 
 function canRegisterPayment(status: string) {
   return status === 'PENDENTE' || status === 'VENCIDO';
@@ -48,11 +49,11 @@ export function FinancialPage() {
   const [paymentDates, setPaymentDates] = useState<Record<string, string>>({});
   const today = toDateInputValue(new Date());
   const query = useQuery({
-    queryKey: ['financeiro', params.page, params.search, params.status],
+    queryKey: ['financeiro', params.page, DEFAULT_TABLE_PAGE_SIZE, params.search, params.status],
     queryFn: () =>
       financialService.list({
         page: params.page,
-        pageSize: params.pageSize,
+        pageSize: DEFAULT_TABLE_PAGE_SIZE,
         search: params.search,
       }),
   });
@@ -88,6 +89,64 @@ export function FinancialPage() {
   const pagination = query.data;
   const income = summaryQuery.data?.receivablesValue ?? filteredEntries.filter((item) => item.type === 'RECEIVABLE').reduce((acc, item) => acc + item.amount, 0) ?? 0;
   const stockOutValue = summaryQuery.data?.stockOutValue ?? 0;
+  const pendingEntriesCount = filteredEntries.filter((item) => item.status === 'PENDENTE').length;
+  const paidEntriesCount = filteredEntries.filter((item) => item.status === 'PAGO').length;
+  const overdueEntriesCount = filteredEntries.filter((item) => item.status === 'VENCIDO').length;
+  const pageTotal = filteredEntries.reduce((total, item) => total + item.amount, 0);
+  const summaryCards = [
+    {
+      id: 'projected-balance',
+      title: 'Saldo projetado',
+      value: formatCurrency(income - stockOutValue),
+      icon: DollarSign,
+      valueClassName: 'text-sky-600',
+      mediaClassName: 'border-sky-200 bg-sky-50 text-sky-700',
+    },
+    {
+      id: 'receivables',
+      title: 'Contas a receber',
+      value: formatCurrency(income),
+      icon: TrendingUp,
+      valueClassName: 'text-emerald-600',
+      mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    },
+    {
+      id: 'stock-out',
+      title: 'Saída de estoque',
+      value: formatCurrency(stockOutValue),
+      icon: PackageSearch,
+      valueClassName: 'text-rose-600',
+      mediaClassName: 'border-rose-200 bg-rose-50 text-rose-700',
+    },
+    {
+      id: 'pending',
+      title: 'Pendentes na página',
+      value: String(pendingEntriesCount),
+      icon: Clock,
+      mediaClassName: 'border-amber-200 bg-amber-50 text-amber-700',
+    },
+    {
+      id: 'paid',
+      title: 'Pagos na página',
+      value: String(paidEntriesCount),
+      icon: CheckCircle2,
+      mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    },
+    {
+      id: 'overdue',
+      title: 'Vencidos na página',
+      value: String(overdueEntriesCount),
+      icon: AlertTriangle,
+      mediaClassName: 'border-rose-200 bg-rose-50 text-rose-700',
+    },
+    {
+      id: 'page-total',
+      title: 'Total da página',
+      value: formatCurrency(pageTotal),
+      icon: DollarSign,
+      mediaClassName: 'border-violet-200 bg-violet-50 text-violet-700',
+    },
+  ];
 
   return (
     <PageContainer>
@@ -105,11 +164,12 @@ export function FinancialPage() {
           </Select>
         </div>
       </PageHeader>
-      <div className="grid gap-4 md:grid-cols-3">
-        <SummaryCard title="Saldo projetado" value={formatCurrency(income - stockOutValue)} icon={DollarSign} valueClassName="text-sky-600" />
-        <SummaryCard title="Contas a receber" value={formatCurrency(income)} icon={TrendingUp} valueClassName="text-emerald-600" />
-        <SummaryCard title="Saída de estoque" value={formatCurrency(stockOutValue)} icon={PackageSearch} valueClassName="text-rose-600" />
-      </div>
+      <CustomizableSummaryCards
+        storageKey="oficina:financeiro:summary-cards:v1"
+        cards={summaryCards}
+        defaultVisibleIds={['projected-balance', 'receivables', 'stock-out']}
+        gridClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+      />
       <Card>
         <CardContent className="p-0">
           {query.isLoading ? <LoadingState /> : null}
