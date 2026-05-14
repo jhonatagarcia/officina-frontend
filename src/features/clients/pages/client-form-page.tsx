@@ -38,7 +38,7 @@ export function ClientFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
               <TextField
                 control={form.control}
                 name="phone"
-                label="Telefone"
+                label="Celular"
                 error={form.formState.errors.phone?.message}
                 inputMode="numeric"
                 transformValue={formatPhone}

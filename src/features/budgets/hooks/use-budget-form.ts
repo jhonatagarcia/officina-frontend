@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { budgetSchema, type BudgetSchema } from '@/features/budgets/schemas/budget-schema';
 import { budgetsService } from '@/features/budgets/services/budgets-service';
@@ -26,6 +26,7 @@ const defaultBudgetValues: BudgetSchema = {
 };
 
 export function useBudgetForm(mode: 'create' | 'view', id: string, onSuccess: () => void) {
+  const queryClient = useQueryClient();
   const budgetQuery = useQuery({
     queryKey: ['orcamento', id],
     queryFn: () => budgetsService.getById(id),
@@ -74,7 +75,10 @@ export function useBudgetForm(mode: 'create' | 'view', id: string, onSuccess: ()
         })),
       });
     },
-    onSuccess: () => {
+    onSuccess: (savedBudget) => {
+      queryClient.setQueryData(['orcamento', savedBudget.id], savedBudget);
+      queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success('Orçamento criado com sucesso.');
       onSuccess();
     },

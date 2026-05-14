@@ -19,6 +19,7 @@ import { mechanicsService } from '@/features/mechanics/services/mechanics-servic
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 import { useListParams } from '@/hooks/use-list-params';
 import { useSortableData } from '@/hooks/use-sortable-data';
+import { formatDateOnly } from '@/lib/utils';
 
 type ActiveFilter = 'ACTIVE' | 'INACTIVE' | 'ALL';
 
@@ -47,7 +48,9 @@ export function MechanicsPage() {
     initialSort: { column: 'name', direction: 'asc' },
     accessors: {
       name: (item) => item.name,
+      email: (item) => item.email,
       status: (item) => item.isActive,
+      lastLoginAt: (item) => (item.lastLoginAt ? new Date(item.lastLoginAt) : null),
     },
   });
   const activeCount = listedItems.filter((item) => item.isActive).length;
@@ -63,14 +66,14 @@ export function MechanicsPage() {
     },
     {
       id: 'active',
-      title: 'Ativos na página',
+      title: 'Ativos nesta página',
       value: String(activeCount),
       icon: CheckCircle2,
       mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
     },
     {
       id: 'inactive',
-      title: 'Inativos na página',
+      title: 'Inativos nesta página',
       value: String(inactiveCount),
       icon: XCircle,
       mediaClassName: 'border-rose-200 bg-rose-50 text-rose-700',
@@ -94,9 +97,9 @@ export function MechanicsPage() {
               <SelectValue placeholder="Situação" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="ALL">Todos</SelectItem>
               <SelectItem value="ACTIVE">Ativos</SelectItem>
               <SelectItem value="INACTIVE">Inativos</SelectItem>
-              <SelectItem value="ALL">Todos</SelectItem>
             </SelectContent>
           </Select>
           <Button className="shrink-0" type="button" onClick={() => navigate('/app/mecanicos/novo')}>
@@ -107,7 +110,7 @@ export function MechanicsPage() {
       <CustomizableSummaryCards
         storageKey="oficina:mecanicos:summary-cards:v1"
         cards={summaryCards}
-        defaultVisibleIds={['total', 'active']}
+        defaultVisibleIds={['total', 'active', 'last-login']}
         gridClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
       />
       <Card>
@@ -121,7 +124,9 @@ export function MechanicsPage() {
                 <TableHeader>
                   <TableRow>
                     <SortableTableHead column="name" sortState={sortState} onSort={requestSort}>Nome</SortableTableHead>
+                    <SortableTableHead column="email" sortState={sortState} onSort={requestSort}>E-mail</SortableTableHead>
                     <SortableTableHead column="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
+                    <SortableTableHead column="lastLoginAt" sortState={sortState} onSort={requestSort}>Último acesso</SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -129,9 +134,11 @@ export function MechanicsPage() {
                   {sortedItems.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>{item.name}</TableCell>
+                      <TableCell>{item.email}</TableCell>
                       <TableCell>
                         <Badge variant={item.isActive ? 'success' : 'danger'}>{item.isActive ? 'Ativo' : 'Inativo'}</Badge>
                       </TableCell>
+                      <TableCell>{item.lastLoginAt ? formatDateOnly(item.lastLoginAt) : '-'}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button size="icon" variant="outline" onClick={() => navigate(`/app/mecanicos/${item.id}`)}>

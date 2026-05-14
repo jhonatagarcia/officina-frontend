@@ -38,10 +38,10 @@ export function VehiclesPage() {
     },
     {
       id: 'page',
-      title: 'Veículos na página',
+      title: 'Veículos nesta página',
       value: String(vehicles.length),
       icon: Hash,
-      mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+      mediaClassName: 'border-sky-200 bg-sky-50 text-sky-700',
     },
     {
       id: 'with-client',
@@ -84,7 +84,7 @@ export function VehiclesPage() {
       <CustomizableSummaryCards
         storageKey="oficina:veiculos:summary-cards:v1"
         cards={summaryCards}
-        defaultVisibleIds={['total', 'page']}
+        defaultVisibleIds={['total', 'with-client', 'with-mileage']}
         gridClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
       />
       <Card>

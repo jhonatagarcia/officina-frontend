@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, DollarSign, Eye, PackageSearch, Pencil, Wrench } from 'lucide-react';
+import { CheckCircle2, DollarSign, Eye, PackageSearch, Pencil, Wrench, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -29,22 +29,6 @@ const billingTypeLabelMap = {
   FIXED_PRICE: 'Preço fixo',
 } as const;
 
-const activeImageSrc =
-  'data:image/svg+xml;utf8,' +
-  encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-      <path d="M20 32l8 8 16-16" stroke="#15803D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  `);
-
-const inactiveImageSrc =
-  'data:image/svg+xml;utf8,' +
-  encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-      <path d="M24 24l16 16M40 24L24 40" stroke="#B91C1C" stroke-width="6" stroke-linecap="round"/>
-    </svg>
-  `);
-
 export function ServicesPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -64,7 +48,10 @@ export function ServicesPage() {
   const toggleActiveMutation = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) =>
       active ? servicesService.deactivate(id) : servicesService.activate(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['servicos'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['servicos'] });
+      queryClient.invalidateQueries({ queryKey: ['reference', 'servicos'] });
+    },
   });
 
   const fetchedItems = query.data?.data ?? [];
@@ -100,19 +87,17 @@ export function ServicesPage() {
     },
     {
       id: 'active',
-      title: 'Ativos na página',
+      title: 'Ativos nesta página',
       value: String(activeCount),
-      imageAlt: 'Serviços ativos',
-      imageSrc: activeImageSrc,
-      mediaClassName: 'border border-emerald-200 bg-emerald-50 p-2',
+      icon: CheckCircle2,
+      mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
     },
     {
       id: 'inactive',
-      title: 'Inativos na página',
+      title: 'Inativos nesta página',
       value: String(inactiveCount),
-      imageAlt: 'Serviços inativos',
-      imageSrc: inactiveImageSrc,
-      mediaClassName: 'border border-rose-200 bg-rose-50 p-2',
+      icon: XCircle,
+      mediaClassName: 'border-rose-200 bg-rose-50 text-rose-700',
     },
     {
       id: 'fixed-price',
@@ -154,9 +139,9 @@ export function ServicesPage() {
               <SelectValue placeholder="Situação" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="ALL">Todos</SelectItem>
               <SelectItem value="ACTIVE">Ativos</SelectItem>
               <SelectItem value="INACTIVE">Inativos</SelectItem>
-              <SelectItem value="ALL">Todos</SelectItem>
             </SelectContent>
           </Select>
           <Button className="shrink-0" type="button" onClick={() => navigate('/app/servicos/novo')}>

@@ -19,7 +19,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
+
+function getBudgetRowClass(status: string) {
+  if (status === 'PENDENTE') return 'bg-amber-50/35 hover:bg-amber-50/60';
+  if (status === 'REPROVADO') return 'bg-rose-50/25 hover:bg-rose-50/50';
+  return undefined;
+}
 
 export function BudgetsPage() {
   const navigate = useNavigate();
@@ -141,6 +147,7 @@ export function BudgetsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">Todos</SelectItem>
+              <SelectItem value="PENDENTE">Pendente</SelectItem>
               <SelectItem value="APROVADO">Aprovado</SelectItem>
               <SelectItem value="REPROVADO">Reprovado</SelectItem>
             </SelectContent>
@@ -172,7 +179,7 @@ export function BudgetsPage() {
                 </TableHeader>
                 <TableBody>
                   {sortedItems.map((budget) => (
-                    <TableRow key={budget.id}>
+                    <TableRow key={budget.id} className={getBudgetRowClass(budget.status)}>
                       <TableCell>{budget.client?.name ?? '-'}</TableCell>
                       <TableCell>{budget.vehicle ? `${budget.vehicle.plate} • ${budget.vehicle.brand} ${budget.vehicle.model}` : '-'}</TableCell>
                       <TableCell><StatusBadge status={budget.status} /></TableCell>
@@ -184,7 +191,12 @@ export function BudgetsPage() {
                           </Button>
                           {budget.status === 'PENDENTE' && !budget.convertedToServiceOrder ? (
                             <>
-                              <Button size="sm" variant="outline" onClick={() => rejectMutation.mutate(budget.id)}>
+                              <Button
+                                className={cn('border-rose-200 text-rose-700 hover:border-rose-300 hover:bg-rose-50')}
+                                size="sm"
+                                variant="outline"
+                                onClick={() => rejectMutation.mutate(budget.id)}
+                              >
                                 Reprovar
                               </Button>
                               <Button size="sm" onClick={() => approveMutation.mutate(budget.id)}>

@@ -77,6 +77,7 @@ export function useServiceForm(mode: 'create' | 'edit' | 'view', id: string, onS
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['servicos'] });
       queryClient.invalidateQueries({ queryKey: ['servico'] });
+      queryClient.invalidateQueries({ queryKey: ['reference', 'servicos'] });
       toast.success('Serviço salvo com sucesso.');
       onSuccess();
     },

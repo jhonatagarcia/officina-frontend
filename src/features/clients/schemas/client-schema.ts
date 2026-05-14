@@ -7,12 +7,12 @@ const phonePattern = /^[\d()\s-]*$/;
 export const clientSchema = z.object({
   name: z.string().min(3, 'Informe o nome do cliente'),
   phone: optionalText
-    .refine((value) => !value || phonePattern.test(value), 'Telefone inválido')
+    .refine((value) => !value || phonePattern.test(value), 'Celular inválido')
     .refine((value) => {
       if (!value) return true;
       const digits = value.replace(/\D/g, '');
       return digits.length >= 10 && digits.length <= 11;
-    }, 'Informe um telefone válido'),
+    }, 'Informe um celular válido'),
   document: optionalText
     .refine((value) => !value || documentPattern.test(value), 'CPF/CNPJ inválido')
     .refine((value) => {

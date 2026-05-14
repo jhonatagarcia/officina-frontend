@@ -18,6 +18,27 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
+import { cn, formatDateOnly, formatServiceOrderNumber } from '@/lib/utils';
+import type { ServiceOrder } from '@/features/service-orders/types';
+
+function startOfToday() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+}
+
+function isOverdueOrder(order: ServiceOrder) {
+  if (!order.expectedDeliveryAt || order.status === 'FINALIZADA' || order.status === 'ENTREGUE') return false;
+
+  const expectedDelivery = new Date(order.expectedDeliveryAt);
+  return !Number.isNaN(expectedDelivery.getTime()) && expectedDelivery < startOfToday();
+}
+
+function getServiceOrderRowClass(order: ServiceOrder) {
+  if (isOverdueOrder(order)) return 'bg-rose-50/45 hover:bg-rose-50/70';
+  if (order.status === 'ABERTA') return 'bg-amber-50/25 hover:bg-amber-50/50';
+  return undefined;
+}
 
 export function ServiceOrdersPage() {
   const navigate = useNavigate();
@@ -38,10 +59,12 @@ export function ServiceOrdersPage() {
   const { sortedItems, sortState, requestSort } = useSortableData(filteredOrders, {
     initialSort: { column: 'client', direction: 'asc' },
     accessors: {
+      orderNumber: (item) => item.orderNumber,
       client: (item) => item.clientName,
       vehicle: (item) => item.vehicleLabel,
       mechanic: (item) => item.mechanicName,
       status: (item) => item.status,
+      expectedDeliveryAt: (item) => (item.expectedDeliveryAt ? new Date(item.expectedDeliveryAt) : null),
     },
   });
   const pagination = query.data;
@@ -131,20 +154,26 @@ export function ServiceOrdersPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <SortableTableHead column="orderNumber" sortState={sortState} onSort={requestSort}>OS</SortableTableHead>
                     <SortableTableHead column="client" sortState={sortState} onSort={requestSort}>Cliente</SortableTableHead>
                     <SortableTableHead column="vehicle" sortState={sortState} onSort={requestSort}>Veículo</SortableTableHead>
                     <SortableTableHead column="mechanic" sortState={sortState} onSort={requestSort}>Mecânico</SortableTableHead>
                     <SortableTableHead column="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
+                    <SortableTableHead column="expectedDeliveryAt" sortState={sortState} onSort={requestSort}>Previsão</SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sortedItems.map((item) => (
-                    <TableRow key={item.id}>
+                    <TableRow key={item.id} className={getServiceOrderRowClass(item)}>
+                      <TableCell className="font-medium">{formatServiceOrderNumber(item.orderNumber)}</TableCell>
                       <TableCell>{item.clientName}</TableCell>
                       <TableCell>{item.vehicleLabel}</TableCell>
                       <TableCell>{item.mechanicName ?? '-'}</TableCell>
                       <TableCell><StatusBadge status={item.status} /></TableCell>
+                      <TableCell className={cn(isOverdueOrder(item) ? 'font-medium text-rose-700' : null)}>
+                        {item.expectedDeliveryAt ? formatDateOnly(item.expectedDeliveryAt) : '-'}
+                      </TableCell>
                       <TableCell className="text-right">
                         <Button size="icon" variant="outline" onClick={() => navigate(`/app/ordens-servico/${item.id}`)}>
                           <Eye className="size-4" />

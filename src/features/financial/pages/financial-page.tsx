@@ -5,7 +5,7 @@ import { financialService } from '@/features/financial/services/financial-servic
 import type { FinancialEntry, PaymentMethod } from '@/features/financial/types';
 import { useListParams } from '@/hooks/use-list-params';
 import { useSortableData } from '@/hooks/use-sortable-data';
-import { formatCurrency, formatDate, formatServiceOrderNumber } from '@/lib/utils';
+import { cn, formatCurrency, formatDate, formatServiceOrderNumber } from '@/lib/utils';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { SearchInput } from '@/components/shared/search-input';
@@ -24,6 +24,12 @@ import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 
 function canRegisterPayment(status: string) {
   return status === 'PENDENTE' || status === 'VENCIDO';
+}
+
+function getFinancialRowClass(status: string) {
+  if (status === 'VENCIDO') return 'bg-rose-50/45 hover:bg-rose-50/70';
+  if (status === 'PENDENTE') return 'bg-amber-50/30 hover:bg-amber-50/55';
+  return undefined;
 }
 
 function getEntryOriginLabel(entry: FinancialEntry) {
@@ -191,12 +197,14 @@ export function FinancialPage() {
                 </TableHeader>
                 <TableBody>
                   {sortedItems.map((entry) => (
-                    <TableRow key={entry.id}>
+                    <TableRow key={entry.id} className={getFinancialRowClass(entry.status)}>
                       <TableCell>
                         {entry.serviceOrder ? formatServiceOrderNumber(entry.serviceOrder.orderNumber) : entry.description}
                       </TableCell>
                       <TableCell><StatusBadge status={entry.status} /></TableCell>
-                      <TableCell>{formatCurrency(entry.amount)}</TableCell>
+                      <TableCell className={cn(entry.status === 'VENCIDO' ? 'font-semibold text-rose-700' : null)}>
+                        {formatCurrency(entry.amount)}
+                      </TableCell>
                       <TableCell>
                         {entry.paidAt ? (
                           formatDate(entry.paidAt)

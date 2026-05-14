@@ -15,15 +15,15 @@ export function TableBody({ className, ...props }: React.HTMLAttributes<HTMLTabl
 }
 
 export function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn('border-b transition-colors hover:bg-secondary/50', className)} {...props} />;
+  return <tr className={cn('border-b transition-colors hover:bg-secondary/45', className)} {...props} />;
 }
 
 export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
-  return <th className={cn('h-12 px-4 text-left align-middle text-muted-foreground', className)} {...props} />;
+  return <th className={cn('h-11 px-4 text-left align-middle text-xs font-semibold uppercase tracking-wide text-muted-foreground', className)} {...props} />;
 }
 
 export function TableCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn('p-4 align-middle', className)} {...props} />;
+  return <td className={cn('px-4 py-3.5 align-middle', className)} {...props} />;
 }
 
 export type SortDirection = 'asc' | 'desc';

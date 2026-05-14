@@ -17,7 +17,13 @@ import { Button } from '@/components/ui/button';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertTriangle, Boxes, CheckCircle2, DollarSign, Hash, Pencil } from 'lucide-react';
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
+
+function getInventoryRowClass(status: string) {
+  if (status === 'CRITICO') return 'bg-rose-50/45 hover:bg-rose-50/70';
+  if (status === 'BAIXO') return 'bg-amber-50/35 hover:bg-amber-50/60';
+  return undefined;
+}
 
 export function InventoryPage() {
   const navigate = useNavigate();
@@ -104,7 +110,7 @@ export function InventoryPage() {
       <CustomizableSummaryCards
         storageKey="oficina:estoque:summary-cards:v1"
         cards={summaryCards}
-        defaultVisibleIds={['total', 'alert']}
+        defaultVisibleIds={['critical', 'alert', 'total']}
         gridClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
       />
       <Card>
@@ -128,7 +134,7 @@ export function InventoryPage() {
                 </TableHeader>
                 <TableBody>
                   {sortedItems.map((item) => (
-                    <TableRow key={item.id}>
+                    <TableRow key={item.id} className={getInventoryRowClass(item.status)}>
                       <TableCell>{item.internalCode}</TableCell>
                       <TableCell>
                         <div>
@@ -136,7 +142,9 @@ export function InventoryPage() {
                           <p className="text-xs text-muted-foreground">{item.supplier ?? item.category ?? 'Sem classificação'}</p>
                         </div>
                       </TableCell>
-                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell className={cn(item.status === 'CRITICO' ? 'font-semibold text-rose-700' : item.status === 'BAIXO' ? 'font-medium text-amber-700' : null)}>
+                        {item.quantity}
+                      </TableCell>
                       <TableCell>{item.minimumQuantity}</TableCell>
                       <TableCell>{formatCurrency(item.salePrice)}</TableCell>
                       <TableCell><StatusBadge status={item.status} /></TableCell>

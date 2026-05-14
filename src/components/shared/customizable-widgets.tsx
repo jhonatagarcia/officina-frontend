@@ -187,10 +187,20 @@ export function CustomizableSummaryCards({
 
   return (
     <section className="space-y-3">
-      <div className="flex justify-end">
-        <Button type="button" variant="outline" size="sm" onClick={() => setIsConfiguring((current) => !current)}>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Indicadores</p>
+          <p className="text-xs text-muted-foreground">{visibleCards.length} ativo(s)</p>
+        </div>
+        <Button
+          className="text-muted-foreground hover:text-foreground"
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsConfiguring((current) => !current)}
+        >
           <Settings2 className="size-4" />
-          Personalizar cards
+          Ajustar cards
         </Button>
       </div>
       {isConfiguring ? (
@@ -292,10 +302,20 @@ export function CustomizableWidgetGrid({
 
   return (
     <section className="space-y-3">
-      <div className="flex justify-end">
-        <Button type="button" variant="outline" size="sm" onClick={() => setIsConfiguring((current) => !current)}>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Painel</p>
+          <p className="text-xs text-muted-foreground">{visibleWidgets.length} item(ns) ativo(s)</p>
+        </div>
+        <Button
+          className="text-muted-foreground hover:text-foreground"
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsConfiguring((current) => !current)}
+        >
           <Settings2 className="size-4" />
-          Personalizar dashboard
+          Ajustar painel
         </Button>
       </div>
       {isConfiguring ? (

@@ -55,6 +55,7 @@ export function useInventoryForm(mode: 'create' | 'edit', id: string, onSuccess:
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['estoque'] });
       queryClient.invalidateQueries({ queryKey: ['estoque-item'] });
+      queryClient.invalidateQueries({ queryKey: ['reference', 'estoque'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['financeiro'] });
       toast.success('Peça salva com sucesso.');

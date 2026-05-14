@@ -1,1 +1,1 @@
-export const DEFAULT_TABLE_PAGE_SIZE = 6;
+export const DEFAULT_TABLE_PAGE_SIZE = 5;

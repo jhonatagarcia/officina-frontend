@@ -45,14 +45,14 @@ export function ClientsPage() {
     },
     {
       id: 'page',
-      title: 'Clientes na página',
+      title: 'Clientes nesta página',
       value: String(clients.length),
       icon: Hash,
-      mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+      mediaClassName: 'border-sky-200 bg-sky-50 text-sky-700',
     },
     {
       id: 'active',
-      title: 'Ativos na página',
+      title: 'Ativos nesta página',
       value: String(activeClientsCount),
       icon: CheckCircle2,
       mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
@@ -89,14 +89,14 @@ export function ClientsPage() {
           className="xl:min-w-[260px]"
           value={params.search}
           onChange={params.setSearch}
-          placeholder="Buscar por nome, telefone ou CPF/CNPJ"
+          placeholder="Buscar por nome, celular ou CPF/CNPJ"
         />
         <Button className="shrink-0" onClick={() => navigate('/app/clientes/novo')}>Novo cliente</Button>
       </PageHeader>
       <CustomizableSummaryCards
         storageKey="oficina:clientes:summary-cards:v1"
         cards={summaryCards}
-        defaultVisibleIds={['total', 'page']}
+        defaultVisibleIds={['total', 'active', 'document']}
         gridClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
       />
       <Card>
@@ -110,7 +110,7 @@ export function ClientsPage() {
                 <TableHeader>
                   <TableRow>
                     <SortableTableHead column="name" sortState={sortState} onSort={requestSort}>Nome</SortableTableHead>
-                    <SortableTableHead column="phone" sortState={sortState} onSort={requestSort}>Telefone</SortableTableHead>
+                    <SortableTableHead column="phone" sortState={sortState} onSort={requestSort}>Celular</SortableTableHead>
                     <SortableTableHead column="document" sortState={sortState} onSort={requestSort}>CPF/CNPJ</SortableTableHead>
                     <SortableTableHead column="email" sortState={sortState} onSort={requestSort}>E-mail</SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>

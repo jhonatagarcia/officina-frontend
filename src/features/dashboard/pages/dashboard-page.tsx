@@ -309,7 +309,7 @@ export function DashboardPage() {
       id: 'operational-alerts',
       title: 'Alertas operacionais',
       category: 'Painel',
-      className: 'md:col-span-2 xl:col-span-2',
+      className: 'md:col-span-2 lg:col-span-4',
       render: () => (
         <Card className="h-full">
           <CardHeader>
@@ -371,10 +371,10 @@ export function DashboardPage() {
           'inventory-low',
           'month-revenue',
           'stock-out',
+          'operational-alerts',
           'active-orders-table',
           'pending-budgets-table',
           'low-stock-table',
-          'operational-alerts',
         ]}
         emptyMessage="Nenhum item ativo no dashboard."
       />
