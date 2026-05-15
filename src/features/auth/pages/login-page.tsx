@@ -1,13 +1,20 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useMutation } from '@tanstack/react-query';
+import { Controller, useForm } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Wrench } from 'lucide-react';
+import { ArrowLeft, Wrench } from 'lucide-react';
+import { useState } from 'react';
 import { useLogin } from '@/features/auth/hooks/use-login';
-import { loginSchema, type LoginSchema } from '@/features/auth/schemas/login-schema';
+import { authService } from '@/features/auth/services/auth-service';
+import { forgotPasswordSchema, loginSchema, type ForgotPasswordSchema, type LoginSchema } from '@/features/auth/schemas/login-schema';
+import { CaptchaField } from '@/features/auth/components/captcha-field';
+import { PasswordField } from '@/features/auth/components/password-field';
+import { RegisterWorkshopDialog } from '@/features/auth/components/register-workshop-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TextField } from '@/components/shared/form-fields';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { env } from '@/lib/env';
 
 function getSafePostLoginPath(state: unknown) {
@@ -20,27 +27,50 @@ export function LoginPage() {
   const { login, isLoggingIn } = useLogin();
   const navigate = useNavigate();
   const location = useLocation();
-  const form = useForm<LoginSchema>({
+  const [mode, setMode] = useState<'login' | 'forgot'>('login');
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const loginForm = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
       password: '',
+      captchaToken: '',
+    },
+  });
+  const forgotForm = useForm<ForgotPasswordSchema>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: '',
+      captchaToken: '',
+    },
+  });
+  const forgotMutation = useMutation({
+    mutationFn: authService.forgotPassword,
+    onSuccess: () => {
+      toast.success('Se o e-mail estiver cadastrado, enviaremos as instruções de redefinição.');
+      forgotForm.reset({ email: '', captchaToken: '' });
+      setMode('login');
+    },
+    onError: () => {
+      toast.error('Não foi possível solicitar a redefinição agora. Tente novamente em instantes.');
     },
   });
 
-  async function onSubmit(values: LoginSchema) {
+  async function onLoginSubmit(values: LoginSchema) {
     try {
       await login(values);
       toast.success('Acesso realizado com sucesso.');
       navigate(getSafePostLoginPath(location.state), { replace: true });
     } catch {
-      toast.error('Credenciais inválidas.');
+      toast.error('Não foi possível entrar. Verifique os dados e tente novamente.');
     }
   }
 
-  function handleFutureFeature(feature: string) {
-    toast.info(`${feature} estará disponível em breve.`);
+  function onForgotSubmit(values: ForgotPasswordSchema) {
+    forgotMutation.mutate(values);
   }
+
+  const isForgotMode = mode === 'forgot';
 
   return (
     <div className="surface-grid min-h-screen bg-slate-950 text-slate-100">
@@ -55,65 +85,128 @@ export function LoginPage() {
 
         <Card className="w-full max-w-[480px] border-white/10 bg-slate-900/78 text-slate-100 shadow-[0_28px_80px_rgba(0,0,0,0.34)] backdrop-blur-xl">
           <CardHeader className="space-y-2 px-6 pb-4 pt-7 text-center sm:px-12">
-            <CardTitle className="text-2xl font-extrabold text-white">Entrar na sua conta</CardTitle>
-            <p className="text-sm text-slate-400">Acesse o sistema de gestão da oficina.</p>
+            {isForgotMode ? (
+              <button
+                className="mb-2 inline-flex items-center justify-center gap-2 self-center text-sm font-medium text-slate-300 transition-colors hover:text-white"
+                type="button"
+                onClick={() => setMode('login')}
+              >
+                <ArrowLeft className="size-4" />
+                Voltar ao login
+              </button>
+            ) : null}
+            <CardTitle className="text-2xl font-extrabold text-white">{isForgotMode ? 'Recuperar senha' : 'Entrar na sua conta'}</CardTitle>
+            <p className="text-sm text-slate-400">
+              {isForgotMode ? 'Informe seu e-mail e enviaremos as instruções se houver uma conta vinculada.' : 'Acesse o sistema de gestão da oficina.'}
+            </p>
           </CardHeader>
           <CardContent className="px-6 pb-7 sm:px-12">
-            <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
-              <div className="[&_input]:border-white/10 [&_input]:bg-slate-800/80 [&_input]:text-white [&_input]:placeholder:text-slate-500 [&_label]:text-slate-200">
-                <TextField
-                  control={form.control}
-                  name="email"
-                  label="E-mail"
-                  type="email"
-                  placeholder="seuemail@oficina.com"
-                  error={form.formState.errors.email?.message}
+            {isForgotMode ? (
+              <form className="space-y-5" onSubmit={forgotForm.handleSubmit(onForgotSubmit)}>
+                <div className="space-y-2">
+                  <Label htmlFor="forgot-email" className="text-slate-200">E-mail</Label>
+                  <Input
+                    id="forgot-email"
+                    autoComplete="email"
+                    className="border-white/10 bg-slate-800/80 text-white placeholder:text-slate-500"
+                    disabled={forgotMutation.isPending}
+                    invalid={Boolean(forgotForm.formState.errors.email)}
+                    placeholder="seuemail@oficina.com"
+                    type="email"
+                    {...forgotForm.register('email')}
+                  />
+                  {forgotForm.formState.errors.email ? <p className="text-xs text-destructive">{forgotForm.formState.errors.email.message}</p> : null}
+                </div>
+                <CaptchaField
+                  disabled={forgotMutation.isPending}
+                  error={forgotForm.formState.errors.captchaToken?.message}
+                  value={forgotForm.watch('captchaToken')}
+                  onChange={(value) => forgotForm.setValue('captchaToken', value, { shouldValidate: true })}
                 />
-              </div>
-              <div className="[&_input]:border-white/10 [&_input]:bg-slate-800/80 [&_input]:text-white [&_input]:placeholder:text-slate-500 [&_label]:text-slate-200">
-                <TextField
-                  control={form.control}
+                <Button className="h-11 w-full" disabled={forgotMutation.isPending} type="submit">
+                  {forgotMutation.isPending ? 'Enviando...' : 'Enviar instruções'}
+                </Button>
+              </form>
+            ) : (
+              <form className="space-y-5" onSubmit={loginForm.handleSubmit(onLoginSubmit)}>
+                <div className="space-y-2">
+                  <Label htmlFor="login-email" className="text-slate-200">E-mail</Label>
+                  <Input
+                    id="login-email"
+                    autoComplete="email"
+                    className="border-white/10 bg-slate-800/80 text-white placeholder:text-slate-500"
+                    disabled={isLoggingIn}
+                    invalid={Boolean(loginForm.formState.errors.email)}
+                    placeholder="seuemail@oficina.com"
+                    type="email"
+                    {...loginForm.register('email')}
+                  />
+                  {loginForm.formState.errors.email ? <p className="text-xs text-destructive">{loginForm.formState.errors.email.message}</p> : null}
+                </div>
+                <Controller
+                  control={loginForm.control}
                   name="password"
-                  label="Senha"
-                  type="password"
-                  placeholder="••••••••"
-                  error={form.formState.errors.password?.message}
+                  render={({ field }) => (
+                    <PasswordField
+                      id="login-password"
+                      autoComplete="current-password"
+                      disabled={isLoggingIn}
+                      error={loginForm.formState.errors.password?.message}
+                      inputClassName="border-white/10 bg-slate-800/80 text-white placeholder:text-slate-500"
+                      label="Senha"
+                      labelClassName="text-slate-200"
+                      placeholder="Sua senha"
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
                 />
-              </div>
-              <Button className="h-11 w-full" disabled={isLoggingIn} type="submit">
-                {isLoggingIn ? 'Entrando...' : 'Entrar'}
-              </Button>
-            </form>
-
-            <div className="my-7 flex items-center gap-4">
-              <div className="h-px flex-1 bg-white/10" />
-              <span className="text-sm text-slate-300">Ou continue com</span>
-              <div className="h-px flex-1 bg-white/10" />
-            </div>
-
-            <Button
-              className="h-11 w-full border-white/10 bg-slate-800/80 text-slate-100 hover:border-white/20 hover:bg-slate-800"
-              type="button"
-              variant="outline"
-              onClick={() => handleFutureFeature('Login com Google')}
-            >
-              <span className="flex size-5 items-center justify-center rounded-full bg-white text-sm font-extrabold text-primary">G</span>
-              Entrar com Google
-            </Button>
+                <CaptchaField
+                  disabled={isLoggingIn}
+                  error={loginForm.formState.errors.captchaToken?.message}
+                  value={loginForm.watch('captchaToken')}
+                  onChange={(value) => loginForm.setValue('captchaToken', value, { shouldValidate: true })}
+                />
+                <div className="flex justify-end">
+                  <button
+                    className="text-sm font-medium text-orange-300 transition-colors hover:text-orange-200"
+                    type="button"
+                    onClick={() => setMode('forgot')}
+                  >
+                    Esqueci minha senha
+                  </button>
+                </div>
+                <Button className="h-11 w-full" disabled={isLoggingIn} type="submit">
+                  {isLoggingIn ? 'Entrando...' : 'Entrar'}
+                </Button>
+              </form>
+            )}
           </CardContent>
         </Card>
 
-        <div className="mt-8 text-center text-sm text-slate-400">
-          Ainda não tem uma conta?{' '}
-          <button
-            className="font-semibold text-orange-300 transition-colors hover:text-orange-200"
-            type="button"
-            onClick={() => handleFutureFeature('Cadastro')}
-          >
-            Cadastre-se
-          </button>
-        </div>
+        {!isForgotMode ? (
+          <div className="mt-8 text-center text-sm text-slate-400">
+            Ainda não tem uma conta?{' '}
+            <button
+              className="font-semibold text-orange-300 transition-colors hover:text-orange-200"
+              type="button"
+              onClick={() => setRegisterOpen(true)}
+            >
+              Cadastre-se
+            </button>
+          </div>
+        ) : null}
       </div>
+      <RegisterWorkshopDialog
+        open={registerOpen}
+        onAuthenticated={() => navigate('/app/dashboard', { replace: true })}
+        onOpenChange={setRegisterOpen}
+        onRegistered={(email) => {
+          loginForm.setValue('email', email);
+          loginForm.setValue('password', '');
+          loginForm.setValue('captchaToken', '');
+        }}
+      />
     </div>
   );
 }

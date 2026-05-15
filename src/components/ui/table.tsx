@@ -49,9 +49,10 @@ export function SortableTableHead<TColumn extends string>({
 }: SortableTableHeadProps<TColumn>) {
   const isActive = sortState.column === column;
   const Icon = !isActive ? ArrowUpDown : sortState.direction === 'asc' ? ArrowUp : ArrowDown;
+  const ariaSort = !isActive ? 'none' : sortState.direction === 'asc' ? 'ascending' : 'descending';
 
   return (
-    <TableHead className={className} {...props}>
+    <TableHead aria-sort={ariaSort} className={className} {...props}>
       <button
         type="button"
         className={cn(
@@ -61,7 +62,7 @@ export function SortableTableHead<TColumn extends string>({
         onClick={() => onSort(column)}
       >
         <span>{children}</span>
-        <Icon className="size-4 shrink-0" />
+        <Icon aria-hidden="true" className="size-4 shrink-0" />
       </button>
     </TableHead>
   );

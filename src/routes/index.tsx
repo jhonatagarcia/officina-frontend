@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { LoadingState } from '@/components/shared/loading-state';
 import { GuestRoute, ProtectedRoute, RoleGuard } from '@/routes/route-guards';
 import { LoginPage } from '@/features/auth/pages/login-page';
+import { ResetPasswordPage } from '@/features/auth/pages/reset-password-page';
 import { appRoutes } from '@/routes/route-manifest';
 
 export function AppRouter() {
@@ -12,6 +13,7 @@ export function AppRouter() {
       <Routes>
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>

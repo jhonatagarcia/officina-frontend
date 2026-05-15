@@ -152,9 +152,14 @@ function WidgetControls({
                 </div>
                 <Button
                   aria-label={isVisible ? `Remover ${item.title}` : `Adicionar ${item.title}`}
+                  className={
+                    isVisible
+                      ? undefined
+                      : 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800'
+                  }
                   size="icon"
                   type="button"
-                  variant={isVisible ? 'outline' : 'secondary'}
+                  variant="outline"
                   onClick={() => (isVisible ? onRemove(item.id) : onAdd(item.id))}
                 >
                   {isVisible ? <X className="size-4" /> : <Plus className="size-4" />}

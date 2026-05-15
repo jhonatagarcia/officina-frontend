@@ -10,6 +10,7 @@ describe('getSidebarRoutes', () => {
       'orcamentos-list',
       'ordens-servico-list',
       'financeiro-list',
+      'oficina-profile',
       'servicos-list',
       'estoque-list',
       'mecanicos-list',

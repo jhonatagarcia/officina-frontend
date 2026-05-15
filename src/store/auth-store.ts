@@ -24,6 +24,8 @@ function normalizeSession(session: AuthSession | null): AuthSession | null {
       name: session.user.name,
       email: session.user.email,
       role: session.user.role,
+      ...(session.user.workshop !== undefined ? { workshop: session.user.workshop } : {}),
+      ...(session.user.workshopFiscalStatus !== undefined ? { workshopFiscalStatus: session.user.workshopFiscalStatus } : {}),
     },
   };
 }

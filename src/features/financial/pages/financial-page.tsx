@@ -15,6 +15,8 @@ import { StatusBadge } from '@/components/shared/status-badge';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { EmptyState } from '@/components/shared/empty-state';
+import { FiscalFeatureBlockedState } from '@/features/workshop/components/fiscal-feature-blocked-state';
+import { useWorkshopFiscalStatus } from '@/features/workshop/hooks/use-workshop-fiscal-status';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -50,6 +52,21 @@ function toPaidAtIsoString(value: string) {
 }
 
 export function FinancialPage() {
+  const fiscalStatus = useWorkshopFiscalStatus();
+
+  if (fiscalStatus.isIncomplete) {
+    return (
+      <PageContainer>
+        <PageHeader title="Financeiro" description="Contas a receber, saída de estoque e conciliação." />
+        <FiscalFeatureBlockedState featureName="Financeiro" />
+      </PageContainer>
+    );
+  }
+
+  return <FinancialPageContent />;
+}
+
+function FinancialPageContent() {
   const params = useListParams();
   const queryClient = useQueryClient();
   const [paymentDates, setPaymentDates] = useState<Record<string, string>>({});

@@ -3,6 +3,7 @@ import {
   CarFront,
   ClipboardList,
   LayoutDashboard,
+  Settings,
   Package,
   Receipt,
   Users,
@@ -58,6 +59,9 @@ const InventoryFormPage = lazy(() =>
 const FinancialPage = lazy(() =>
   import('@/features/financial/pages/financial-page').then(({ FinancialPage }) => ({ default: FinancialPage })),
 );
+const WorkshopProfilePage = lazy(() =>
+  import('@/features/workshop/pages/workshop-profile-page').then(({ WorkshopProfilePage }) => ({ default: WorkshopProfilePage })),
+);
 const ServicesPage = lazy(() =>
   import('@/features/services/pages/services-page').then(({ ServicesPage }) => ({ default: ServicesPage })),
 );
@@ -81,6 +85,7 @@ export interface AppRouteDefinition {
   label?: string;
   icon?: ComponentType<{ className?: string }>;
   sidebar?: boolean;
+  requiresCnpj?: boolean;
 }
 
 export const appRoutes: AppRouteDefinition[] = [
@@ -272,6 +277,16 @@ export const appRoutes: AppRouteDefinition[] = [
     label: 'Financeiro',
     icon: Wallet,
     sidebar: true,
+    requiresCnpj: true,
+  },
+  {
+    key: 'oficina-profile',
+    path: 'oficina',
+    roles: ['ADMIN'],
+    element: <WorkshopProfilePage />,
+    label: 'Oficina',
+    icon: Settings,
+    sidebar: true,
   },
 ];
 
@@ -282,6 +297,7 @@ const sidebarOrder = [
   'orcamentos-list',
   'ordens-servico-list',
   'financeiro-list',
+  'oficina-profile',
   'servicos-list',
   'estoque-list',
   'mecanicos-list',

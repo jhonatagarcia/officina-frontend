@@ -262,11 +262,14 @@ export function DashboardPage() {
       id: 'low-stock-table',
       title: 'Itens com estoque baixo',
       category: 'Tabela',
-      className: 'md:col-span-2 xl:col-span-2',
+      className: 'md:col-span-2 lg:col-span-4',
       render: () => (
         <Card className="h-full">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle>Itens com estoque baixo</CardTitle>
+            <Button size="sm" variant="outline" onClick={() => navigate('/app/estoque')}>
+              Ver estoque
+            </Button>
           </CardHeader>
           <CardContent>
             {sortedItems.length ? (

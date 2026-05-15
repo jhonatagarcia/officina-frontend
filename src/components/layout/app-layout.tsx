@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
+import { FiscalSetupBanner } from '@/features/workshop/components/fiscal-setup-banner';
 
 export function AppLayout() {
   return (
@@ -10,6 +11,7 @@ export function AppLayout() {
         <div className="relative flex min-h-screen flex-col overflow-hidden">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-white/60 via-white/25 to-transparent" />
           <Header />
+          <FiscalSetupBanner />
           <main className="relative z-10 flex-1 px-4 pb-8 pt-4 md:px-6 md:pb-10 md:pt-5">
             <div className="mx-auto max-w-7xl">
               <Outlet />

@@ -9,6 +9,8 @@ export interface User {
   lastLoginAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  workshop?: WorkshopFiscalProfile | null;
+  workshopFiscalStatus?: WorkshopFiscalStatus;
 }
 
 export interface AuthSession {
@@ -19,4 +21,34 @@ export interface AuthSession {
 export interface LoginPayload {
   email: string;
   password: string;
+  captchaToken?: string;
+}
+
+export interface RegisterWorkshopPayload {
+  tradeName: string;
+  cnpj?: string | null;
+  email: string;
+  password: string;
+  captchaToken: string;
+}
+
+export interface ForgotPasswordPayload {
+  email: string;
+  captchaToken: string;
+}
+
+export interface ResetPasswordPayload {
+  token: string;
+  password: string;
+}
+
+export type WorkshopFiscalStatus = 'COMPLETE' | 'INCOMPLETE' | 'UNKNOWN';
+
+export interface WorkshopFiscalProfile {
+  id?: string;
+  name?: string | null;
+  tradeName?: string | null;
+  cnpj?: string | null;
+  fiscalStatus?: WorkshopFiscalStatus;
+  fiscalRegistrationComplete?: boolean;
 }

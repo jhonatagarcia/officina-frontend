@@ -5,18 +5,18 @@ const variantMap: Record<string, 'default' | 'success' | 'warning' | 'danger' | 
   PAGO: 'success',
   ENTREGUE: 'success',
   FINALIZADA: 'success',
+  OK: 'success',
   RECEIVABLE: 'info',
+  PART: 'info',
   PAYABLE: 'warning',
   EM_ANDAMENTO: 'warning',
   ABERTA: 'warning',
-  PART: 'info',
   LABOR: 'warning',
   PENDENTE: 'warning',
+  BAIXO: 'warning',
   REPROVADO: 'danger',
   CRITICO: 'danger',
   VENCIDO: 'danger',
-  BAIXO: 'warning',
-  OK: 'success',
 };
 
 const labelMap: Record<string, string> = {
