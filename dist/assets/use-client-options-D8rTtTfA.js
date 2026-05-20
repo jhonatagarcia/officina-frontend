@@ -1,0 +1,1 @@
+import{b as r}from"./query-vendor-BYxVlMLC.js";import{c as s}from"./clients-service-BTtYPwas.js";function i(){return r({queryKey:["reference","clientes","options"],queryFn:async()=>(await s.list({page:1,pageSize:100})).data.map(e=>({label:e.name,value:e.id}))})}export{i as u};

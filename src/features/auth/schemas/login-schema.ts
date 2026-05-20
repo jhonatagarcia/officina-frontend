@@ -67,6 +67,7 @@ export const resetPasswordSchema = z
   .object({
     password: strongPasswordSchema,
     confirmPassword: z.string().min(1, 'Confirme a nova senha'),
+    captchaToken: z.string().min(1, 'Confirme o captcha para continuar'),
   })
   .refine((values) => values.password === values.confirmPassword, {
     message: 'As senhas precisam ser iguais',

@@ -24,11 +24,16 @@ export interface LoginPayload {
   captchaToken?: string;
 }
 
+export interface GoogleLoginPayload {
+  credential: string;
+}
+
 export interface RegisterWorkshopPayload {
   tradeName: string;
   cnpj?: string | null;
   email: string;
   password: string;
+  confirmPassword: string;
   captchaToken: string;
 }
 
@@ -40,6 +45,8 @@ export interface ForgotPasswordPayload {
 export interface ResetPasswordPayload {
   token: string;
   password: string;
+  passwordConfirmation: string;
+  captchaToken?: string;
 }
 
 export type WorkshopFiscalStatus = 'COMPLETE' | 'INCOMPLETE' | 'UNKNOWN';

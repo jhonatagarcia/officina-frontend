@@ -4,27 +4,49 @@ import { Controller, useForm } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft, Wrench } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useLogin } from '@/features/auth/hooks/use-login';
+import { useGoogleLogin } from '@/features/auth/hooks/use-google-login';
 import { authService } from '@/features/auth/services/auth-service';
 import { forgotPasswordSchema, loginSchema, type ForgotPasswordSchema, type LoginSchema } from '@/features/auth/schemas/login-schema';
 import { CaptchaField } from '@/features/auth/components/captcha-field';
 import { PasswordField } from '@/features/auth/components/password-field';
 import { RegisterWorkshopDialog } from '@/features/auth/components/register-workshop-dialog';
+import { GoogleSignInButton } from '@/features/auth/components/google-sign-in-button';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { env } from '@/lib/env';
+import type { AuthSession } from '@/types/auth';
 
-function getSafePostLoginPath(state: unknown) {
+function getSafePostLoginPath(state: unknown, session?: AuthSession) {
+  if (session?.user.role === 'ADMIN' && session.user.workshopFiscalStatus === 'INCOMPLETE') {
+    return '/app/oficina';
+  }
+
   const pathname = (state as { from?: { pathname?: unknown } } | null)?.from?.pathname;
 
   return typeof pathname === 'string' && pathname.startsWith('/app/') ? pathname : '/app/dashboard';
 }
 
+function getGoogleLoginErrorMessage(error: unknown) {
+  const statusCode = (error as { statusCode?: unknown } | null)?.statusCode;
+
+  if (statusCode === 400 || statusCode === 401) {
+    return 'A autenticação do Google não foi validada. Tente novamente.';
+  }
+
+  if (statusCode === 409) {
+    return 'Esta conta Google não pôde ser vinculada automaticamente. Entre com e-mail e senha.';
+  }
+
+  return 'Não foi possível entrar com Google. Tente novamente ou use e-mail e senha.';
+}
+
 export function LoginPage() {
   const { login, isLoggingIn } = useLogin();
+  const { loginWithGoogle, isGoogleLoggingIn } = useGoogleLogin();
   const navigate = useNavigate();
   const location = useLocation();
   const [mode, setMode] = useState<'login' | 'forgot'>('login');
@@ -58,9 +80,9 @@ export function LoginPage() {
 
   async function onLoginSubmit(values: LoginSchema) {
     try {
-      await login(values);
+      const session = await login(values);
       toast.success('Acesso realizado com sucesso.');
-      navigate(getSafePostLoginPath(location.state), { replace: true });
+      navigate(getSafePostLoginPath(location.state, session), { replace: true });
     } catch {
       toast.error('Não foi possível entrar. Verifique os dados e tente novamente.');
     }
@@ -70,7 +92,26 @@ export function LoginPage() {
     forgotMutation.mutate(values);
   }
 
+  const onGoogleCredential = useCallback(async (credential: string) => {
+    try {
+      const session = await loginWithGoogle({ credential });
+      toast.success(
+        session.user.workshopFiscalStatus === 'INCOMPLETE'
+          ? 'Acesso com Google realizado. Complete os dados da oficina para liberar todos os recursos.'
+          : 'Acesso com Google realizado com sucesso.',
+      );
+      navigate(getSafePostLoginPath(location.state, session), { replace: true });
+    } catch (error) {
+      toast.error(getGoogleLoginErrorMessage(error));
+    }
+  }, [location.state, loginWithGoogle, navigate]);
+
+  const onGoogleError = useCallback(() => {
+    toast.error('Não foi possível iniciar o login com Google. Tente novamente ou use e-mail e senha.');
+  }, []);
+
   const isForgotMode = mode === 'forgot';
+  const isAuthenticating = isLoggingIn || isGoogleLoggingIn;
 
   return (
     <div className="surface-grid min-h-screen bg-slate-950 text-slate-100">
@@ -135,7 +176,7 @@ export function LoginPage() {
                     id="login-email"
                     autoComplete="email"
                     className="border-white/10 bg-slate-800/80 text-white placeholder:text-slate-500"
-                    disabled={isLoggingIn}
+                    disabled={isAuthenticating}
                     invalid={Boolean(loginForm.formState.errors.email)}
                     placeholder="seuemail@oficina.com"
                     type="email"
@@ -150,7 +191,7 @@ export function LoginPage() {
                     <PasswordField
                       id="login-password"
                       autoComplete="current-password"
-                      disabled={isLoggingIn}
+                      disabled={isAuthenticating}
                       error={loginForm.formState.errors.password?.message}
                       inputClassName="border-white/10 bg-slate-800/80 text-white placeholder:text-slate-500"
                       label="Senha"
@@ -162,23 +203,36 @@ export function LoginPage() {
                   )}
                 />
                 <CaptchaField
-                  disabled={isLoggingIn}
+                  disabled={isAuthenticating}
                   error={loginForm.formState.errors.captchaToken?.message}
                   value={loginForm.watch('captchaToken')}
                   onChange={(value) => loginForm.setValue('captchaToken', value, { shouldValidate: true })}
+                />
+                <Button className="h-11 w-full" disabled={isAuthenticating} type="submit">
+                  {isLoggingIn ? 'Entrando...' : 'Entrar'}
+                </Button>
+                <div className="flex items-center gap-3" aria-hidden="true">
+                  <span className="h-px flex-1 bg-white/10" />
+                  <span className="text-xs font-medium uppercase tracking-wide text-slate-500">ou continue com</span>
+                  <span className="h-px flex-1 bg-white/10" />
+                </div>
+                <GoogleSignInButton
+                  clientId={env.VITE_GOOGLE_CLIENT_ID}
+                  disabled={isLoggingIn}
+                  isSubmitting={isGoogleLoggingIn}
+                  onCredential={onGoogleCredential}
+                  onGoogleError={onGoogleError}
                 />
                 <div className="flex justify-end">
                   <button
                     className="text-sm font-medium text-orange-300 transition-colors hover:text-orange-200"
                     type="button"
+                    disabled={isAuthenticating}
                     onClick={() => setMode('forgot')}
                   >
                     Esqueci minha senha
                   </button>
                 </div>
-                <Button className="h-11 w-full" disabled={isLoggingIn} type="submit">
-                  {isLoggingIn ? 'Entrando...' : 'Entrar'}
-                </Button>
               </form>
             )}
           </CardContent>
@@ -199,7 +253,6 @@ export function LoginPage() {
       </div>
       <RegisterWorkshopDialog
         open={registerOpen}
-        onAuthenticated={() => navigate('/app/dashboard', { replace: true })}
         onOpenChange={setRegisterOpen}
         onRegistered={(email) => {
           loginForm.setValue('email', email);

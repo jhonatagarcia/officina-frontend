@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Building2 } from 'lucide-react';
@@ -7,7 +7,6 @@ import { authService } from '@/features/auth/services/auth-service';
 import { registerSchema, type RegisterSchema } from '@/features/auth/schemas/login-schema';
 import { PasswordField } from '@/features/auth/components/password-field';
 import { CaptchaField } from '@/features/auth/components/captcha-field';
-import { useAuthStore } from '@/store/auth-store';
 import { onlyDigits } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,32 +18,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { AuthSession } from '@/types/auth';
 
-function isAuthSession(value: unknown): value is AuthSession {
-  return Boolean(
-    value &&
-      typeof value === 'object' &&
-      'accessToken' in value &&
-      typeof (value as { accessToken?: unknown }).accessToken === 'string',
-  );
+function getRegisterErrorMessage(error: unknown) {
+  const message = (error as { message?: unknown } | null)?.message;
+  return typeof message === 'string' && message.trim()
+    ? message
+    : 'Não foi possível concluir o cadastro. Revise os dados e tente novamente.';
 }
 
 interface RegisterWorkshopDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onRegistered: (email: string) => void;
-  onAuthenticated: () => void;
 }
 
 export function RegisterWorkshopDialog({
   open,
   onOpenChange,
   onRegistered,
-  onAuthenticated,
 }: RegisterWorkshopDialogProps) {
-  const queryClient = useQueryClient();
-  const setSession = useAuthStore((state) => state.setSession);
   const form = useForm<RegisterSchema>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -58,22 +50,14 @@ export function RegisterWorkshopDialog({
   });
   const mutation = useMutation({
     mutationFn: authService.registerWorkshop,
-    onSuccess: (data, variables) => {
-      if (isAuthSession(data)) {
-        queryClient.clear();
-        setSession(data);
-        toast.success('Cadastro realizado com sucesso.');
-        onAuthenticated();
-        return;
-      }
-
-      toast.success('Cadastro criado. Entre com o e-mail e senha informados.');
+    onSuccess: (_data, variables) => {
+      toast.success('Cadastro realizado com sucesso.');
       onRegistered(variables.email);
       onOpenChange(false);
       form.reset();
     },
-    onError: () => {
-      toast.error('Não foi possível concluir o cadastro. Revise os dados e tente novamente.');
+    onError: (error) => {
+      toast.error(getRegisterErrorMessage(error));
     },
   });
   const isSubmitting = mutation.isPending;
@@ -84,6 +68,7 @@ export function RegisterWorkshopDialog({
       cnpj: values.cnpj ? onlyDigits(values.cnpj) : null,
       email: values.email,
       password: values.password,
+      confirmPassword: values.confirmPassword,
       captchaToken: values.captchaToken,
     });
   }

@@ -4,22 +4,35 @@ import { Controller, useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Wrench } from 'lucide-react';
+import { useState } from 'react';
 import { authService } from '@/features/auth/services/auth-service';
 import { resetPasswordSchema, type ResetPasswordSchema } from '@/features/auth/schemas/login-schema';
 import { PasswordField } from '@/features/auth/components/password-field';
+import { CaptchaField } from '@/features/auth/components/captcha-field';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { env } from '@/lib/env';
+
+const invalidResetLinkMessage = 'Este link expirou ou já foi usado. Solicite uma nova redefinição.';
+
+function isTokenError(error: unknown) {
+  const message = (error as { message?: unknown } | null)?.message;
+  const statusCode = (error as { statusCode?: unknown } | null)?.statusCode;
+
+  return statusCode === 400 && typeof message === 'string' && /token/i.test(message);
+}
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token')?.trim() ?? '';
+  const [tokenError, setTokenError] = useState(false);
   const form = useForm<ResetPasswordSchema>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
       password: '',
       confirmPassword: '',
+      captchaToken: '',
     },
   });
   const mutation = useMutation({
@@ -28,10 +41,18 @@ export function ResetPasswordPage() {
       toast.success('Senha redefinida com sucesso. Entre com sua nova senha.');
       navigate('/login', { replace: true });
     },
-    onError: () => {
-      toast.error('Não foi possível redefinir a senha. Solicite um novo link e tente novamente.');
+    onError: (error) => {
+      if (isTokenError(error)) {
+        setTokenError(true);
+        toast.error(invalidResetLinkMessage);
+        return;
+      }
+
+      toast.error('Não foi possível redefinir a senha. Revise os dados e tente novamente.');
     },
   });
+
+  const cannotReset = !token || tokenError;
 
   return (
     <div className="surface-grid min-h-screen bg-slate-950 text-slate-100">
@@ -49,10 +70,10 @@ export function ResetPasswordPage() {
             <p className="text-sm text-slate-400">Escolha uma nova senha segura para acessar sua conta.</p>
           </CardHeader>
           <CardContent className="px-6 pb-7 sm:px-12">
-            {!token ? (
+            {cannotReset ? (
               <div className="space-y-5 text-center">
                 <p className="text-sm leading-6 text-slate-300">
-                  O link de redefinição está inválido ou expirado. Solicite um novo link para continuar.
+                  {!token ? 'O link de redefinição está inválido. Solicite um novo link para continuar.' : invalidResetLinkMessage}
                 </p>
                 <Button asChild className="w-full">
                   <Link to="/login">Voltar ao login</Link>
@@ -61,7 +82,14 @@ export function ResetPasswordPage() {
             ) : (
               <form
                 className="space-y-5"
-                onSubmit={form.handleSubmit((values) => mutation.mutate({ token, password: values.password }))}
+                onSubmit={form.handleSubmit((values) =>
+                  mutation.mutate({
+                    token,
+                    password: values.password,
+                    passwordConfirmation: values.confirmPassword,
+                    captchaToken: values.captchaToken,
+                  }),
+                )}
               >
                 <Controller
                   control={form.control}
@@ -98,6 +126,12 @@ export function ResetPasswordPage() {
                       onChange={field.onChange}
                     />
                   )}
+                />
+                <CaptchaField
+                  disabled={mutation.isPending}
+                  error={form.formState.errors.captchaToken?.message}
+                  value={form.watch('captchaToken')}
+                  onChange={(value) => form.setValue('captchaToken', value, { shouldValidate: true })}
                 />
                 <Button className="h-11 w-full" disabled={mutation.isPending} type="submit">
                   {mutation.isPending ? 'Redefinindo...' : 'Redefinir senha'}
