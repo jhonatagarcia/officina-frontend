@@ -11,12 +11,13 @@ import { PageHeader } from '@/components/shared/page-header';
 import { SearchInput } from '@/components/shared/search-input';
 import { Pagination } from '@/components/shared/pagination';
 import { CustomizableSummaryCards } from '@/components/shared/customizable-widgets';
+import { IndicatorHeaderActions } from '@/components/shared/indicator-header-actions';
+import { PlateChip } from '@/components/shared/table-identity-cells';
+import { TableFilterChips } from '@/components/shared/table-filter-chips';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { EmptyState } from '@/components/shared/empty-state';
-import { FiscalFeatureBlockedState } from '@/features/workshop/components/fiscal-feature-blocked-state';
-import { useWorkshopFiscalStatus } from '@/features/workshop/hooks/use-workshop-fiscal-status';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -52,23 +53,13 @@ function toPaidAtIsoString(value: string) {
 }
 
 export function FinancialPage() {
-  const fiscalStatus = useWorkshopFiscalStatus();
-
-  if (fiscalStatus.isIncomplete) {
-    return (
-      <PageContainer>
-        <PageHeader title="Financeiro" description="Contas a receber, saída de estoque e conciliação." />
-        <FiscalFeatureBlockedState featureName="Financeiro" />
-      </PageContainer>
-    );
-  }
-
   return <FinancialPageContent />;
 }
 
 function FinancialPageContent() {
   const params = useListParams();
   const queryClient = useQueryClient();
+  const [isConfiguringPanel, setIsConfiguringPanel] = useState(false);
   const [paymentDates, setPaymentDates] = useState<Record<string, string>>({});
   const today = toDateInputValue(new Date());
   const query = useQuery({
@@ -174,7 +165,7 @@ function FinancialPageContent() {
   return (
     <PageContainer>
       <PageHeader title="Financeiro" description="Contas a receber, saída de estoque e conciliação.">
-        <div className="flex gap-3">
+        <IndicatorHeaderActions onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}>
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por descrição ou origem" />
           <Select value={selectedStatus} onValueChange={(value) => params.setStatus(value === 'ALL' ? '' : value)}>
             <SelectTrigger className="w-[180px]"><SelectValue placeholder="Status" /></SelectTrigger>
@@ -185,22 +176,37 @@ function FinancialPageContent() {
               <SelectItem value="VENCIDO">Vencido</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </IndicatorHeaderActions>
       </PageHeader>
       <CustomizableSummaryCards
         storageKey="oficina:financeiro:summary-cards:v1"
         cards={summaryCards}
         defaultVisibleIds={['projected-balance', 'receivables', 'stock-out']}
         gridClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+        isConfiguring={isConfiguringPanel}
+        onConfiguringChange={setIsConfiguringPanel}
+        showHeaderAction={false}
       />
       <Card>
         <CardContent className="p-0">
           {query.isLoading ? <LoadingState /> : null}
           {query.isError ? <ErrorState onRetry={() => query.refetch()} /> : null}
           {!query.isLoading && !query.isError && filteredEntries.length === 0 ? <EmptyState /> : null}
+          {query.data ? (
+            <TableFilterChips
+              value={selectedStatus}
+              options={[
+                { value: 'ALL', label: 'Todos', count: query.data.data.length, icon: DollarSign, tone: 'slate' },
+                { value: 'PENDENTE', label: 'Pendente', count: pendingEntriesCount, icon: Clock, tone: 'amber' },
+                { value: 'PAGO', label: 'Pago', count: paidEntriesCount, icon: CheckCircle2, tone: 'emerald' },
+                { value: 'VENCIDO', label: 'Vencido', count: overdueEntriesCount, icon: AlertTriangle, tone: 'rose' },
+              ]}
+              onChange={(value) => params.setStatus(value === 'ALL' ? '' : value)}
+            />
+          ) : null}
           {filteredEntries.length ? (
-            <div className="p-6">
-              <Table>
+            <div className="overflow-x-auto">
+              <Table className="min-w-[900px]">
                 <TableHeader>
                   <TableRow>
                     <SortableTableHead column="description" sortState={sortState} onSort={requestSort}>Descrição</SortableTableHead>
@@ -216,10 +222,10 @@ function FinancialPageContent() {
                   {sortedItems.map((entry) => (
                     <TableRow key={entry.id} className={getFinancialRowClass(entry.status)}>
                       <TableCell>
-                        {entry.serviceOrder ? formatServiceOrderNumber(entry.serviceOrder.orderNumber) : entry.description}
+                        {entry.serviceOrder ? <PlateChip>{formatServiceOrderNumber(entry.serviceOrder.orderNumber)}</PlateChip> : entry.description}
                       </TableCell>
                       <TableCell><StatusBadge status={entry.status} /></TableCell>
-                      <TableCell className={cn(entry.status === 'VENCIDO' ? 'font-semibold text-rose-700' : null)}>
+                      <TableCell className={cn('font-bold [font-variant-numeric:tabular-nums]', entry.status === 'VENCIDO' ? 'text-rose-700' : null)}>
                         {formatCurrency(entry.amount)}
                       </TableCell>
                       <TableCell>
@@ -264,7 +270,7 @@ function FinancialPageContent() {
                   ))}
                 </TableBody>
               </Table>
-              <div className="mt-6">
+              <div className="p-5">
                 {pagination ? (
                   <Pagination page={pagination.page} total={pagination.total} pageSize={pagination.pageSize} onPageChange={params.setPage} />
                 ) : null}

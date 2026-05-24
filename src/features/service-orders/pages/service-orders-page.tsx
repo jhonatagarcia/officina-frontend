@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, CheckCircle2, ClipboardList, Clock, Eye, UserCheck, Wrench } from 'lucide-react';
+import { CalendarDays, CheckCircle2, ClipboardList, Clock, Eye, Pencil, Printer, UserCheck, Wrench } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { serviceOrdersService } from '@/features/service-orders/services/service-orders-service';
 import { useListParams } from '@/hooks/use-list-params';
@@ -9,7 +10,9 @@ import { PageHeader } from '@/components/shared/page-header';
 import { SearchInput } from '@/components/shared/search-input';
 import { Pagination } from '@/components/shared/pagination';
 import { CustomizableSummaryCards } from '@/components/shared/customizable-widgets';
-import { StatusBadge } from '@/components/shared/status-badge';
+import { IndicatorHeaderActions } from '@/components/shared/indicator-header-actions';
+import { VehicleIdentityCell } from '@/components/shared/table-identity-cells';
+import { TableFilterChips } from '@/components/shared/table-filter-chips';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -18,7 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
-import { cn, formatDateOnly, formatServiceOrderNumber } from '@/lib/utils';
+import { cn, formatCurrency, formatDateOnly, formatServiceOrderNumber } from '@/lib/utils';
 import type { ServiceOrder } from '@/features/service-orders/types';
 
 function startOfToday() {
@@ -35,14 +38,59 @@ function isOverdueOrder(order: ServiceOrder) {
 }
 
 function getServiceOrderRowClass(order: ServiceOrder) {
-  if (isOverdueOrder(order)) return 'bg-rose-50/45 hover:bg-rose-50/70';
-  if (order.status === 'ABERTA') return 'bg-amber-50/25 hover:bg-amber-50/50';
+  if (isOverdueOrder(order)) return 'border-l-4 border-l-rose-600 hover:bg-stone-50/80';
   return undefined;
+}
+
+function getOrderStatusTone(status: ServiceOrder['status']) {
+  if (status === 'EM_ANDAMENTO') return 'orange';
+  if (status === 'AGUARDANDO_PECA') return 'amber';
+  if (status === 'ABERTA') return 'stone';
+  if (status === 'FINALIZADA') return 'emerald';
+  return 'sky';
+}
+
+function getOrderStatusLabel(status: ServiceOrder['status']) {
+  if (status === 'EM_ANDAMENTO') return 'Em andamento';
+  if (status === 'AGUARDANDO_PECA') return 'Aguardando peça';
+  if (status === 'ABERTA') return 'Aberta';
+  if (status === 'FINALIZADA') return 'Concluída';
+  return 'Entregue';
+}
+
+function ServiceOrderStatusPill({ status }: { status: ServiceOrder['status'] }) {
+  const tone = getOrderStatusTone(status);
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold',
+        tone === 'orange' && 'bg-orange-50 text-orange-700',
+        tone === 'stone' && 'bg-stone-100 text-stone-700',
+        tone === 'amber' && 'bg-amber-50 text-amber-700',
+        tone === 'emerald' && 'bg-emerald-50 text-emerald-700',
+        tone === 'sky' && 'bg-sky-50 text-sky-700',
+      )}
+    >
+      <span
+        className={cn(
+          'size-2 rounded-full',
+          tone === 'orange' && 'bg-orange-500',
+          tone === 'stone' && 'bg-stone-400',
+          tone === 'amber' && 'bg-amber-500',
+          tone === 'emerald' && 'bg-emerald-500',
+          tone === 'sky' && 'bg-sky-500',
+        )}
+      />
+      {getOrderStatusLabel(status)}
+    </span>
+  );
 }
 
 export function ServiceOrdersPage() {
   const navigate = useNavigate();
   const params = useListParams();
+  const [isConfiguringPanel, setIsConfiguringPanel] = useState(false);
   const query = useQuery({
     queryKey: ['ordens-servico', params.page, DEFAULT_TABLE_PAGE_SIZE, params.search, params.status],
     queryFn: () =>
@@ -65,6 +113,7 @@ export function ServiceOrdersPage() {
       mechanic: (item) => item.mechanicName,
       status: (item) => item.status,
       expectedDeliveryAt: (item) => (item.expectedDeliveryAt ? new Date(item.expectedDeliveryAt) : null),
+      total: (item) => item.total ?? 0,
     },
   });
   const pagination = query.data;
@@ -88,7 +137,7 @@ export function ServiceOrdersPage() {
       title: 'OS abertas',
       value: String(openOrdersCount),
       icon: Clock,
-      mediaClassName: 'border-amber-200 bg-amber-50 text-amber-700',
+      mediaClassName: 'border-stone-200 bg-stone-100 text-stone-700',
     },
     {
       id: 'in-progress',
@@ -123,7 +172,11 @@ export function ServiceOrdersPage() {
   return (
     <PageContainer>
       <PageHeader title="Ordens de serviço" description="Acompanhamento operacional e status da execução.">
-        <div className="flex gap-3">
+        <IndicatorHeaderActions
+          onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
+          primaryActionLabel="Nova OS"
+          onPrimaryAction={() => navigate('/app/ordens-servico')}
+        >
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por OS, cliente ou veículo" />
           <Select value={selectedStatus} onValueChange={(value) => params.setStatus(value === 'ALL' ? '' : value)}>
             <SelectTrigger className="w-[200px]">
@@ -137,21 +190,38 @@ export function ServiceOrdersPage() {
               <SelectItem value="ENTREGUE">Entregue</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </IndicatorHeaderActions>
       </PageHeader>
       <CustomizableSummaryCards
         storageKey="oficina:ordens-servico:summary-cards:v1"
         cards={summaryCards}
         defaultVisibleIds={['total', 'open', 'in-progress', 'completed']}
+        isConfiguring={isConfiguringPanel}
+        onConfiguringChange={setIsConfiguringPanel}
+        showHeaderAction={false}
       />
       <Card>
         <CardContent className="p-0">
           {query.isLoading ? <LoadingState /> : null}
           {query.isError ? <ErrorState onRetry={() => query.refetch()} /> : null}
           {!query.isLoading && !query.isError && filteredOrders.length === 0 ? <EmptyState /> : null}
+          {query.data ? (
+            <TableFilterChips
+              value={selectedStatus}
+              options={[
+                { value: 'ALL', label: 'Todas', count: query.data.data.length, icon: ClipboardList, tone: 'slate' },
+                { value: 'ABERTA', label: 'Aberta', count: query.data.data.filter((item) => item.status === 'ABERTA').length, icon: Clock, tone: 'slate' },
+                { value: 'AGUARDANDO_PECA', label: 'Aguardando peça', count: query.data.data.filter((item) => item.status === 'AGUARDANDO_PECA').length, icon: Clock, tone: 'amber' },
+                { value: 'EM_ANDAMENTO', label: 'Em andamento', count: query.data.data.filter((item) => item.status === 'EM_ANDAMENTO').length, icon: Wrench, tone: 'rose' },
+                { value: 'FINALIZADA', label: 'Concluída', count: query.data.data.filter((item) => item.status === 'FINALIZADA').length, icon: CheckCircle2, tone: 'emerald' },
+                { value: 'ENTREGUE', label: 'Entregue', count: query.data.data.filter((item) => item.status === 'ENTREGUE').length, icon: ClipboardList, tone: 'sky' },
+              ]}
+              onChange={(value) => params.setStatus(value === 'ALL' ? '' : value)}
+            />
+          ) : null}
           {filteredOrders.length ? (
-            <div className="p-6">
-              <Table>
+            <div className="overflow-x-auto">
+              <Table className="min-w-[1180px]">
                 <TableHeader>
                   <TableRow>
                     <SortableTableHead column="orderNumber" sortState={sortState} onSort={requestSort}>OS</SortableTableHead>
@@ -160,30 +230,60 @@ export function ServiceOrdersPage() {
                     <SortableTableHead column="mechanic" sortState={sortState} onSort={requestSort}>Mecânico</SortableTableHead>
                     <SortableTableHead column="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
                     <SortableTableHead column="expectedDeliveryAt" sortState={sortState} onSort={requestSort}>Previsão</SortableTableHead>
+                    <SortableTableHead className="text-right" column="total" sortState={sortState} onSort={requestSort}>Valor</SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sortedItems.map((item) => (
                     <TableRow key={item.id} className={getServiceOrderRowClass(item)}>
-                      <TableCell className="font-medium">{formatServiceOrderNumber(item.orderNumber)}</TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <p className="font-mono text-sm font-bold text-primary">{formatServiceOrderNumber(item.orderNumber)}</p>
+                          <p className="text-xs text-muted-foreground">aberta {formatDateOnly(item.openedAt)}</p>
+                        </div>
+                      </TableCell>
                       <TableCell>{item.clientName}</TableCell>
-                      <TableCell>{item.vehicleLabel}</TableCell>
+                      <TableCell>
+                        <VehicleIdentityCell
+                          plate={item.vehicle?.plate}
+                          description={item.vehicle ? `${item.vehicle.brand} ${item.vehicle.model} ${item.vehicle.year}` : null}
+                          fallback={item.vehicleLabel}
+                        />
+                      </TableCell>
                       <TableCell>{item.mechanicName ?? '-'}</TableCell>
-                      <TableCell><StatusBadge status={item.status} /></TableCell>
-                      <TableCell className={cn(isOverdueOrder(item) ? 'font-medium text-rose-700' : null)}>
-                        {item.expectedDeliveryAt ? formatDateOnly(item.expectedDeliveryAt) : '-'}
+                      <TableCell><ServiceOrderStatusPill status={item.status} /></TableCell>
+                      <TableCell>
+                        {item.expectedDeliveryAt ? (
+                          <div className={cn('flex items-center gap-2', isOverdueOrder(item) ? 'font-bold text-rose-700' : 'text-muted-foreground')}>
+                            <span>{formatDateOnly(item.expectedDeliveryAt)}</span>
+                            {isOverdueOrder(item) ? (
+                              <span className="rounded bg-rose-50 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-rose-700">Atrasada</span>
+                            ) : null}
+                          </div>
+                        ) : '-'}
+                      </TableCell>
+                      <TableCell className="text-right font-bold [font-variant-numeric:tabular-nums]">
+                        {formatCurrency(item.total ?? 0)}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button size="icon" variant="outline" onClick={() => navigate(`/app/ordens-servico/${item.id}`)}>
-                          <Eye className="size-4" />
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button className="size-9 rounded-lg bg-white" size="icon" variant="outline" onClick={() => navigate(`/app/ordens-servico/${item.id}`)}>
+                            <Eye className="size-4" strokeWidth={1.75} />
+                          </Button>
+                          <Button className="size-9 rounded-lg bg-white" size="icon" variant="outline" onClick={() => navigate(`/app/ordens-servico/${item.id}`)}>
+                            <Pencil className="size-4" strokeWidth={1.75} />
+                          </Button>
+                          <Button className="size-9 rounded-lg bg-white" size="icon" variant="outline" onClick={() => navigate(`/app/ordens-servico/${item.id}`)}>
+                            <Printer className="size-4" strokeWidth={1.75} />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-              <div className="mt-6">
+              <div className="p-5">
                 {pagination ? (
                   <Pagination page={pagination.page} total={pagination.total} pageSize={pagination.pageSize} onPageChange={params.setPage} />
                 ) : null}

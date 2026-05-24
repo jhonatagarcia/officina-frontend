@@ -18,12 +18,10 @@ const defaultValues: InventoryItemSchema = {
 function InventoryItemFormTestHarness({
   mode = 'create',
   isPending = false,
-  onCancel = vi.fn(),
   onSubmit = vi.fn(),
 }: {
   mode?: 'create' | 'edit';
   isPending?: boolean;
-  onCancel?: () => void;
   onSubmit?: (values: InventoryItemSchema) => void;
 }) {
   const form = useForm<InventoryItemSchema>({
@@ -36,7 +34,6 @@ function InventoryItemFormTestHarness({
       mode={mode}
       internalCode="INT-001"
       isPending={isPending}
-      onCancel={onCancel}
       onSubmit={onSubmit}
     />
   );
@@ -76,16 +73,10 @@ describe('InventoryItemForm', () => {
       });
   });
 
-  it('exibe codigo interno no modo edicao e aciona voltar', () => {
-    const onCancel = vi.fn();
-
-    renderWithProviders(<InventoryItemFormTestHarness mode="edit" onCancel={onCancel} />);
+  it('exibe codigo interno no modo edicao', () => {
+    renderWithProviders(<InventoryItemFormTestHarness mode="edit" />);
 
     expect(screen.getByLabelText(/^id$/i)).toHaveValue('INT-001');
-
-    fireEvent.click(screen.getByRole('button', { name: /voltar/i }));
-
-    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
   it('mostra estado de salvamento no botao principal', () => {

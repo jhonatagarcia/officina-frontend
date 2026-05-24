@@ -7,6 +7,18 @@ export function useListParams() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [type, setType] = useState('');
+  const updateSearch = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+  const updateStatus = (value: string) => {
+    setStatus(value);
+    setPage(1);
+  };
+  const updateType = (value: string) => {
+    setType(value);
+    setPage(1);
+  };
 
   return {
     page,
@@ -15,8 +27,8 @@ export function useListParams() {
     status,
     type,
     setPage,
-    setSearch,
-    setStatus,
-    setType,
+    setSearch: updateSearch,
+    setStatus: updateStatus,
+    setType: updateType,
   };
 }

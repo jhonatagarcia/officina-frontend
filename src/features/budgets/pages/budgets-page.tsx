@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Clock, DollarSign, Eye, FileText, XCircle } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { budgetsService } from '@/features/budgets/services/budgets-service';
@@ -10,6 +11,9 @@ import { PageHeader } from '@/components/shared/page-header';
 import { Pagination } from '@/components/shared/pagination';
 import { SearchInput } from '@/components/shared/search-input';
 import { CustomizableSummaryCards } from '@/components/shared/customizable-widgets';
+import { IndicatorHeaderActions } from '@/components/shared/indicator-header-actions';
+import { VehicleIdentityCell } from '@/components/shared/table-identity-cells';
+import { TableFilterChips } from '@/components/shared/table-filter-chips';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
@@ -31,6 +35,7 @@ export function BudgetsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const params = useListParams();
+  const [isConfiguringPanel, setIsConfiguringPanel] = useState(false);
   const query = useQuery({
     queryKey: ['orcamentos', params.page, DEFAULT_TABLE_PAGE_SIZE, params.search, params.status],
     queryFn: () =>
@@ -139,7 +144,11 @@ export function BudgetsPage() {
   return (
     <PageContainer>
       <PageHeader title="Orçamentos" description="Criação, aprovação e conversão em OS.">
-        <div className="flex w-full flex-col gap-3 xl:w-auto xl:flex-row">
+        <IndicatorHeaderActions
+          onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
+          primaryActionLabel="Novo orçamento"
+          onPrimaryAction={() => navigate('/app/orcamentos/novo')}
+        >
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por cliente, veículo ou problema" />
           <Select value={selectedStatus} onValueChange={(value) => params.setStatus(value === 'ALL' ? '' : value)}>
             <SelectTrigger className="w-[180px]">
@@ -152,22 +161,36 @@ export function BudgetsPage() {
               <SelectItem value="REPROVADO">Reprovado</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-        <Button className="shrink-0" onClick={() => navigate('/app/orcamentos/novo')}>Novo orçamento</Button>
+        </IndicatorHeaderActions>
       </PageHeader>
       <CustomizableSummaryCards
         storageKey="oficina:orcamentos:summary-cards:v1"
         cards={summaryCards}
         defaultVisibleIds={['total', 'pending', 'approved', 'rejected']}
+        isConfiguring={isConfiguringPanel}
+        onConfiguringChange={setIsConfiguringPanel}
+        showHeaderAction={false}
       />
       <Card>
         <CardContent className="p-0">
           {query.isLoading ? <LoadingState /> : null}
           {query.isError ? <ErrorState onRetry={() => query.refetch()} /> : null}
           {!query.isLoading && !query.isError && filteredBudgets.length === 0 ? <EmptyState /> : null}
+          {query.data ? (
+            <TableFilterChips
+              value={selectedStatus}
+              options={[
+                { value: 'ALL', label: 'Todos', count: query.data.data.length, icon: FileText, tone: 'slate' },
+                { value: 'PENDENTE', label: 'Pendente', count: pendingBudgetsCount, icon: Clock, tone: 'amber' },
+                { value: 'APROVADO', label: 'Aprovado', count: approvedBudgetsCount, icon: CheckCircle2, tone: 'emerald' },
+                { value: 'REPROVADO', label: 'Reprovado', count: rejectedBudgetsCount, icon: XCircle, tone: 'rose' },
+              ]}
+              onChange={(value) => params.setStatus(value === 'ALL' ? '' : value)}
+            />
+          ) : null}
           {filteredBudgets.length ? (
-            <div className="p-6">
-              <Table>
+            <div className="overflow-x-auto">
+              <Table className="min-w-[900px]">
                 <TableHeader>
                   <TableRow>
                     <SortableTableHead column="client" sortState={sortState} onSort={requestSort}>Cliente</SortableTableHead>
@@ -179,11 +202,16 @@ export function BudgetsPage() {
                 </TableHeader>
                 <TableBody>
                   {sortedItems.map((budget) => (
-                    <TableRow key={budget.id} className={getBudgetRowClass(budget.status)}>
-                      <TableCell>{budget.client?.name ?? '-'}</TableCell>
-                      <TableCell>{budget.vehicle ? `${budget.vehicle.plate} • ${budget.vehicle.brand} ${budget.vehicle.model}` : '-'}</TableCell>
+                      <TableRow key={budget.id} className={getBudgetRowClass(budget.status)}>
+                        <TableCell>{budget.client?.name ?? '-'}</TableCell>
+                        <TableCell>
+                          <VehicleIdentityCell
+                            plate={budget.vehicle?.plate}
+                            description={budget.vehicle ? `${budget.vehicle.brand} ${budget.vehicle.model} ${budget.vehicle.year}` : null}
+                          />
+                        </TableCell>
                       <TableCell><StatusBadge status={budget.status} /></TableCell>
-                      <TableCell>{formatCurrency(budget.total)}</TableCell>
+                      <TableCell className="font-bold [font-variant-numeric:tabular-nums]">{formatCurrency(budget.total)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button size="icon" variant="outline" onClick={() => navigate(`/app/orcamentos/${budget.id}`)}>
@@ -215,7 +243,7 @@ export function BudgetsPage() {
                   ))}
                 </TableBody>
               </Table>
-              <div className="mt-6">
+              <div className="p-5">
                 {pagination ? (
                   <Pagination page={pagination.page} total={pagination.total} pageSize={pagination.pageSize} onPageChange={params.setPage} />
                 ) : null}

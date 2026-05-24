@@ -4,7 +4,13 @@ import { Button } from '@/components/ui/button';
 import type { UseFieldArrayReturn, UseFormReturn } from 'react-hook-form';
 import type { BudgetSchema } from '@/features/budgets/schemas/budget-schema';
 import { formatCurrency, parseCurrencyInput } from '@/lib/utils';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useInventoryOptions } from '@/features/reference-data/hooks/use-inventory-options';
 import { useServiceOptions } from '@/features/reference-data/hooks/use-service-options';
 
@@ -74,38 +80,61 @@ function BudgetItemRow({
   const itemType = form.watch(`items.${index}.type`);
   const selectedServiceId = form.watch(`items.${index}.serviceCatalogItemId`);
   const selectedInventoryItemId = form.watch(`items.${index}.inventoryItemId`);
-  const selectedService = serviceOptions.find((service) => service.value === selectedServiceId);
-  const selectedInventoryItem = inventoryOptions.find((inventoryItem) => inventoryItem.value === selectedInventoryItemId);
+  const selectedService = serviceOptions.find(
+    (service) => service.value === selectedServiceId,
+  );
+  const selectedInventoryItem = inventoryOptions.find(
+    (inventoryItem) => inventoryItem.value === selectedInventoryItemId,
+  );
 
   function syncCompositeItem(serviceId: string, inventoryId: string) {
     const service = serviceOptions.find((option) => option.value === serviceId);
-    const inventoryItem = inventoryOptions.find((option) => option.value === inventoryId);
+    const inventoryItem = inventoryOptions.find(
+      (option) => option.value === inventoryId,
+    );
 
-    const descriptionParts = [service?.description, inventoryItem?.name].filter(Boolean);
+    const descriptionParts = [service?.description, inventoryItem?.name].filter(
+      Boolean,
+    );
     if (descriptionParts.length) {
-      form.setValue(`items.${index}.description`, descriptionParts.join(' + '), { shouldValidate: true });
+      form.setValue(
+        `items.${index}.description`,
+        descriptionParts.join(' + '),
+        { shouldValidate: true },
+      );
     }
 
-    const nextUnitPrice = (service?.suggestedTotalPrice ?? 0) + (inventoryItem?.salePrice ?? 0);
-    form.setValue(`items.${index}.unitPrice`, nextUnitPrice, { shouldValidate: true });
+    const nextUnitPrice =
+      (service?.suggestedTotalPrice ?? 0) + (inventoryItem?.salePrice ?? 0);
+    form.setValue(`items.${index}.unitPrice`, nextUnitPrice, {
+      shouldValidate: true,
+    });
   }
 
   function syncPartItem(inventoryId: string) {
-    const inventoryItem = inventoryOptions.find((option) => option.value === inventoryId);
+    const inventoryItem = inventoryOptions.find(
+      (option) => option.value === inventoryId,
+    );
 
-    form.setValue(`items.${index}.description`, inventoryItem?.name ?? '', { shouldValidate: true });
-    form.setValue(`items.${index}.unitPrice`, inventoryItem?.salePrice ?? 0, { shouldValidate: true });
+    form.setValue(`items.${index}.description`, inventoryItem?.name ?? '', {
+      shouldValidate: true,
+    });
+    form.setValue(`items.${index}.unitPrice`, inventoryItem?.salePrice ?? 0, {
+      shouldValidate: true,
+    });
   }
 
   return (
-    <div className="grid gap-3 rounded-xl border p-4 md:grid-cols-4">
+    <div className="grid gap-4 rounded-xl border border-border-soft bg-white p-5 shadow-xs md:grid-cols-4">
       <div>
         <Label htmlFor={typeFieldId}>Tipo</Label>
         <Select
           disabled={readOnly}
           onValueChange={(value) => {
             const nextType = value as 'LABOR' | 'LABOR_AND_PART';
-            form.setValue(`items.${index}.type`, nextType, { shouldValidate: true });
+            form.setValue(`items.${index}.type`, nextType, {
+              shouldValidate: true,
+            });
 
             if (nextType === 'LABOR') {
               form.setValue(`items.${index}.inventoryItemId`, '');
@@ -130,16 +159,31 @@ function BudgetItemRow({
             <Select
               disabled={readOnly || isLoadingServices}
               onValueChange={(value) => {
-                const service = serviceOptions.find((option) => option.value === value);
-                form.setValue(`items.${index}.serviceCatalogItemId`, value, { shouldValidate: true });
-                form.setValue(`items.${index}.serviceCode`, service?.code ?? '');
+                const service = serviceOptions.find(
+                  (option) => option.value === value,
+                );
+                form.setValue(`items.${index}.serviceCatalogItemId`, value, {
+                  shouldValidate: true,
+                });
+                form.setValue(
+                  `items.${index}.serviceCode`,
+                  service?.code ?? '',
+                );
                 if (itemType === 'LABOR_AND_PART') {
                   syncCompositeItem(value, selectedInventoryItemId ?? '');
                 } else {
-                  form.setValue(`items.${index}.description`, service?.description ?? '', { shouldValidate: true });
-                  form.setValue(`items.${index}.unitPrice`, service?.suggestedTotalPrice ?? 0, {
-                    shouldValidate: true,
-                  });
+                  form.setValue(
+                    `items.${index}.description`,
+                    service?.description ?? '',
+                    { shouldValidate: true },
+                  );
+                  form.setValue(
+                    `items.${index}.unitPrice`,
+                    service?.suggestedTotalPrice ?? 0,
+                    {
+                      shouldValidate: true,
+                    },
+                  );
                 }
               }}
               value={selectedServiceId}
@@ -155,9 +199,13 @@ function BudgetItemRow({
                 ))}
               </SelectContent>
             </Select>
-            {form.formState.errors.items?.[index]?.serviceCatalogItemId?.message ? (
+            {form.formState.errors.items?.[index]?.serviceCatalogItemId
+              ?.message ? (
               <p className="text-xs text-destructive">
-                {form.formState.errors.items[index]?.serviceCatalogItemId?.message}
+                {
+                  form.formState.errors.items[index]?.serviceCatalogItemId
+                    ?.message
+                }
               </p>
             ) : null}
           </div>
@@ -167,7 +215,11 @@ function BudgetItemRow({
             <Input
               id={serviceCodeFieldId}
               disabled
-              value={form.watch(`items.${index}.serviceCode`) || selectedService?.code || ''}
+              value={
+                form.watch(`items.${index}.serviceCode`) ||
+                selectedService?.code ||
+                ''
+              }
             />
           </div>
 
@@ -178,7 +230,9 @@ function BudgetItemRow({
                 <Select
                   disabled={readOnly || isLoadingInventory}
                   onValueChange={(value) => {
-                    form.setValue(`items.${index}.inventoryItemId`, value, { shouldValidate: true });
+                    form.setValue(`items.${index}.inventoryItemId`, value, {
+                      shouldValidate: true,
+                    });
                     syncCompositeItem(selectedServiceId ?? '', value);
                   }}
                   value={selectedInventoryItemId}
@@ -188,22 +242,33 @@ function BudgetItemRow({
                   </SelectTrigger>
                   <SelectContent>
                     {inventoryOptions.map((inventoryItem) => (
-                      <SelectItem key={inventoryItem.value} value={inventoryItem.value}>
+                      <SelectItem
+                        key={inventoryItem.value}
+                        value={inventoryItem.value}
+                      >
                         {inventoryItem.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {form.formState.errors.items?.[index]?.inventoryItemId?.message ? (
+                {form.formState.errors.items?.[index]?.inventoryItemId
+                  ?.message ? (
                   <p className="text-xs text-destructive">
-                    {form.formState.errors.items[index]?.inventoryItemId?.message}
+                    {
+                      form.formState.errors.items[index]?.inventoryItemId
+                        ?.message
+                    }
                   </p>
                 ) : null}
               </div>
 
               <div>
                 <Label htmlFor={inventoryCodeFieldId}>Código da peça</Label>
-                <Input id={inventoryCodeFieldId} disabled value={selectedInventoryItem?.internalCode ?? ''} />
+                <Input
+                  id={inventoryCodeFieldId}
+                  disabled
+                  value={selectedInventoryItem?.internalCode ?? ''}
+                />
               </div>
             </>
           ) : null}
@@ -215,7 +280,9 @@ function BudgetItemRow({
             <Select
               disabled={readOnly || isLoadingInventory}
               onValueChange={(value) => {
-                form.setValue(`items.${index}.inventoryItemId`, value, { shouldValidate: true });
+                form.setValue(`items.${index}.inventoryItemId`, value, {
+                  shouldValidate: true,
+                });
                 syncPartItem(value);
               }}
               value={selectedInventoryItemId}
@@ -225,20 +292,29 @@ function BudgetItemRow({
               </SelectTrigger>
               <SelectContent>
                 {inventoryOptions.map((inventoryItem) => (
-                  <SelectItem key={inventoryItem.value} value={inventoryItem.value}>
+                  <SelectItem
+                    key={inventoryItem.value}
+                    value={inventoryItem.value}
+                  >
                     {inventoryItem.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {form.formState.errors.items?.[index]?.inventoryItemId?.message ? (
-              <p className="text-xs text-destructive">{form.formState.errors.items[index]?.inventoryItemId?.message}</p>
+              <p className="text-xs text-destructive">
+                {form.formState.errors.items[index]?.inventoryItemId?.message}
+              </p>
             ) : null}
           </div>
 
           <div>
             <Label htmlFor={inventoryCodeFieldId}>Código da peça</Label>
-            <Input id={inventoryCodeFieldId} disabled value={selectedInventoryItem?.internalCode ?? ''} />
+            <Input
+              id={inventoryCodeFieldId}
+              disabled
+              value={selectedInventoryItem?.internalCode ?? ''}
+            />
           </div>
         </>
       )}
@@ -262,7 +338,11 @@ function BudgetItemRow({
           inputMode="numeric"
           value={formatCurrency(form.watch(`items.${index}.unitPrice`) ?? 0)}
           onChange={(event) =>
-            form.setValue(`items.${index}.unitPrice`, parseCurrencyInput(event.target.value), { shouldValidate: true })
+            form.setValue(
+              `items.${index}.unitPrice`,
+              parseCurrencyInput(event.target.value),
+              { shouldValidate: true },
+            )
           }
         />
       </div>
@@ -275,7 +355,12 @@ function BudgetItemRow({
 
       {!readOnly ? (
         <div className="flex items-end justify-end md:col-span-2">
-          <Button type="button" variant="ghost" onClick={onRemove}>
+          <Button
+            className="rounded-xl font-semibold"
+            type="button"
+            variant="ghost"
+            onClick={onRemove}
+          >
             Remover
           </Button>
         </div>
@@ -284,18 +369,34 @@ function BudgetItemRow({
   );
 }
 
-export function BudgetItemsEditor({ form, fieldArray, readOnly, items }: BudgetItemsEditorProps) {
+export function BudgetItemsEditor({
+  form,
+  fieldArray,
+  readOnly,
+  items,
+}: BudgetItemsEditorProps) {
   const serviceOptionsQuery = useServiceOptions();
   const inventoryOptionsQuery = useInventoryOptions();
   const serviceOptions = (serviceOptionsQuery.data ?? []) as ServiceOption[];
-  const inventoryOptions = (inventoryOptionsQuery.data ?? []) as InventoryOption[];
+  const inventoryOptions = (inventoryOptionsQuery.data ??
+    []) as InventoryOption[];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 border-t border-border-soft pt-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Itens do orçamento</h2>
+        <hgroup>
+          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
+            Composição
+          </p>
+          <h2 className="mt-1 text-xl font-bold">Itens do orçamento</h2>
+        </hgroup>
         {!readOnly ? (
-          <Button type="button" variant="outline" onClick={() => fieldArray.append(defaultBudgetItem)}>
+          <Button
+            className="rounded-xl bg-white font-semibold"
+            type="button"
+            variant="outline"
+            onClick={() => fieldArray.append(defaultBudgetItem)}
+          >
             Adicionar item
           </Button>
         ) : null}

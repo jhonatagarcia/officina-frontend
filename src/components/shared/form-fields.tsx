@@ -149,7 +149,12 @@ export function SelectField<TFieldValues extends FieldValues>({
             <SelectTrigger>
               <SelectValue placeholder={placeholder ?? 'Selecione'} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent
+              align={searchable ? 'start' : undefined}
+              className={searchable ? 'max-h-[min(var(--radix-select-content-available-height),22rem)] w-[var(--radix-select-trigger-width)]' : undefined}
+              position={searchable ? 'popper' : undefined}
+              sideOffset={searchable ? 6 : undefined}
+            >
               {searchable ? (
                 <div className="p-2">
                   <Input

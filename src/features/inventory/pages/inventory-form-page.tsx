@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
-import { Card, CardContent } from '@/components/ui/card';
+import { FormCard } from '@/components/shared/form-layout';
+import { Button } from '@/components/ui/button';
 import { InventoryItemForm } from '@/features/inventory/components/inventory-item-form';
 import { InventoryQuantityChangeDialog } from '@/features/inventory/components/inventory-quantity-change-dialog';
 import { useInventoryForm } from '@/features/inventory/hooks/use-inventory-form';
@@ -15,8 +17,11 @@ import type { InventoryItemSchema } from '@/features/inventory/schemas/inventory
 export function InventoryFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const navigate = useNavigate();
   const { id = '' } = useParams();
-  const { query, form, mutation } = useInventoryForm(mode, id, () => navigate('/app/estoque'));
-  const [pendingValues, setPendingValues] = useState<InventoryItemSchema | null>(null);
+  const { query, form, mutation } = useInventoryForm(mode, id, () =>
+    navigate('/app/estoque'),
+  );
+  const [pendingValues, setPendingValues] =
+    useState<InventoryItemSchema | null>(null);
   const movementsQuery = useQuery({
     queryKey: ['estoque-item', id, 'movements'],
     queryFn: () => inventoryService.getMovements(id),
@@ -27,7 +32,11 @@ export function InventoryFormPage({ mode }: { mode: 'create' | 'edit' }) {
   if (query.isError) return <ErrorState onRetry={() => query.refetch()} />;
 
   function handleSubmit(values: InventoryItemSchema) {
-    if (mode === 'edit' && query.data && values.quantity !== query.data.quantity) {
+    if (
+      mode === 'edit' &&
+      query.data &&
+      values.quantity !== query.data.quantity
+    ) {
       setPendingValues(values);
       return;
     }
@@ -51,19 +60,25 @@ export function InventoryFormPage({ mode }: { mode: 'create' | 'edit' }) {
             ? 'Cadastre itens de estoque para alimentar a base da oficina.'
             : 'Atualize os dados do item de estoque.'
         }
-      />
-      <Card>
-        <CardContent className="p-6">
-          <InventoryItemForm
-            form={form}
-            mode={mode}
-            internalCode={query.data?.internalCode ?? ''}
-            isPending={mutation.isPending}
-            onCancel={() => navigate('/app/estoque')}
-            onSubmit={handleSubmit}
-          />
-        </CardContent>
-      </Card>
+      >
+        <Button
+          className="min-h-11 rounded-xl bg-white/90 font-semibold"
+          variant="outline"
+          onClick={() => navigate('/app/estoque')}
+        >
+          <ArrowLeft className="size-4" strokeWidth={1.75} />
+          Voltar
+        </Button>
+      </PageHeader>
+      <FormCard>
+        <InventoryItemForm
+          form={form}
+          mode={mode}
+          internalCode={query.data?.internalCode ?? ''}
+          isPending={mutation.isPending}
+          onSubmit={handleSubmit}
+        />
+      </FormCard>
       {pendingValues && query.data ? (
         <InventoryQuantityChangeDialog
           currentQuantity={query.data.quantity}

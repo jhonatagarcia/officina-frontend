@@ -11,6 +11,7 @@ const variantMap: Record<string, 'default' | 'success' | 'warning' | 'danger' | 
   PAYABLE: 'warning',
   EM_ANDAMENTO: 'warning',
   ABERTA: 'warning',
+  AGUARDANDO_PECA: 'warning',
   LABOR: 'warning',
   PENDENTE: 'warning',
   BAIXO: 'warning',
@@ -22,6 +23,7 @@ const variantMap: Record<string, 'default' | 'success' | 'warning' | 'danger' | 
 const labelMap: Record<string, string> = {
   FINALIZADA: 'Finalizada',
   EM_ANDAMENTO: 'Em andamento',
+  AGUARDANDO_PECA: 'Aguardando peça',
   RECEIVABLE: 'Receber',
   PAYABLE: 'Pagar',
   PART: 'Peça',
@@ -38,11 +40,16 @@ const labelMap: Record<string, string> = {
   OK: 'OK',
 };
 
+const classNameMap: Record<string, string> = {
+  ABERTA: 'border-transparent bg-stone-100 text-stone-700',
+  AGUARDANDO_PECA: 'border-transparent bg-amber-50 text-amber-700',
+};
+
 export function StatusBadge({ status }: { status: string }) {
   const normalizedStatus = status.toUpperCase();
 
   return (
-    <Badge variant={variantMap[normalizedStatus] ?? 'default'}>
+    <Badge className={classNameMap[normalizedStatus]} variant={variantMap[normalizedStatus] ?? 'default'}>
       {labelMap[normalizedStatus] ?? status.replace(/_/g, ' ')}
     </Badge>
   );

@@ -1,5 +1,6 @@
 export type ServiceOrderStatus =
   | 'ABERTA'
+  | 'AGUARDANDO_PECA'
   | 'EM_ANDAMENTO'
   | 'FINALIZADA'
   | 'ENTREGUE';

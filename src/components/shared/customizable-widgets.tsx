@@ -16,6 +16,9 @@ export interface CustomizableSummaryCardOption {
   mediaClassName?: string;
   valueClassName?: string;
   size?: 'default' | 'compact';
+  delta?: number;
+  trendLabel?: string;
+  sparklineValues?: number[];
 }
 
 export interface CustomizableWidgetOption {
@@ -31,6 +34,9 @@ interface CustomizableSummaryCardsProps {
   cards: CustomizableSummaryCardOption[];
   defaultVisibleIds: string[];
   gridClassName?: string;
+  isConfiguring?: boolean;
+  onConfiguringChange?: (isConfiguring: boolean) => void;
+  showHeaderAction?: boolean;
 }
 
 interface CustomizableWidgetGridProps {
@@ -39,6 +45,10 @@ interface CustomizableWidgetGridProps {
   defaultVisibleIds: string[];
   gridClassName?: string;
   emptyMessage?: string;
+  isConfiguring?: boolean;
+  onConfiguringChange?: (isConfiguring: boolean) => void;
+  showHeaderAction?: boolean;
+  activeItemsLabel?: string;
 }
 
 function readStoredIds(storageKey: string) {
@@ -127,47 +137,82 @@ function WidgetControls({
   onRemove: (id: string) => void;
   onReset: () => void;
 }) {
+  const visibleItems = availableItems.filter((item) => visibleIds.includes(item.id));
+  const hiddenItems = availableItems.filter((item) => !visibleIds.includes(item.id));
+
   return (
-    <Card>
-      <CardContent className="space-y-4 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+    <Card className="border-primary/20 shadow-xs">
+      <CardContent className="space-y-6 p-4 md:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold">Adicionar ou remover</p>
-            <p className="text-xs text-muted-foreground">A escolha fica salva neste navegador.</p>
+            <p className="text-base font-bold leading-tight">Adicionar ou remover</p>
+            <p className="mt-1 text-sm text-muted-foreground">A escolha fica salva neste navegador.</p>
           </div>
-          <Button size="sm" variant="outline" type="button" onClick={onReset}>
-            <RotateCcw className="size-4" />
+          <Button className="rounded-lg bg-white font-semibold" size="sm" variant="outline" type="button" onClick={onReset}>
+            <RotateCcw className="size-4" strokeWidth={1.75} />
             Restaurar padrão
           </Button>
         </div>
-        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-          {availableItems.map((item) => {
-            const isVisible = visibleIds.includes(item.id);
 
-            return (
-              <div key={item.id} className="flex min-h-14 items-center justify-between gap-3 rounded-xl border bg-white/70 px-3 py-2">
+        {visibleItems.length ? (
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+            {visibleItems.map((item) => (
+              <div
+                key={item.id}
+                className="flex min-h-16 items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary-soft/50 px-3 py-2"
+              >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{item.title}</p>
-                  {item.category ? <p className="text-xs text-muted-foreground">{item.category}</p> : null}
+                  <p className="truncate text-sm font-bold leading-tight">{item.title}</p>
+                  {item.category ? <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.category}</p> : null}
                 </div>
                 <Button
-                  aria-label={isVisible ? `Remover ${item.title}` : `Adicionar ${item.title}`}
-                  className={
-                    isVisible
-                      ? undefined
-                      : 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800'
-                  }
+                  aria-label={`Remover ${item.title}`}
+                  className="size-8 rounded-lg border-0 bg-destructive-soft text-destructive hover:bg-destructive/10 hover:text-destructive"
                   size="icon"
                   type="button"
                   variant="outline"
-                  onClick={() => (isVisible ? onRemove(item.id) : onAdd(item.id))}
+                  onClick={() => onRemove(item.id)}
                 >
-                  {isVisible ? <X className="size-4" /> : <Plus className="size-4" />}
+                  <X className="size-4" strokeWidth={1.75} />
                 </Button>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : null}
+
+        {hiddenItems.length ? (
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-border" />
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Disponíveis para adicionar</p>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+        ) : null}
+
+        {hiddenItems.length ? (
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+            {hiddenItems.map((item) => (
+              <div
+                key={item.id}
+                className="flex min-h-16 items-center justify-between gap-3 rounded-lg border bg-white/80 px-3 py-2 shadow-xs transition hover:border-primary/30 hover:bg-white"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold leading-tight">{item.title}</p>
+                  {item.category ? <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.category}</p> : null}
+                </div>
+                <Button
+                  aria-label={`Adicionar ${item.title}`}
+                  className="size-8 rounded-lg border-0 bg-primary-soft text-primary hover:bg-primary/10 hover:text-primary"
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                  onClick={() => onAdd(item.id)}
+                >
+                  <Plus className="size-4" strokeWidth={1.75} />
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );
@@ -178,8 +223,11 @@ export function CustomizableSummaryCards({
   cards,
   defaultVisibleIds,
   gridClassName = 'grid gap-4 md:grid-cols-2 xl:grid-cols-4',
+  isConfiguring: controlledIsConfiguring,
+  onConfiguringChange,
+  showHeaderAction = true,
 }: CustomizableSummaryCardsProps) {
-  const [isConfiguring, setIsConfiguring] = useState(false);
+  const [uncontrolledIsConfiguring, setUncontrolledIsConfiguring] = useState(false);
   const availableIds = useMemo(() => cards.map((card) => card.id), [cards]);
   const { visibleIds, addVisibleId, removeVisibleId, resetVisibleIds } = useVisibleWidgetIds(
     storageKey,
@@ -189,6 +237,12 @@ export function CustomizableSummaryCards({
   const visibleCards = visibleIds
     .map((id) => cards.find((card) => card.id === id))
     .filter((card): card is CustomizableSummaryCardOption => Boolean(card));
+  const isConfiguring = controlledIsConfiguring ?? uncontrolledIsConfiguring;
+  const setIsConfiguring = (nextValue: boolean | ((currentValue: boolean) => boolean)) => {
+    const nextIsConfiguring = typeof nextValue === 'function' ? nextValue(isConfiguring) : nextValue;
+    setUncontrolledIsConfiguring(nextIsConfiguring);
+    onConfiguringChange?.(nextIsConfiguring);
+  };
 
   return (
     <section className="space-y-3">
@@ -197,16 +251,18 @@ export function CustomizableSummaryCards({
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Indicadores</p>
           <p className="text-xs text-muted-foreground">{visibleCards.length} ativo(s)</p>
         </div>
-        <Button
-          className="text-muted-foreground hover:text-foreground"
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsConfiguring((current) => !current)}
-        >
-          <Settings2 className="size-4" />
-          Ajustar cards
-        </Button>
+        {showHeaderAction ? (
+          <Button
+            className="text-muted-foreground hover:text-foreground"
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsConfiguring((current) => !current)}
+          >
+            <Settings2 className="size-4" />
+            Ajustar cards
+          </Button>
+        ) : null}
       </div>
       {isConfiguring ? (
         <WidgetControls
@@ -230,6 +286,9 @@ export function CustomizableSummaryCards({
                 mediaClassName={card.mediaClassName}
                 valueClassName={card.valueClassName}
                 size={card.size}
+                delta={card.delta}
+                trendLabel={card.trendLabel}
+                sparklineValues={card.sparklineValues}
               />
               {isConfiguring ? (
                 <Button
@@ -263,8 +322,12 @@ export function CustomizableWidgetGrid({
   defaultVisibleIds,
   gridClassName = 'grid gap-4 md:grid-cols-2 xl:grid-cols-4',
   emptyMessage = 'Nenhum widget ativo.',
+  isConfiguring: controlledIsConfiguring,
+  onConfiguringChange,
+  showHeaderAction = true,
+  activeItemsLabel = 'item(ns)',
 }: CustomizableWidgetGridProps) {
-  const [isConfiguring, setIsConfiguring] = useState(false);
+  const [uncontrolledIsConfiguring, setUncontrolledIsConfiguring] = useState(false);
   const [draggedWidgetId, setDraggedWidgetId] = useState<string | null>(null);
   const [dragOverWidgetId, setDragOverWidgetId] = useState<string | null>(null);
   const availableIds = useMemo(() => widgets.map((widget) => widget.id), [widgets]);
@@ -276,6 +339,12 @@ export function CustomizableWidgetGrid({
   const visibleWidgets = visibleIds
     .map((id) => widgets.find((widget) => widget.id === id))
     .filter((widget): widget is CustomizableWidgetOption => Boolean(widget));
+  const isConfiguring = controlledIsConfiguring ?? uncontrolledIsConfiguring;
+  const setIsConfiguring = (nextValue: boolean | ((currentValue: boolean) => boolean)) => {
+    const nextIsConfiguring = typeof nextValue === 'function' ? nextValue(isConfiguring) : nextValue;
+    setUncontrolledIsConfiguring(nextIsConfiguring);
+    onConfiguringChange?.(nextIsConfiguring);
+  };
   const clearDragState = () => {
     setDraggedWidgetId(null);
     setDragOverWidgetId(null);
@@ -310,18 +379,22 @@ export function CustomizableWidgetGrid({
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Painel</p>
-          <p className="text-xs text-muted-foreground">{visibleWidgets.length} item(ns) ativo(s)</p>
+          <p className="text-xs text-muted-foreground">
+            {visibleWidgets.length} {activeItemsLabel} ativo(s)
+          </p>
         </div>
-        <Button
-          className="text-muted-foreground hover:text-foreground"
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsConfiguring((current) => !current)}
-        >
-          <Settings2 className="size-4" />
-          Ajustar painel
-        </Button>
+        {showHeaderAction ? (
+          <Button
+            className="text-muted-foreground hover:text-foreground"
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsConfiguring((current) => !current)}
+          >
+            <Settings2 className="size-4" />
+            Ajustar painel
+          </Button>
+        ) : null}
       </div>
       {isConfiguring ? (
         <div className="space-y-3">

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { CalendarDays, Car, Eye, Gauge, Hash, Pencil, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { vehiclesService } from '@/features/vehicles/services/vehicles-service';
@@ -9,6 +10,8 @@ import { PageHeader } from '@/components/shared/page-header';
 import { SearchInput } from '@/components/shared/search-input';
 import { Pagination } from '@/components/shared/pagination';
 import { CustomizableSummaryCards } from '@/components/shared/customizable-widgets';
+import { IndicatorHeaderActions } from '@/components/shared/indicator-header-actions';
+import { VehicleIdentityCell } from '@/components/shared/table-identity-cells';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -20,6 +23,7 @@ import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 export function VehiclesPage() {
   const navigate = useNavigate();
   const params = useListParams();
+  const [isConfiguringPanel, setIsConfiguringPanel] = useState(false);
   const query = useQuery({
     queryKey: ['veiculos', params.page, DEFAULT_TABLE_PAGE_SIZE, params.search],
     queryFn: () => vehiclesService.list({ page: params.page, pageSize: DEFAULT_TABLE_PAGE_SIZE, search: params.search }),
@@ -78,14 +82,22 @@ export function VehiclesPage() {
   return (
     <PageContainer>
       <PageHeader title="Veículos" description="Controle da frota atendida pela oficina.">
-        <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por placa, marca, modelo ou cliente" />
-        <Button className="shrink-0" onClick={() => navigate('/app/veiculos/novo')}>Novo veículo</Button>
+        <IndicatorHeaderActions
+          onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
+          primaryActionLabel="Novo veículo"
+          onPrimaryAction={() => navigate('/app/veiculos/novo')}
+        >
+          <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por placa, marca, modelo ou cliente" />
+        </IndicatorHeaderActions>
       </PageHeader>
       <CustomizableSummaryCards
         storageKey="oficina:veiculos:summary-cards:v1"
         cards={summaryCards}
         defaultVisibleIds={['total', 'with-client', 'with-mileage']}
         gridClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+        isConfiguring={isConfiguringPanel}
+        onConfiguringChange={setIsConfiguringPanel}
+        showHeaderAction={false}
       />
       <Card>
         <CardContent className="p-0">
@@ -93,12 +105,11 @@ export function VehiclesPage() {
           {query.isError ? <ErrorState onRetry={() => query.refetch()} /> : null}
           {!query.isLoading && !query.isError && query.data?.data.length === 0 ? <EmptyState /> : null}
           {query.data?.data.length ? (
-            <div className="p-6">
-              <Table>
+            <div className="overflow-x-auto">
+              <Table className="min-w-[900px]">
                 <TableHeader>
                   <TableRow>
-                    <SortableTableHead column="plate" sortState={sortState} onSort={requestSort}>Placa</SortableTableHead>
-                    <SortableTableHead column="model" sortState={sortState} onSort={requestSort}>Modelo</SortableTableHead>
+                    <SortableTableHead column="plate" sortState={sortState} onSort={requestSort}>Veículo</SortableTableHead>
                     <SortableTableHead column="client" sortState={sortState} onSort={requestSort}>Cliente</SortableTableHead>
                     <SortableTableHead column="year" sortState={sortState} onSort={requestSort}>Ano</SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>
@@ -107,8 +118,9 @@ export function VehiclesPage() {
                 <TableBody>
                   {sortedItems.map((vehicle) => (
                     <TableRow key={vehicle.id}>
-                      <TableCell>{vehicle.plate}</TableCell>
-                      <TableCell>{vehicle.brand} {vehicle.model}</TableCell>
+                      <TableCell>
+                        <VehicleIdentityCell plate={vehicle.plate} description={`${vehicle.brand} ${vehicle.model}`} />
+                      </TableCell>
                       <TableCell>{vehicle.clientName ?? '-'}</TableCell>
                       <TableCell>{vehicle.year}</TableCell>
                       <TableCell className="text-right">
@@ -125,7 +137,7 @@ export function VehiclesPage() {
                   ))}
                 </TableBody>
               </Table>
-              <div className="mt-6">
+              <div className="p-5">
                 <Pagination page={query.data.page} total={query.data.total} pageSize={query.data.pageSize} onPageChange={params.setPage} />
               </div>
             </div>

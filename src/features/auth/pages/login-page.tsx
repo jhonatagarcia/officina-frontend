@@ -218,7 +218,7 @@ export function LoginPage() {
                 </div>
                 <GoogleSignInButton
                   clientId={env.VITE_GOOGLE_CLIENT_ID}
-                  disabled={isLoggingIn}
+                  disabled={true}
                   isSubmitting={isGoogleLoggingIn}
                   onCredential={onGoogleCredential}
                   onGoogleError={onGoogleError}
@@ -243,6 +243,7 @@ export function LoginPage() {
             Ainda não tem uma conta?{' '}
             <button
               className="font-semibold text-orange-300 transition-colors hover:text-orange-200"
+              disabled={true}
               type="button"
               onClick={() => setRegisterOpen(true)}
             >

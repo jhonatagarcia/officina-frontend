@@ -1,13 +1,14 @@
 import { lazy, type ComponentType } from 'react';
 import {
+  BadgeDollarSign,
+  Boxes,
+  Building2,
   CarFront,
-  ClipboardList,
+  ClipboardCheck,
+  FileText,
   LayoutDashboard,
-  Settings,
-  Package,
-  Receipt,
-  Users,
-  Wallet,
+  UserRoundCog,
+  UsersRound,
   Wrench,
 } from 'lucide-react';
 import type { Role } from '@/types/auth';
@@ -104,7 +105,7 @@ export const appRoutes: AppRouteDefinition[] = [
     roles: ['ADMIN', 'ATENDENTE'],
     element: <ClientsPage />,
     label: 'Clientes',
-    icon: Users,
+    icon: UsersRound,
     sidebar: true,
   },
   {
@@ -164,7 +165,7 @@ export const appRoutes: AppRouteDefinition[] = [
     roles: ['ADMIN', 'ATENDENTE'],
     element: <BudgetsPage />,
     label: 'Orçamentos',
-    icon: Receipt,
+    icon: FileText,
     sidebar: true,
   },
   {
@@ -185,7 +186,7 @@ export const appRoutes: AppRouteDefinition[] = [
     roles: ['ADMIN', 'ATENDENTE', 'MECANICO'],
     element: <ServiceOrdersPage />,
     label: 'Ordens de Serviço',
-    icon: ClipboardList,
+    icon: ClipboardCheck,
     sidebar: true,
   },
   {
@@ -200,7 +201,7 @@ export const appRoutes: AppRouteDefinition[] = [
     roles: ['ADMIN', 'ATENDENTE'],
     element: <InventoryPage />,
     label: 'Estoque',
-    icon: Package,
+    icon: Boxes,
     sidebar: true,
   },
   {
@@ -248,7 +249,7 @@ export const appRoutes: AppRouteDefinition[] = [
     roles: ['ADMIN'],
     element: <MechanicsPage />,
     label: 'Mecânicos',
-    icon: Wrench,
+    icon: UserRoundCog,
     sidebar: true,
   },
   {
@@ -275,7 +276,7 @@ export const appRoutes: AppRouteDefinition[] = [
     roles: ['ADMIN', 'FINANCEIRO'],
     element: <FinancialPage />,
     label: 'Financeiro',
-    icon: Wallet,
+    icon: BadgeDollarSign,
     sidebar: true,
     requiresCnpj: true,
   },
@@ -285,7 +286,7 @@ export const appRoutes: AppRouteDefinition[] = [
     roles: ['ADMIN'],
     element: <WorkshopProfilePage />,
     label: 'Oficina',
-    icon: Settings,
+    icon: Building2,
     sidebar: true,
   },
 ];
@@ -308,5 +309,11 @@ export function getSidebarRoutes(role?: Role) {
 
   return appRoutes
     .filter((route) => route.sidebar && route.roles.includes(role))
+    .sort((left, right) => sidebarOrder.indexOf(left.key as (typeof sidebarOrder)[number]) - sidebarOrder.indexOf(right.key as (typeof sidebarOrder)[number]));
+}
+
+export function getSidebarMenuRoutes() {
+  return appRoutes
+    .filter((route) => route.sidebar)
     .sort((left, right) => sidebarOrder.indexOf(left.key as (typeof sidebarOrder)[number]) - sidebarOrder.indexOf(right.key as (typeof sidebarOrder)[number]));
 }

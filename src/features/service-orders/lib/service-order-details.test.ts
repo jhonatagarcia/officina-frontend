@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  getServiceOrderLaborItems,
   toDateInputValue,
   validateExpectedDeliveryAtValue,
 } from '@/features/service-orders/lib/service-order-details';
+import type { ServiceOrder } from '@/features/service-orders/types';
 
 describe('service-order-details helpers', () => {
   beforeEach(() => {
@@ -41,6 +43,72 @@ describe('service-order-details helpers', () => {
 
     it('rejeita data anterior ao dia atual', () => {
       expect(validateExpectedDeliveryAtValue('2026-05-07')).toBe('A previsao de entrega nao pode ser anterior ao dia atual.');
+    });
+  });
+
+  describe('getServiceOrderLaborItems', () => {
+    const baseOrder: ServiceOrder = {
+      id: 'os-1',
+      orderNumber: 'OS-1',
+      budgetId: null,
+      clientId: 'client-1',
+      vehicleId: 'vehicle-1',
+      mechanicId: null,
+      clientName: 'Cliente',
+      vehicleLabel: 'ABC1234',
+      mechanicName: null,
+      problemDescription: 'Problema',
+      diagnosis: null,
+      servicesPerformed: null,
+      vehicleChecklist: null,
+      openedAt: '2026-05-08',
+      expectedDeliveryAt: null,
+      finishedAt: null,
+      deliveredAt: null,
+      status: 'ABERTA',
+      notes: null,
+      createdAt: '2026-05-08',
+      updatedAt: '2026-05-08',
+    };
+
+    it('usa itens de mao de obra do orçamento quando disponíveis', () => {
+      const items = getServiceOrderLaborItems({
+        ...baseOrder,
+        budgetItems: [
+          {
+            id: 'labor-1',
+            type: 'LABOR',
+            inventoryItemId: null,
+            serviceCode: 'SRV-001',
+            description: 'Troca de óleo',
+            quantity: 1,
+            unitPrice: 120,
+            totalPrice: 120,
+            inventoryItem: null,
+          },
+        ],
+      });
+
+      expect(items).toHaveLength(1);
+      expect(items[0].description).toBe('Troca de óleo');
+    });
+
+    it('cria item de serviço a partir de servicesPerformed quando não há budgetItems', () => {
+      const items = getServiceOrderLaborItems({
+        ...baseOrder,
+        servicesPerformed: 'Serviço executado manualmente',
+        laborTotal: 300,
+      });
+
+      expect(items).toEqual([
+        expect.objectContaining({
+          id: 'services-performed',
+          type: 'LABOR',
+          description: 'Serviço executado manualmente',
+          unitPrice: 300,
+          totalPrice: 300,
+        }),
+      ]);
     });
   });
 });

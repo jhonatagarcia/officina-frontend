@@ -10,6 +10,8 @@ import { PageHeader } from '@/components/shared/page-header';
 import { Pagination } from '@/components/shared/pagination';
 import { SearchInput } from '@/components/shared/search-input';
 import { CustomizableSummaryCards } from '@/components/shared/customizable-widgets';
+import { IndicatorHeaderActions } from '@/components/shared/indicator-header-actions';
+import { TableFilterChips } from '@/components/shared/table-filter-chips';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,6 +28,7 @@ type ActiveFilter = 'ACTIVE' | 'INACTIVE' | 'ALL';
 export function MechanicsPage() {
   const navigate = useNavigate();
   const params = useListParams();
+  const [isConfiguringPanel, setIsConfiguringPanel] = useState(false);
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('ALL');
   const handleActiveFilterChange = (value: ActiveFilter) => {
     setActiveFilter(value);
@@ -90,7 +93,11 @@ export function MechanicsPage() {
   return (
     <PageContainer>
       <PageHeader title="Mecânicos" description="Cadastro e gestão dos mecânicos da oficina.">
-        <div className="flex w-full flex-col gap-3 xl:w-auto xl:flex-row">
+        <IndicatorHeaderActions
+          onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
+          primaryActionLabel="Novo mecânico"
+          onPrimaryAction={() => navigate('/app/mecanicos/novo')}
+        >
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por nome ou e-mail" />
           <Select value={activeFilter} onValueChange={(value) => handleActiveFilterChange(value as ActiveFilter)}>
             <SelectTrigger className="w-[180px]">
@@ -102,25 +109,36 @@ export function MechanicsPage() {
               <SelectItem value="INACTIVE">Inativos</SelectItem>
             </SelectContent>
           </Select>
-          <Button className="shrink-0" type="button" onClick={() => navigate('/app/mecanicos/novo')}>
-            Novo mecânico
-          </Button>
-        </div>
+        </IndicatorHeaderActions>
       </PageHeader>
       <CustomizableSummaryCards
         storageKey="oficina:mecanicos:summary-cards:v1"
         cards={summaryCards}
         defaultVisibleIds={['total', 'active', 'last-login']}
         gridClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+        isConfiguring={isConfiguringPanel}
+        onConfiguringChange={setIsConfiguringPanel}
+        showHeaderAction={false}
       />
       <Card>
         <CardContent className="p-0">
           {query.isLoading ? <LoadingState /> : null}
           {query.isError ? <ErrorState onRetry={() => query.refetch()} /> : null}
           {!query.isLoading && !query.isError && listedItems.length === 0 ? <EmptyState /> : null}
+          {query.data ? (
+            <TableFilterChips
+              value={activeFilter}
+              options={[
+                { value: 'ALL', label: 'Todos', count: query.data.data.length, icon: Wrench, tone: 'slate' },
+                { value: 'ACTIVE', label: 'Ativos', count: activeCount, icon: CheckCircle2, tone: 'emerald' },
+                { value: 'INACTIVE', label: 'Inativos', count: inactiveCount, icon: XCircle, tone: 'rose' },
+              ]}
+              onChange={(value) => handleActiveFilterChange(value as ActiveFilter)}
+            />
+          ) : null}
           {listedItems.length ? (
-            <div className="p-6">
-              <Table>
+            <div className="overflow-x-auto">
+              <Table className="min-w-[900px]">
                 <TableHeader>
                   <TableRow>
                     <SortableTableHead column="name" sortState={sortState} onSort={requestSort}>Nome</SortableTableHead>
@@ -153,7 +171,7 @@ export function MechanicsPage() {
                   ))}
                 </TableBody>
               </Table>
-              <div className="mt-6">
+              <div className="p-5">
                 <Pagination page={query.data!.page} total={query.data!.total} pageSize={query.data!.pageSize} onPageChange={params.setPage} />
               </div>
             </div>

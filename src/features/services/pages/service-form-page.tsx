@@ -1,15 +1,31 @@
 import { Controller } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
-import { TextAreaField, TextField, SelectField } from '@/components/shared/form-fields';
+import { ArrowLeft } from 'lucide-react';
+import {
+  TextAreaField,
+  TextField,
+  SelectField,
+} from '@/components/shared/form-fields';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
+import {
+  FormActions,
+  FormCard,
+  FormSectionHeader,
+  formPrimaryButtonClassName,
+} from '@/components/shared/form-layout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useServiceForm } from '@/features/services/hooks/use-service-form';
 import { formatCurrency, parseCurrencyInput } from '@/lib/utils';
 
@@ -26,19 +42,30 @@ const materialSourceOptions = [
   { label: 'Flexível', value: 'FLEXIBLE' },
 ];
 
-export function ServiceFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
+export function ServiceFormPage({
+  mode,
+}: {
+  mode: 'create' | 'edit' | 'view';
+}) {
   const navigate = useNavigate();
   const { id = '' } = useParams();
   const isReadOnly = mode === 'view';
-  const { query, form, mutation } = useServiceForm(mode, id, () => navigate('/app/servicos'));
+  const { query, form, mutation } = useServiceForm(mode, id, () =>
+    navigate('/app/servicos'),
+  );
 
   const laborPrice = form.watch('laborPrice') || 0;
   const suggestedTotalPrice = laborPrice;
   const availableBillingTypeOptions =
-    mode === 'create' ? billingTypeOptions.filter((option) => option.value !== 'FIXED_PRICE') : billingTypeOptions;
+    mode === 'create'
+      ? billingTypeOptions.filter((option) => option.value !== 'FIXED_PRICE')
+      : billingTypeOptions;
   const availableMaterialSourceOptions =
     mode === 'create'
-      ? materialSourceOptions.filter((option) => option.value !== 'FLEXIBLE' && option.value !== 'NO_PARTS_REQUIRED')
+      ? materialSourceOptions.filter(
+          (option) =>
+            option.value !== 'FLEXIBLE' && option.value !== 'NO_PARTS_REQUIRED',
+        )
       : materialSourceOptions;
 
   if (query.isLoading) return <LoadingState />;
@@ -47,106 +74,155 @@ export function ServiceFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) 
   return (
     <PageContainer>
       <PageHeader
-        title={mode === 'create' ? 'Novo serviço' : mode === 'edit' ? 'Editar serviço' : 'Detalhes do serviço'}
+        title={
+          mode === 'create'
+            ? 'Novo serviço'
+            : mode === 'edit'
+              ? 'Editar serviço'
+              : 'Detalhes do serviço'
+        }
         description="Cadastro padronizado para uso em orçamento e ordem de serviço."
-      />
-      <Card>
-        <CardContent className="p-6">
-          <form className="grid gap-4 md:grid-cols-2" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
-            {mode !== 'create' ? (
-              <div className="space-y-2">
-                <Label htmlFor="code">Código</Label>
-                <Input id="code" disabled value={query.data?.code ?? ''} />
-              </div>
+      >
+        <Button
+          className="min-h-11 rounded-xl bg-white/90 font-semibold"
+          variant="outline"
+          onClick={() => navigate('/app/servicos')}
+        >
+          <ArrowLeft className="size-4" strokeWidth={1.75} />
+          Voltar
+        </Button>
+      </PageHeader>
+      <FormCard>
+        <form
+          className="grid gap-5 md:grid-cols-2"
+          onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
+        >
+          <FormSectionHeader eyebrow="Catálogo" title="Dados do serviço" />
+          {mode !== 'create' ? (
+            <div className="space-y-2">
+              <Label htmlFor="code">Código</Label>
+              <Input id="code" disabled value={query.data?.code ?? ''} />
+            </div>
+          ) : null}
+          <TextField
+            control={form.control}
+            name="name"
+            label="Nome do serviço"
+            disabled={isReadOnly}
+            error={form.formState.errors.name?.message}
+          />
+          <TextField
+            control={form.control}
+            name="category"
+            label="Categoria"
+            disabled={isReadOnly}
+            error={form.formState.errors.category?.message}
+          />
+          <SelectField
+            control={form.control}
+            name="billingType"
+            label="Tipo de cobrança"
+            disabled={isReadOnly}
+            options={availableBillingTypeOptions}
+            error={form.formState.errors.billingType?.message}
+          />
+          <SelectField
+            control={form.control}
+            name="materialSource"
+            label="Origem do material"
+            disabled={isReadOnly}
+            options={availableMaterialSourceOptions}
+            error={form.formState.errors.materialSource?.message}
+          />
+          <div className="space-y-2">
+            <Label htmlFor="laborPrice">Valor da mão de obra</Label>
+            <Input
+              id="laborPrice"
+              disabled={isReadOnly}
+              inputMode="numeric"
+              value={formatCurrency(form.watch('laborPrice') ?? 0)}
+              onChange={(event) =>
+                form.setValue(
+                  'laborPrice',
+                  parseCurrencyInput(event.target.value),
+                  { shouldValidate: true, shouldDirty: true },
+                )
+              }
+            />
+            {form.formState.errors.laborPrice?.message ? (
+              <p className="text-xs text-destructive">
+                {form.formState.errors.laborPrice.message}
+              </p>
             ) : null}
-            <TextField control={form.control} name="name" label="Nome do serviço" disabled={isReadOnly} error={form.formState.errors.name?.message} />
-            <TextField control={form.control} name="category" label="Categoria" disabled={isReadOnly} error={form.formState.errors.category?.message} />
-            <SelectField
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="suggestedTotalPrice">Total sugerido</Label>
+            <Input
+              id="suggestedTotalPrice"
+              disabled
+              value={formatCurrency(suggestedTotalPrice)}
+            />
+          </div>
+          <TextField
+            control={form.control}
+            name="warrantyDays"
+            label="Garantia em dias"
+            type="number"
+            disabled={isReadOnly}
+            error={form.formState.errors.warrantyDays?.message}
+          />
+          <Controller
+            control={form.control}
+            name="active"
+            render={({ field }) => (
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  disabled={isReadOnly || mode === 'create'}
+                  onValueChange={(value) => field.onChange(value === 'true')}
+                  value={field.value ? 'true' : 'false'}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="true">Ativo</SelectItem>
+                    <SelectItem value="false">Inativo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          />
+          <div className="md:col-span-2">
+            <TextAreaField
               control={form.control}
-              name="billingType"
-              label="Tipo de cobrança"
+              name="description"
+              label="Descrição"
               disabled={isReadOnly}
-              options={availableBillingTypeOptions}
-              error={form.formState.errors.billingType?.message}
+              error={form.formState.errors.description?.message}
             />
-            <SelectField
+          </div>
+          <div className="md:col-span-2">
+            <TextAreaField
               control={form.control}
-              name="materialSource"
-              label="Origem do material"
+              name="internalNotes"
+              label="Observações internas"
               disabled={isReadOnly}
-              options={availableMaterialSourceOptions}
-              error={form.formState.errors.materialSource?.message}
+              error={form.formState.errors.internalNotes?.message}
             />
-            <div className="space-y-2">
-              <Label htmlFor="laborPrice">Valor da mão de obra</Label>
-              <Input
-                id="laborPrice"
-                disabled={isReadOnly}
-                inputMode="numeric"
-                value={formatCurrency(form.watch('laborPrice') ?? 0)}
-                onChange={(event) => form.setValue('laborPrice', parseCurrencyInput(event.target.value), { shouldValidate: true, shouldDirty: true })}
-              />
-              {form.formState.errors.laborPrice?.message ? (
-                <p className="text-xs text-destructive">{form.formState.errors.laborPrice.message}</p>
-              ) : null}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="suggestedTotalPrice">Total sugerido</Label>
-              <Input id="suggestedTotalPrice" disabled value={formatCurrency(suggestedTotalPrice)} />
-            </div>
-            <TextField
-              control={form.control}
-              name="warrantyDays"
-              label="Garantia em dias"
-              type="number"
-              disabled={isReadOnly}
-              error={form.formState.errors.warrantyDays?.message}
-            />
-            <Controller
-              control={form.control}
-              name="active"
-              render={({ field }) => (
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select disabled={isReadOnly || mode === 'create'} onValueChange={(value) => field.onChange(value === 'true')} value={field.value ? 'true' : 'false'}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="true">Ativo</SelectItem>
-                      <SelectItem value="false">Inativo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            />
-            <div className="md:col-span-2">
-              <TextAreaField
-                control={form.control}
-                name="description"
-                label="Descrição"
-                disabled={isReadOnly}
-                error={form.formState.errors.description?.message}
-              />
-            </div>
-            <div className="md:col-span-2">
-              <TextAreaField
-                control={form.control}
-                name="internalNotes"
-                label="Observações internas"
-                disabled={isReadOnly}
-                error={form.formState.errors.internalNotes?.message}
-              />
-            </div>
-            <div className="md:col-span-2 flex justify-end gap-3">
-              <Button variant="outline" type="button" onClick={() => navigate('/app/servicos')}>
-                Voltar
+          </div>
+          <FormActions>
+            {!isReadOnly ? (
+              <Button
+                className={formPrimaryButtonClassName}
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending ? 'Salvando...' : 'Salvar'}
               </Button>
-              {!isReadOnly ? <Button disabled={mutation.isPending}>{mutation.isPending ? 'Salvando...' : 'Salvar'}</Button> : null}
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            ) : null}
+          </FormActions>
+        </form>
+      </FormCard>
     </PageContainer>
   );
 }

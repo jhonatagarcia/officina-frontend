@@ -1,4 +1,4 @@
-import type { ServiceOrderStatus } from '@/features/service-orders/types';
+import type { ServiceOrder, ServiceOrderBudgetItem, ServiceOrderStatus } from '@/features/service-orders/types';
 
 export function toDateInputValue(value?: string | null) {
   if (!value) return '';
@@ -49,6 +49,8 @@ export function formatServiceOrderStatusLabel(status: ServiceOrderStatus) {
   switch (status) {
     case 'ABERTA':
       return 'Aberta';
+    case 'AGUARDANDO_PECA':
+      return 'Aguardando peça';
     case 'EM_ANDAMENTO':
       return 'Em andamento';
     case 'FINALIZADA':
@@ -58,4 +60,29 @@ export function formatServiceOrderStatusLabel(status: ServiceOrderStatus) {
     default:
       return status;
   }
+}
+
+export function getServiceOrderLaborItems(order: ServiceOrder): ServiceOrderBudgetItem[] {
+  const laborItems = (order.budgetItems ?? []).filter(
+    (item) => item.type === 'LABOR' || item.type === 'LABOR_AND_PART',
+  );
+
+  if (laborItems.length) return laborItems;
+
+  const performedDescription = order.servicesPerformed?.trim();
+  if (!performedDescription) return [];
+
+  return [
+    {
+      id: 'services-performed',
+      type: 'LABOR',
+      inventoryItemId: null,
+      serviceCode: null,
+      description: performedDescription,
+      quantity: 1,
+      unitPrice: order.laborTotal ?? order.total ?? 0,
+      totalPrice: order.laborTotal ?? order.total ?? 0,
+      inventoryItem: null,
+    },
+  ];
 }

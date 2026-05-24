@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import type { PropsWithChildren } from 'react';
 import { vi } from 'vitest';
 import { Header } from '@/components/layout/header';
@@ -26,14 +26,13 @@ describe('Header', () => {
     getProfileMock.mockReset();
   });
 
-  it('limpa cache de queries e remove sessao ao sair', () => {
+  it('nao exibe o card do usuario no topo', () => {
     const queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
         mutations: { retry: false },
       },
     });
-    queryClient.setQueryData(['clientes'], [{ id: 'client-1' }]);
     getProfileMock.mockResolvedValue({
       id: 'workshop-1',
       tradeName: 'Oficina Avenida',
@@ -58,13 +57,8 @@ describe('Header', () => {
 
     render(<Header />, { wrapper: createWrapper(queryClient) });
 
-    expect(screen.getByText('Ana')).toBeInTheDocument();
-    expect(queryClient.getQueryData(['clientes'])).toEqual([{ id: 'client-1' }]);
-
-    fireEvent.click(screen.getByRole('button', { name: /sair/i }));
-
-    expect(useAuthStore.getState().session).toBeNull();
-    expect(queryClient.getQueryData(['clientes'])).toBeUndefined();
+    expect(screen.queryByText('Ana')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /sair/i })).not.toBeInTheDocument();
   });
 
   it('exibe o nome fantasia da oficina quando o perfil esta carregado', () => {

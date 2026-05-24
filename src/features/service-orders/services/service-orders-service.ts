@@ -29,6 +29,9 @@ interface ServiceOrderApiResponse
   vehicle?: ServiceOrder['vehicle'];
   mechanic?: ServiceOrder['mechanic'] | null;
   parts?: ServiceOrderPartApiResponse[];
+  budget?: {
+    items?: ServiceOrderBudgetItemApiResponse[];
+  } | null;
 }
 
 function mapServiceOrderPart(part: ServiceOrderPartApiResponse): ServiceOrderPart {
@@ -57,7 +60,7 @@ function mapServiceOrder(order: ServiceOrderApiResponse): ServiceOrder {
     laborTotal: order.laborTotal !== undefined ? toNumber(order.laborTotal) : undefined,
     discount: order.discount !== undefined ? toNumber(order.discount) : undefined,
     total: order.total !== undefined ? toNumber(order.total) : undefined,
-    budgetItems: order.budgetItems?.map(mapServiceOrderBudgetItem),
+    budgetItems: (order.budgetItems ?? order.budget?.items)?.map(mapServiceOrderBudgetItem),
     parts: order.parts?.map(mapServiceOrderPart),
   };
 }

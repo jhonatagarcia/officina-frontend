@@ -1,5 +1,10 @@
 import type { UseFormReturn } from 'react-hook-form';
 import { TextField } from '@/components/shared/form-fields';
+import {
+  FormActions,
+  FormSectionHeader,
+  formPrimaryButtonClassName,
+} from '@/components/shared/form-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,23 +16,33 @@ interface InventoryItemFormProps {
   mode: 'create' | 'edit';
   internalCode: string;
   isPending: boolean;
-  onCancel: () => void;
   onSubmit: (values: InventoryItemSchema) => void;
 }
 
 function capitalizeWords(value: string) {
   return value.replace(
     /(^|[\s'-])(\p{L})/gu,
-    (_, separator: string, letter: string) => `${separator}${letter.toLocaleUpperCase('pt-BR')}`,
+    (_, separator: string, letter: string) =>
+      `${separator}${letter.toLocaleUpperCase('pt-BR')}`,
   );
 }
 
-export function InventoryItemForm({ form, mode, internalCode, isPending, onCancel, onSubmit }: InventoryItemFormProps) {
+export function InventoryItemForm({
+  form,
+  mode,
+  internalCode,
+  isPending,
+  onSubmit,
+}: InventoryItemFormProps) {
   const cost = form.watch('cost') ?? 0;
   const salePrice = form.watch('salePrice') ?? 0;
 
   return (
-    <form className="grid gap-4 md:grid-cols-2" onSubmit={form.handleSubmit(onSubmit)}>
+    <form
+      className="grid gap-5 md:grid-cols-2"
+      onSubmit={form.handleSubmit(onSubmit)}
+    >
+      <FormSectionHeader eyebrow="Estoque" title="Dados da peça / produto" />
       {mode === 'edit' ? (
         <div className="space-y-2">
           <Label htmlFor="internalCode">ID</Label>
@@ -83,7 +98,9 @@ export function InventoryItemForm({ form, mode, internalCode, isPending, onCance
           }
         />
         {form.formState.errors.cost?.message ? (
-          <p className="text-xs text-destructive">{form.formState.errors.cost.message}</p>
+          <p className="text-xs text-destructive">
+            {form.formState.errors.cost.message}
+          </p>
         ) : null}
       </div>
       <div className="space-y-2">
@@ -100,15 +117,16 @@ export function InventoryItemForm({ form, mode, internalCode, isPending, onCance
           }
         />
         {form.formState.errors.salePrice?.message ? (
-          <p className="text-xs text-destructive">{form.formState.errors.salePrice.message}</p>
+          <p className="text-xs text-destructive">
+            {form.formState.errors.salePrice.message}
+          </p>
         ) : null}
       </div>
-      <div className="flex justify-end gap-3 md:col-span-2">
-        <Button variant="outline" type="button" onClick={onCancel}>
-          Voltar
+      <FormActions>
+        <Button className={formPrimaryButtonClassName} disabled={isPending}>
+          {isPending ? 'Salvando...' : 'Salvar'}
         </Button>
-        <Button disabled={isPending}>{isPending ? 'Salvando...' : 'Salvar'}</Button>
-      </div>
+      </FormActions>
     </form>
   );
 }
