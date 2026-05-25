@@ -1,3 +1,5 @@
+import type { ServiceOrderStatus } from '@/features/service-orders/types';
+
 export type InventoryStatus = 'OK' | 'BAIXO' | 'CRITICO';
 
 export interface InventoryItem {
@@ -13,6 +15,30 @@ export interface InventoryItem {
   status: InventoryStatus;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RelatedPendingServiceOrderSuggestion {
+  serviceOrderId: string;
+  orderNumber: string;
+  clientName: string;
+  vehiclePlate: string;
+  pendingPartId: string;
+  inventoryItemId: string;
+  quantityRequired: number;
+  quantityAvailable: number;
+  status: string;
+  serviceOrderStatus?: ServiceOrderStatus;
+  suggestedAction: 'RESUME_SERVICE_ORDER';
+}
+
+export interface RelatedPendingServiceOrders {
+  count: number;
+  items: RelatedPendingServiceOrderSuggestion[];
+}
+
+export interface InventoryItemSaveResult {
+  item: InventoryItem;
+  relatedPendingServiceOrders?: RelatedPendingServiceOrders;
 }
 
 export interface InventoryMovement {

@@ -25,12 +25,12 @@ const defaultBudgetValues: BudgetSchema = {
   ],
 };
 
-export function useBudgetForm(mode: 'create' | 'view', id: string, onSuccess: () => void) {
+export function useBudgetForm(mode: 'create' | 'edit' | 'view', id: string, onSuccess: () => void) {
   const queryClient = useQueryClient();
   const budgetQuery = useQuery({
     queryKey: ['orcamento', id],
     queryFn: () => budgetsService.getById(id),
-    enabled: mode === 'view',
+    enabled: mode !== 'create',
   });
 
   const form = useForm<BudgetSchema>({
@@ -59,7 +59,7 @@ export function useBudgetForm(mode: 'create' | 'view', id: string, onSuccess: ()
 
   const mutation = useMutation({
     mutationFn: async (values: BudgetSchema) => {
-      return budgetsService.create({
+      const payload = {
         clientId: values.clientId,
         vehicleId: values.vehicleId,
         problemDescription: values.problemDescription,
@@ -73,13 +73,22 @@ export function useBudgetForm(mode: 'create' | 'view', id: string, onSuccess: ()
           quantity: item.quantity,
           unitPrice: item.unitPrice,
         })),
-      });
+      };
+
+      if (mode === 'edit') return budgetsService.update(id, payload);
+      return budgetsService.create(payload);
     },
     onSuccess: (savedBudget) => {
       queryClient.setQueryData(['orcamento', savedBudget.id], savedBudget);
       queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      toast.success('Orçamento criado com sucesso.');
+      toast.success(
+        mode === 'edit' && budgetQuery.data?.status === 'APROVADO'
+          ? 'Orçamento atualizado e enviado para nova aprovação.'
+          : mode === 'edit'
+            ? 'Orçamento atualizado com sucesso.'
+            : 'Orçamento criado com sucesso.',
+      );
       onSuccess();
     },
   });

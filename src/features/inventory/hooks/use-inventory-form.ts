@@ -6,8 +6,9 @@ import { inventoryItemSchema, type InventoryItemSchema } from '@/features/invent
 import { inventoryService } from '@/features/inventory/services/inventory-service';
 import { normalizeNullableString } from '@/lib/utils';
 import type { ApiErrorResponse } from '@/types/common';
+import type { InventoryItemSaveResult } from '@/features/inventory/types';
 
-export function useInventoryForm(mode: 'create' | 'edit', id: string, onSuccess: () => void) {
+export function useInventoryForm(mode: 'create' | 'edit', id: string, onSuccess: (result: InventoryItemSaveResult) => void) {
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ['estoque-item', id],
@@ -52,14 +53,14 @@ export function useInventoryForm(mode: 'create' | 'edit', id: string, onSuccess:
       if (mode === 'edit') return inventoryService.update(id, payload);
       return inventoryService.create(payload);
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['estoque'] });
       queryClient.invalidateQueries({ queryKey: ['estoque-item'] });
       queryClient.invalidateQueries({ queryKey: ['reference', 'estoque'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['financeiro'] });
       toast.success('Peça salva com sucesso.');
-      onSuccess();
+      onSuccess(result);
     },
     onError: (error: ApiErrorResponse) => {
       toast.error(error.message || 'Não foi possível salvar a peça.');

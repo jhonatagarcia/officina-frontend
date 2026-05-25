@@ -1,3 +1,5 @@
+import type { ServiceOrderStatus } from '@/features/service-orders/types';
+
 export type BudgetStatus = 'PENDENTE' | 'APROVADO' | 'REPROVADO';
 export type BudgetItemType = 'PART' | 'LABOR' | 'LABOR_AND_PART';
 
@@ -55,6 +57,6 @@ export interface BudgetVehicleSummary {
 export interface BudgetServiceOrderSummary {
   id: string;
   orderNumber: string;
-  status: BudgetStatus;
+  status: ServiceOrderStatus;
   openedAt: string;
 }

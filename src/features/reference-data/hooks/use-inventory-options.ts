@@ -12,6 +12,7 @@ export function useInventoryOptions() {
         name: item.name,
         internalCode: item.internalCode,
         salePrice: item.salePrice,
+        quantity: item.quantity,
       }));
     },
   });

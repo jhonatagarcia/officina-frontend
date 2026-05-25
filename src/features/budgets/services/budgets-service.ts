@@ -41,6 +41,22 @@ interface BudgetApiResponse {
   serviceOrder?: Budget['serviceOrder'] | null;
 }
 
+export interface SaveBudgetPayload {
+  clientId: string;
+  vehicleId: string;
+  problemDescription: string;
+  notes?: string;
+  discount: number;
+  items: Array<{
+    type: BudgetItemType;
+    serviceCatalogItemId?: string;
+    inventoryItemId?: string;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
+}
+
 function mapBudgetItem(item: BudgetItemApiResponse): BudgetItem {
   return {
     ...item,
@@ -74,22 +90,12 @@ export const budgetsService = {
     const response = await http.get<BudgetApiResponse>(`/budgets/${id}`);
     return mapBudget(response.data);
   },
-  async create(payload: {
-    clientId: string;
-    vehicleId: string;
-    problemDescription: string;
-    notes?: string;
-    discount: number;
-    items: Array<{
-      type: BudgetItemType;
-      serviceCatalogItemId?: string;
-      inventoryItemId?: string;
-      description: string;
-      quantity: number;
-      unitPrice: number;
-    }>;
-  }) {
+  async create(payload: SaveBudgetPayload) {
     const response = await http.post<BudgetApiResponse>('/budgets', payload);
+    return mapBudget(response.data);
+  },
+  async update(id: string, payload: SaveBudgetPayload) {
+    const response = await http.patch<BudgetApiResponse>(`/budgets/${id}`, payload);
     return mapBudget(response.data);
   },
   async approve(id: string) {

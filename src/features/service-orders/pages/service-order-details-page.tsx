@@ -1,14 +1,41 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Check, Edit3, FileDown, Info, Package, Play, Plus, Printer, Share2, Wrench } from 'lucide-react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Check, Edit3, FileDown, Info, Package, PackagePlus, Play, Plus, Printer, Save, Share2, Trash2, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { mechanicsService } from '@/features/mechanics/services/mechanics-service';
+import { PendingPartDialog } from '@/features/service-orders/components/pending-part-dialog';
+import { PendingPartOfferDialog } from '@/features/service-orders/components/pending-part-offer-dialog';
+import { PendingPartsCard } from '@/features/service-orders/components/pending-parts-card';
+import { RegressiveStatusChangeDialog } from '@/features/service-orders/components/regressive-status-change-dialog';
+import { RemoveServiceOrderPartDialog } from '@/features/service-orders/components/remove-service-order-part-dialog';
+import { RemoveServiceOrderItemDialog } from '@/features/service-orders/components/remove-service-order-item-dialog';
+import { ResumeServiceOrderDialog } from '@/features/service-orders/components/resume-service-order-dialog';
+import { ServiceOrderStockPartDialog } from '@/features/service-orders/components/service-order-stock-part-dialog';
+import { ServiceOrderItemDialog } from '@/features/service-orders/components/service-order-item-dialog';
 import { serviceOrdersService } from '@/features/service-orders/services/service-orders-service';
-import type { ServiceOrder, ServiceOrderStatus } from '@/features/service-orders/types';
-import { getServiceOrderLaborItems } from '@/features/service-orders/lib/service-order-details';
+import type {
+  CreateServiceOrderPendingPartPayload,
+  ServiceOrder,
+  ServiceOrderPart,
+  ServiceOrderPendingPart,
+  ServiceOrderBudgetItem,
+  ServiceOrderStatus,
+  UpdateServiceOrderItemPayload,
+} from '@/features/service-orders/types';
+import { getEditableServiceOrderItems, getServiceOrderLaborItems } from '@/features/service-orders/lib/service-order-details';
 import { generateServiceOrderPdf } from '@/features/service-orders/lib/service-order-pdf';
-import { getAppliedServiceOrderParts } from '@/features/service-orders/lib/service-order-parts';
+import {
+  getAppliedServiceOrderParts,
+  getPlannedServiceOrderParts,
+} from '@/features/service-orders/lib/service-order-parts';
+import {
+  getServiceOrderStatusLabel,
+  getServiceOrderStatusTone,
+  isRegressiveServiceOrderStatusChange,
+  isReadOnlyServiceOrderStatus,
+  shouldShowWaitingForPartStep,
+} from '@/features/service-orders/lib/service-order-status';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { ErrorState } from '@/components/shared/error-state';
@@ -18,29 +45,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import { cn, formatCurrency, formatDateOnly, formatPhone, formatServiceOrderNumber } from '@/lib/utils';
 
-function getStatusLabel(status: ServiceOrderStatus) {
-  const labels = {
-    ABERTA: 'Aberta',
-    AGUARDANDO_PECA: 'Aguardando peça',
-    EM_ANDAMENTO: 'Em andamento',
-    FINALIZADA: 'Concluída',
-    ENTREGUE: 'Entregue',
-  };
-  return labels[status];
-}
-
-function getStatusTone(status: ServiceOrderStatus) {
-  if (status === 'ABERTA') return 'stone';
-  if (status === 'AGUARDANDO_PECA') return 'amber';
-  if (status === 'EM_ANDAMENTO') return 'orange';
-  if (status === 'FINALIZADA') return 'emerald';
-  return 'sky';
-}
-
 function getTimelineToneClasses(status: ServiceOrderStatus) {
-  const tone = getStatusTone(status);
+  const tone = getServiceOrderStatusTone(status);
   return {
     bg: cn(
       tone === 'amber' && 'bg-amber-500',
@@ -67,7 +76,7 @@ function getTimelineToneClasses(status: ServiceOrderStatus) {
 }
 
 function StatusPill({ status }: { status: ServiceOrderStatus }) {
-  const tone = getStatusTone(status);
+  const tone = getServiceOrderStatusTone(status);
   return (
     <span
       className={cn(
@@ -89,7 +98,7 @@ function StatusPill({ status }: { status: ServiceOrderStatus }) {
           tone === 'sky' && 'bg-sky-500',
         )}
       />
-      {getStatusLabel(status)}
+      {getServiceOrderStatusLabel(status)}
     </span>
   );
 }
@@ -106,21 +115,19 @@ function getInitials(name?: string | null) {
 }
 
 function getProgressSteps(order: ServiceOrder) {
-  const orderIndex = {
-    ABERTA: 0,
-    AGUARDANDO_PECA: 1,
-    EM_ANDAMENTO: 2,
-    FINALIZADA: 3,
-    ENTREGUE: 4,
-  }[order.status];
-
-  return [
+  const steps = [
     { status: 'ABERTA' as const, title: 'OS aberta', detail: `${formatDateOnly(order.openedAt)} · Atendente`, note: null },
     { status: 'AGUARDANDO_PECA' as const, title: 'Aguardando peça', detail: `${formatDateOnly(order.openedAt)} · Mecânico`, note: 'Peça solicitada ao fornecedor.' },
     { status: 'EM_ANDAMENTO' as const, title: 'Em andamento', detail: order.status === 'EM_ANDAMENTO' ? `${formatDateOnly(order.updatedAt)} · Mecânico` : 'Início do serviço.', note: 'Peça recebida. Início do serviço.' },
     { status: 'FINALIZADA' as const, title: 'Concluída', detail: order.finishedAt ? formatDateOnly(order.finishedAt) : order.expectedDeliveryAt ? `Previsão ${formatDateOnly(order.expectedDeliveryAt)}` : '-', note: null },
     { status: 'ENTREGUE' as const, title: 'Entregue ao cliente', detail: order.deliveredAt ? formatDateOnly(order.deliveredAt) : '-', note: null },
-  ].map((step, index) => ({
+  ].filter((step) => step.status !== 'AGUARDANDO_PECA' || shouldShowWaitingForPartStep(order));
+  const orderIndex = Math.max(
+    steps.findIndex((step) => step.status === order.status),
+    0,
+  );
+
+  return steps.map((step, index) => ({
     ...step,
     state: index < orderIndex ? 'done' : index === orderIndex ? 'current' : 'pending',
   }));
@@ -129,11 +136,31 @@ function getProgressSteps(order: ServiceOrder) {
 export function ServiceOrderDetailsPage() {
   const navigate = useNavigate();
   const { id = '' } = useParams();
+  const [searchParams] = useSearchParams();
+  const pageMode = searchParams.get('mode');
+  const isReadOnlyMode = pageMode === 'view' || pageMode === 'print';
+  const isPrintMode = pageMode === 'print';
   const [nextStatus, setNextStatus] = useState<ServiceOrderStatus | ''>('');
   const [selectedMechanicId, setSelectedMechanicId] = useState('NONE');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [pendingPartOfferOpen, setPendingPartOfferOpen] = useState(false);
+  const [pendingPartDialogOpen, setPendingPartDialogOpen] = useState(false);
+  const [stockPartDialogOpen, setStockPartDialogOpen] = useState(false);
+  const [stockPartToRemove, setStockPartToRemove] = useState<ServiceOrderPart | null>(null);
+  const [executionItemToEdit, setExecutionItemToEdit] = useState<ServiceOrderBudgetItem | null>(null);
+  const [executionItemToRemove, setExecutionItemToRemove] = useState<ServiceOrderBudgetItem | null>(null);
+  const [pendingPartToEdit, setPendingPartToEdit] = useState<ServiceOrderPendingPart | null>(null);
+  const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
+  const [regressiveStatusToConfirm, setRegressiveStatusToConfirm] = useState<ServiceOrderStatus | null>(null);
+  const [isEditingProblem, setIsEditingProblem] = useState(false);
+  const [problemDraft, setProblemDraft] = useState('');
   const queryClient = useQueryClient();
-  const query = useQuery({ queryKey: ['ordem-servico', id], queryFn: () => serviceOrdersService.getById(id) });
+  const query = useQuery({
+    queryKey: ['ordem-servico', id],
+    queryFn: () => serviceOrdersService.getById(id),
+    enabled: Boolean(id),
+  });
+  const isReadOnly = isReadOnlyMode || isReadOnlyServiceOrderStatus(query.data?.status);
   const mechanicsQuery = useQuery({
     queryKey: ['mecanicos', 'options', 'active'],
     queryFn: () => mechanicsService.list({ page: 1, pageSize: 100, active: true }),
@@ -146,6 +173,7 @@ export function ServiceOrderDetailsPage() {
       queryClient.invalidateQueries({ queryKey: ['financeiro'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setNextStatus('');
+      setRegressiveStatusToConfirm(null);
       toast.success('Status atualizado com sucesso.');
       if (updatedOrder.whatsappNotification?.status === 'SENT') {
         toast.success('Notificação enviada pelo WhatsApp.');
@@ -158,10 +186,136 @@ export function ServiceOrderDetailsPage() {
       }
 
       query.refetch();
+      if (updatedOrder.status === 'AGUARDANDO_PECA') {
+        setPendingPartToEdit(null);
+        setPendingPartOfferOpen(true);
+      }
     },
     onError: (error: { message?: string | string[] }) => {
       const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      setNextStatus('');
+      setRegressiveStatusToConfirm(null);
       toast.error(message || 'Não foi possível atualizar o status da ordem de serviço.');
+    },
+  });
+  const createPendingPartMutation = useMutation({
+    mutationFn: (payload: CreateServiceOrderPendingPartPayload) => serviceOrdersService.createPendingPart(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
+      setPendingPartDialogOpen(false);
+      toast.success('Peça pendente salva.');
+    },
+    onError: (error: { message?: string | string[] }) => {
+      const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      toast.error(message || 'Não foi possível salvar a peça pendente.');
+    },
+  });
+  const updatePendingPartMutation = useMutation({
+    mutationFn: ({ pendingPartId, payload }: { pendingPartId: string; payload: CreateServiceOrderPendingPartPayload }) =>
+      serviceOrdersService.updatePendingPart(id, pendingPartId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
+      setPendingPartDialogOpen(false);
+      setPendingPartToEdit(null);
+      toast.success('Peça pendente atualizada.');
+    },
+    onError: (error: { message?: string | string[] }) => {
+      const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      toast.error(message || 'Não foi possível atualizar a peça pendente.');
+    },
+  });
+  const cancelPendingPartMutation = useMutation({
+    mutationFn: (pendingPartId: string) => serviceOrdersService.cancelPendingPart(id, pendingPartId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
+      toast.success('Pendência cancelada.');
+    },
+    onError: (error: { message?: string | string[] }) => {
+      const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      toast.error(message || 'Não foi possível cancelar a pendência.');
+    },
+  });
+  const addStockPartMutation = useMutation({
+    mutationFn: (payload: { inventoryItemId: string; quantity: number; unitPrice: number }) =>
+      serviceOrdersService.addPart(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
+      queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setStockPartDialogOpen(false);
+      toast.success('Peça adicionada à OS.');
+      query.refetch();
+    },
+    onError: (error: { message?: string | string[] }) => {
+      const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      toast.error(message || 'Não foi possível adicionar a peça à OS.');
+    },
+  });
+  const removeStockPartMutation = useMutation({
+    mutationFn: (partId: string) => serviceOrdersService.removePart(id, partId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
+      queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
+      queryClient.invalidateQueries({ queryKey: ['reference', 'estoque', 'options'] });
+      queryClient.invalidateQueries({ queryKey: ['estoque'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setStockPartToRemove(null);
+      toast.success('Peça removida da OS e devolvida ao estoque.');
+      query.refetch();
+    },
+    onError: (error: { message?: string | string[] }) => {
+      const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      toast.error(message || 'Não foi possível remover a peça da OS.');
+    },
+  });
+  const updateExecutionItemMutation = useMutation({
+    mutationFn: ({ itemId, payload }: { itemId: string; payload: UpdateServiceOrderItemPayload }) =>
+      serviceOrdersService.updateItem(id, itemId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setExecutionItemToEdit(null);
+      toast.success('Item da execução atualizado.');
+      query.refetch();
+    },
+    onError: (error: { message?: string | string[] }) => {
+      const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      toast.error(message || 'Não foi possível atualizar o item da execução.');
+    },
+  });
+  const removeExecutionItemMutation = useMutation({
+    mutationFn: (itemId: string) => serviceOrdersService.removeItem(id, itemId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setExecutionItemToRemove(null);
+      toast.success('Item excluído da execução da OS.');
+      query.refetch();
+    },
+    onError: (error: { message?: string | string[] }) => {
+      const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      toast.error(message || 'Não foi possível excluir o item da execução.');
+    },
+  });
+  const resumeMutation = useMutation({
+    mutationFn: () => serviceOrdersService.resumeAfterPartsArrival(id),
+    onSuccess: (updatedOrder) => {
+      queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
+      queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setResumeDialogOpen(false);
+      toast.success('OS retomada com sucesso.');
+      if (updatedOrder.whatsappNotification?.status === 'SENT') {
+        toast.success('Notificação enviada pelo WhatsApp.');
+      }
+      if (updatedOrder.whatsappNotification?.status === 'FAILED') {
+        toast.error(updatedOrder.whatsappNotification.reason || 'OS retomada, mas não foi possível enviar a mensagem no WhatsApp.');
+      }
+      query.refetch();
+    },
+    onError: (error: { message?: string | string[] }) => {
+      const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      toast.error(message || 'Não foi possível retomar a OS.');
     },
   });
   const mechanicMutation = useMutation({
@@ -181,16 +335,49 @@ export function ServiceOrderDetailsPage() {
       toast.error(message || 'Não foi possível atualizar o mecânico responsável.');
     },
   });
+  const problemMutation = useMutation({
+    mutationFn: (problemDescription: string) =>
+      serviceOrdersService.update(id, {
+        problemDescription,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
+      queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
+      setIsEditingProblem(false);
+      toast.success('Problema relatado atualizado.');
+      query.refetch();
+    },
+    onError: (error: { message?: string | string[] }) => {
+      const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      toast.error(message || 'Não foi possível atualizar o problema relatado.');
+    },
+  });
 
   useEffect(() => {
     setSelectedMechanicId(query.data?.mechanicId ?? 'NONE');
   }, [query.data?.mechanicId]);
 
+  useEffect(() => {
+    setProblemDraft(query.data?.problemDescription ?? '');
+  }, [query.data?.problemDescription]);
+
+  useEffect(() => {
+    if (!isPrintMode || !query.data) return;
+    const timeoutId = window.setTimeout(() => window.print(), 250);
+    return () => window.clearTimeout(timeoutId);
+  }, [isPrintMode, query.data]);
+
   if (query.isLoading) return <LoadingState />;
   if (query.isError || !query.data) return <ErrorState onRetry={() => query.refetch()} />;
 
   const budgetLaborItems = getServiceOrderLaborItems(query.data);
+  const editablePlannedItems = getEditableServiceOrderItems(query.data);
+  const plannedParts = getPlannedServiceOrderParts(query.data);
   const appliedParts = getAppliedServiceOrderParts(query.data);
+  const canManageStockParts =
+    !isReadOnly && query.data.status !== 'FINALIZADA' && query.data.status !== 'ENTREGUE';
+  const removableStockPartIds = new Set((query.data.parts ?? []).map((part) => part.id));
+  const progressSteps = getProgressSteps(query.data);
   const canGeneratePdf = query.data.status === 'ENTREGUE';
   const hasMechanicChanged = selectedMechanicId !== (query.data.mechanicId ?? 'NONE');
   const selectedMechanic = mechanicsQuery.data?.data.find((mechanic) => mechanic.id === selectedMechanicId);
@@ -199,7 +386,7 @@ export function ServiceOrderDetailsPage() {
     activeMechanicName
       ? [activeMechanicName, `Mecânico responsável pela OS: ${activeMechanicName}.`, query.data.updatedAt]
       : ['Sistema', 'OS sem mecânico responsável definido.', query.data.updatedAt],
-    ['Sistema', `Status atual: ${getStatusLabel(query.data.status)}.`, query.data.updatedAt],
+    ['Sistema', `Status atual: ${getServiceOrderStatusLabel(query.data.status)}.`, query.data.updatedAt],
     [query.data.clientName, 'OS aberta. Veículo recebido para avaliação.', query.data.openedAt],
   ];
 
@@ -226,23 +413,79 @@ export function ServiceOrderDetailsPage() {
   };
 
   const handleUpdateStatus = () => {
+    if (isReadOnly) return;
+
     if (!nextStatus || nextStatus === query.data.status) {
       return;
     }
+
+    if (isRegressiveServiceOrderStatusChange(query.data.status, nextStatus)) {
+      setRegressiveStatusToConfirm(nextStatus);
+      return;
+    }
+
     mutation.mutate(nextStatus);
+  };
+
+  const handleCancelRegressiveStatusChange = () => {
+    if (mutation.isPending) return;
+    setRegressiveStatusToConfirm(null);
+    setNextStatus('');
+  };
+
+  const handleConfirmRegressiveStatusChange = () => {
+    if (!regressiveStatusToConfirm) return;
+    mutation.mutate(regressiveStatusToConfirm);
+  };
+
+  const handleOpenPendingPartDialog = (pendingPart?: ServiceOrderPendingPart) => {
+    if (isReadOnly) return;
+    setPendingPartToEdit(pendingPart ?? null);
+    setPendingPartDialogOpen(true);
+  };
+
+  const handleSavePendingPart = (payload: CreateServiceOrderPendingPartPayload) => {
+    if (isReadOnly) return;
+
+    if (pendingPartToEdit) {
+      updatePendingPartMutation.mutate({ pendingPartId: pendingPartToEdit.id, payload });
+      return;
+    }
+
+    createPendingPartMutation.mutate(payload);
+  };
+
+  const handleSaveProblem = () => {
+    if (isReadOnly) return;
+
+    const nextProblemDescription = problemDraft.trim();
+    if (!nextProblemDescription) {
+      toast.error('Informe o problema relatado.');
+      return;
+    }
+    if (nextProblemDescription === query.data.problemDescription) {
+      setIsEditingProblem(false);
+      return;
+    }
+    problemMutation.mutate(nextProblemDescription);
   };
 
   return (
     <PageContainer>
-      <PageHeader title="Detalhe da OS" description="Acompanhamento completo da ordem de serviço.">
+      <PageHeader
+        title={isReadOnly ? 'Visualização da OS' : 'Operação da OS'}
+        description={isReadOnly ? 'Consulta da ordem de serviço em modo somente leitura.' : 'Acompanhamento operacional da ordem de serviço.'}
+      >
         <Button className="min-h-11 rounded-xl bg-white/90 font-semibold" variant="outline" onClick={() => navigate('/app/ordens-servico')}>
           <ArrowLeft className="size-4" strokeWidth={1.75} />
           Voltar
         </Button>
-        <Button className="min-h-11 rounded-xl bg-white/90 font-semibold" variant="outline">
+        {!isReadOnly ? (
+          <Button className="min-h-11 rounded-xl bg-white/90 font-semibold" variant="outline">
           <Share2 className="size-4" strokeWidth={1.75} />
           Compartilhar
-        </Button>
+          </Button>
+        ) : null}
       </PageHeader>
 
       <Card className="bg-white shadow-xs">
@@ -261,7 +504,8 @@ export function ServiceOrderDetailsPage() {
                 ) : null}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            {!isReadOnly ? (
+              <div className="flex flex-wrap gap-2">
               <Button className="rounded-xl bg-white font-semibold" variant="outline" onClick={() => window.print()}>
                 <Printer className="size-4" strokeWidth={1.75} />
                 Imprimir
@@ -290,7 +534,8 @@ export function ServiceOrderDetailsPage() {
                 <Check className="size-4" strokeWidth={1.75} />
                 Atualizar status
               </Button>
-            </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="mt-7 grid gap-5 border-t border-border-soft pt-6 md:grid-cols-2 xl:grid-cols-4">
@@ -315,7 +560,8 @@ export function ServiceOrderDetailsPage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-lg font-bold">{query.data.mechanicName ?? '-'}</p>
-                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  {!isReadOnly ? (
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                     <Select
                       disabled={mechanicsQuery.isLoading || mechanicMutation.isPending}
                       onValueChange={setSelectedMechanicId}
@@ -343,7 +589,8 @@ export function ServiceOrderDetailsPage() {
                     >
                       {mechanicMutation.isPending ? 'Salvando...' : 'Salvar'}
                     </Button>
-                  </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -361,10 +608,13 @@ export function ServiceOrderDetailsPage() {
           <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">Progresso</p>
           <h3 className="mt-1 text-xl font-bold">Status da ordem</h3>
           <div className="mt-8 overflow-x-auto pb-2">
-            <div className="relative min-w-[980px]">
-              <div className="absolute left-6 right-6 top-6 grid grid-cols-4">
-                {getProgressSteps(query.data).slice(0, 4).map((step, index) => {
-                  const nextStep = getProgressSteps(query.data)[index + 1];
+            <div className="relative" style={{ minWidth: `${Math.max(progressSteps.length * 190, 760)}px` }}>
+              <div
+                className="absolute left-6 right-6 top-6 grid"
+                style={{ gridTemplateColumns: `repeat(${Math.max(progressSteps.length - 1, 1)}, minmax(0, 1fr))` }}
+              >
+                {progressSteps.slice(0, -1).map((step, index) => {
+                  const nextStep = progressSteps[index + 1];
                   const isActiveSegment = step.state !== 'pending' && nextStep.state !== 'pending';
                   return (
                     <div
@@ -374,8 +624,8 @@ export function ServiceOrderDetailsPage() {
                   );
                 })}
               </div>
-              <div className="relative grid grid-cols-5 gap-8">
-                {getProgressSteps(query.data).map((step) => (
+              <div className="relative grid gap-8" style={{ gridTemplateColumns: `repeat(${progressSteps.length}, minmax(0, 1fr))` }}>
+                {progressSteps.map((step) => (
                   <div key={step.status} className="min-w-0">
                     <div
                       className={cn(
@@ -403,6 +653,19 @@ export function ServiceOrderDetailsPage() {
         </CardContent>
       </Card>
 
+      <PendingPartsCard
+        isLoading={query.isLoading}
+        isError={query.isError}
+        serviceOrderStatus={query.data.status}
+        pendingParts={query.data.pendingParts ?? []}
+        readOnly={isReadOnly}
+        onAdd={() => handleOpenPendingPartDialog()}
+        onEdit={handleOpenPendingPartDialog}
+        onCancel={(pendingPart) => cancelPendingPartMutation.mutate(pendingPart.id)}
+        onResume={() => setResumeDialogOpen(true)}
+        onRetry={() => query.refetch()}
+      />
+
       <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Card className="min-h-80 bg-white shadow-xs">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
@@ -410,13 +673,47 @@ export function ServiceOrderDetailsPage() {
               <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">Diagnóstico</p>
               <CardTitle className="mt-1 text-xl">Problema relatado</CardTitle>
             </div>
-            <Button className="text-primary" size="sm" variant="ghost">
-              <Edit3 className="size-4" strokeWidth={1.75} />
-              Editar
-            </Button>
+            {!isReadOnly && !isEditingProblem ? (
+              <Button className="text-primary" size="sm" variant="ghost" onClick={() => setIsEditingProblem(true)}>
+                <Edit3 className="size-4" strokeWidth={1.75} />
+                Editar
+              </Button>
+            ) : null}
           </CardHeader>
           <CardContent className="space-y-5 text-base leading-7">
-            <p>{query.data.problemDescription}</p>
+            {isEditingProblem ? (
+              <div className="space-y-3">
+                <Textarea
+                  aria-label="Problema relatado"
+                  value={problemDraft}
+                  onChange={(event) => setProblemDraft(event.target.value)}
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    className="rounded-xl bg-white font-semibold"
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setProblemDraft(query.data.problemDescription);
+                      setIsEditingProblem(false);
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    className="rounded-xl font-semibold"
+                    disabled={problemMutation.isPending}
+                    type="button"
+                    onClick={handleSaveProblem}
+                  >
+                    <Save className="size-4" strokeWidth={1.75} />
+                    {problemMutation.isPending ? 'Salvando...' : 'Salvar problema'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p>{query.data.problemDescription}</p>
+            )}
             {query.data.notes ? (
               <div className="rounded-lg border-l-4 border-sky-400 bg-sky-50 p-4">
                 <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-sky-700">
@@ -455,10 +752,18 @@ export function ServiceOrderDetailsPage() {
             <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">Itens da OS</p>
             <CardTitle className="mt-1 text-xl">Serviços executados e peças</CardTitle>
           </div>
-          <Button className="rounded-xl bg-white font-semibold" variant="outline">
-            <Plus className="size-4" strokeWidth={1.75} />
-            Adicionar item
-          </Button>
+          {canManageStockParts ? (
+            <div className="flex flex-wrap gap-2">
+              <Button className="rounded-xl bg-white font-semibold" variant="outline" onClick={() => setStockPartDialogOpen(true)}>
+                <PackagePlus className="size-4" strokeWidth={1.75} />
+                Aplicar peça do estoque
+              </Button>
+              <Button className="rounded-xl bg-white font-semibold" variant="outline" onClick={() => handleOpenPendingPartDialog()}>
+                <Plus className="size-4" strokeWidth={1.75} />
+                Registrar peça em falta
+              </Button>
+            </div>
+          ) : null}
         </CardHeader>
         <CardContent className="space-y-8">
           <div>
@@ -471,21 +776,114 @@ export function ServiceOrderDetailsPage() {
                   <TableHead>Qtd</TableHead>
                   <TableHead>Unit.</TableHead>
                   <TableHead className="text-right">Total</TableHead>
+                  {canManageStockParts ? <TableHead className="text-right">Ações</TableHead> : null}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {budgetLaborItems.map((item) => (
+                {budgetLaborItems.length ? budgetLaborItems.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-bold">{item.description}</TableCell>
                     <TableCell>{item.serviceCode ? '90 dias' : '30 dias'}</TableCell>
                     <TableCell>{item.quantity}</TableCell>
                     <TableCell className="[font-variant-numeric:tabular-nums]">{formatCurrency(item.unitPrice)}</TableCell>
                     <TableCell className="text-right font-bold">{formatCurrency(item.totalPrice)}</TableCell>
+                    {canManageStockParts ? (
+                      <TableCell className="text-right">
+                        {item.id !== 'services-performed' ? (
+                          <div className="inline-flex">
+                            <Button
+                              aria-label={`Editar ${item.description}`}
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => setExecutionItemToEdit(item)}
+                            >
+                              <Edit3 className="size-4" />
+                            </Button>
+                            <Button
+                              aria-label={`Excluir ${item.description}`}
+                              className="text-rose-600 hover:text-rose-700"
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => setExecutionItemToRemove(item)}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        ) : null}
+                      </TableCell>
+                    ) : null}
                   </TableRow>
-                ))}
+                )) : (
+                  <TableRow>
+                    <TableCell className="py-6 text-center text-muted-foreground" colSpan={canManageStockParts ? 6 : 5}>
+                      Nenhum serviço registrado.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
+
+          {plannedParts.length ? (
+            <div>
+              <p className="mb-3 flex items-center gap-2 font-bold">
+                <Package className="size-4 text-primary" /> Peças previstas no orçamento{' '}
+                <span className="rounded-full bg-stone-100 px-2 text-sm text-muted-foreground">{plannedParts.length}</span>
+              </p>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Código</TableHead>
+                    <TableHead>Peça</TableHead>
+                    <TableHead>Qtd</TableHead>
+                    <TableHead>Unit.</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    {canManageStockParts ? <TableHead className="text-right">Ações</TableHead> : null}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {plannedParts.map((part) => (
+                    <TableRow key={part.id}>
+                      <TableCell className="font-mono text-sm font-semibold tracking-[0.08em]">{part.inventoryItem.internalCode}</TableCell>
+                      <TableCell className="font-bold">{part.inventoryItem.name}</TableCell>
+                      <TableCell>{part.quantity}</TableCell>
+                    <TableCell className="[font-variant-numeric:tabular-nums]">{formatCurrency(part.unitPrice)}</TableCell>
+                    <TableCell className="text-right font-bold">{formatCurrency(part.totalPrice)}</TableCell>
+                    {canManageStockParts ? (
+                      <TableCell className="text-right">
+                        <div className="inline-flex">
+                          <Button
+                            aria-label={`Editar previsão de ${part.inventoryItem.name}`}
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              const item = editablePlannedItems.find((candidate) => candidate.id === part.id);
+                              if (item) setExecutionItemToEdit(item);
+                            }}
+                          >
+                            <Edit3 className="size-4" />
+                          </Button>
+                          <Button
+                            aria-label={`Excluir previsão de ${part.inventoryItem.name}`}
+                            className="text-rose-600 hover:text-rose-700"
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              const item = editablePlannedItems.find((candidate) => candidate.id === part.id);
+                              if (item) setExecutionItemToRemove(item);
+                            }}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    ) : null}
+                  </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : null}
 
           <div>
             <p className="mb-3 flex items-center gap-2 font-bold"><Package className="size-4 text-primary" /> Peças aplicadas <span className="rounded-full bg-stone-100 px-2 text-sm text-muted-foreground">{appliedParts.length}</span></p>
@@ -497,18 +895,43 @@ export function ServiceOrderDetailsPage() {
                   <TableHead>Qtd</TableHead>
                   <TableHead>Unit.</TableHead>
                   <TableHead className="text-right">Total</TableHead>
+                  {canManageStockParts ? <TableHead className="text-right">Ações</TableHead> : null}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {appliedParts.map((part) => (
+                {appliedParts.length ? appliedParts.map((part) => (
                   <TableRow key={part.id}>
                     <TableCell className="font-mono text-sm font-semibold tracking-[0.08em]">{part.inventoryItem.internalCode}</TableCell>
                     <TableCell className="font-bold">{part.inventoryItem.name}</TableCell>
                     <TableCell>{part.quantity}</TableCell>
                     <TableCell className="[font-variant-numeric:tabular-nums]">{formatCurrency(part.unitPrice)}</TableCell>
                     <TableCell className="text-right font-bold">{formatCurrency(part.totalPrice)}</TableCell>
+                    {canManageStockParts ? (
+                      <TableCell className="text-right">
+                        {removableStockPartIds.has(part.id) ? (
+                          <Button
+                            aria-label={`Remover ${part.inventoryItem.name} da OS`}
+                            className="text-rose-600 hover:text-rose-700"
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              const appliedPart = query.data.parts?.find((item) => item.id === part.id);
+                              if (appliedPart) setStockPartToRemove(appliedPart);
+                            }}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        ) : null}
+                      </TableCell>
+                    ) : null}
                   </TableRow>
-                ))}
+                )) : (
+                  <TableRow>
+                    <TableCell className="py-6 text-center text-muted-foreground" colSpan={canManageStockParts ? 6 : 5}>
+                      Nenhuma peça aplicada.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
@@ -535,6 +958,73 @@ export function ServiceOrderDetailsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <PendingPartOfferDialog
+        open={!isReadOnly && pendingPartOfferOpen}
+        onOpenChange={setPendingPartOfferOpen}
+        onAddPendingPart={() => {
+          setPendingPartOfferOpen(false);
+          handleOpenPendingPartDialog();
+        }}
+      />
+      <PendingPartDialog
+        open={!isReadOnly && pendingPartDialogOpen}
+        pendingPart={pendingPartToEdit}
+        isSubmitting={createPendingPartMutation.isPending || updatePendingPartMutation.isPending}
+        onOpenChange={(open) => {
+          setPendingPartDialogOpen(open);
+          if (!open) setPendingPartToEdit(null);
+        }}
+        onSubmit={handleSavePendingPart}
+      />
+      <ServiceOrderStockPartDialog
+        open={canManageStockParts && stockPartDialogOpen}
+        isSubmitting={addStockPartMutation.isPending}
+        onOpenChange={setStockPartDialogOpen}
+        onSubmit={(payload) => addStockPartMutation.mutate(payload)}
+      />
+      <ServiceOrderItemDialog
+        item={canManageStockParts ? executionItemToEdit : null}
+        isSubmitting={updateExecutionItemMutation.isPending}
+        onCancel={() => setExecutionItemToEdit(null)}
+        onSubmit={(payload) => {
+          if (executionItemToEdit) {
+            updateExecutionItemMutation.mutate({ itemId: executionItemToEdit.id, payload });
+          }
+        }}
+      />
+      <RemoveServiceOrderPartDialog
+        part={canManageStockParts ? stockPartToRemove : null}
+        isSubmitting={removeStockPartMutation.isPending}
+        onCancel={() => setStockPartToRemove(null)}
+        onConfirm={() => {
+          if (stockPartToRemove) removeStockPartMutation.mutate(stockPartToRemove.id);
+        }}
+      />
+      <RemoveServiceOrderItemDialog
+        item={canManageStockParts ? executionItemToRemove : null}
+        isSubmitting={removeExecutionItemMutation.isPending}
+        onCancel={() => setExecutionItemToRemove(null)}
+        onConfirm={() => {
+          if (executionItemToRemove) removeExecutionItemMutation.mutate(executionItemToRemove.id);
+        }}
+      />
+      <ResumeServiceOrderDialog
+        open={!isReadOnly && resumeDialogOpen}
+        isSubmitting={resumeMutation.isPending}
+        onOpenChange={setResumeDialogOpen}
+        onConfirm={() => resumeMutation.mutate()}
+      />
+      {!isReadOnly && regressiveStatusToConfirm ? (
+        <RegressiveStatusChangeDialog
+          open={Boolean(regressiveStatusToConfirm)}
+          currentStatus={query.data.status}
+          nextStatus={regressiveStatusToConfirm}
+          isSubmitting={mutation.isPending}
+          onCancel={handleCancelRegressiveStatusChange}
+          onConfirm={handleConfirmRegressiveStatusChange}
+        />
+      ) : null}
     </PageContainer>
   );
 }

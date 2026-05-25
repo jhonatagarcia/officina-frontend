@@ -181,6 +181,12 @@ export const appRoutes: AppRouteDefinition[] = [
     element: <BudgetFormPage mode="view" />,
   },
   {
+    key: 'orcamentos-edit',
+    path: 'orcamentos/:id/editar',
+    roles: ['ADMIN', 'ATENDENTE'],
+    element: <BudgetFormPage mode="edit" />,
+  },
+  {
     key: 'ordens-servico-list',
     path: 'ordens-servico',
     roles: ['ADMIN', 'ATENDENTE', 'MECANICO'],

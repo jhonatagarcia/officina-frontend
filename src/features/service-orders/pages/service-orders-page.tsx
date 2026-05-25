@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, CheckCircle2, ClipboardList, Clock, Eye, Pencil, Printer, UserCheck, Wrench } from 'lucide-react';
+import { CalendarDays, CheckCircle2, ClipboardList, Clock, Eye, Printer, Settings2, UserCheck, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { serviceOrdersService } from '@/features/service-orders/services/service-orders-service';
@@ -21,6 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
+import { getServiceOrderStatusLabel, getServiceOrderStatusTone, isReadOnlyServiceOrderStatus } from '@/features/service-orders/lib/service-order-status';
 import { cn, formatCurrency, formatDateOnly, formatServiceOrderNumber } from '@/lib/utils';
 import type { ServiceOrder } from '@/features/service-orders/types';
 
@@ -43,19 +44,7 @@ function getServiceOrderRowClass(order: ServiceOrder) {
 }
 
 function getOrderStatusTone(status: ServiceOrder['status']) {
-  if (status === 'EM_ANDAMENTO') return 'orange';
-  if (status === 'AGUARDANDO_PECA') return 'amber';
-  if (status === 'ABERTA') return 'stone';
-  if (status === 'FINALIZADA') return 'emerald';
-  return 'sky';
-}
-
-function getOrderStatusLabel(status: ServiceOrder['status']) {
-  if (status === 'EM_ANDAMENTO') return 'Em andamento';
-  if (status === 'AGUARDANDO_PECA') return 'Aguardando peça';
-  if (status === 'ABERTA') return 'Aberta';
-  if (status === 'FINALIZADA') return 'Concluída';
-  return 'Entregue';
+  return getServiceOrderStatusTone(status);
 }
 
 function ServiceOrderStatusPill({ status }: { status: ServiceOrder['status'] }) {
@@ -82,7 +71,7 @@ function ServiceOrderStatusPill({ status }: { status: ServiceOrder['status'] }) 
           tone === 'sky' && 'bg-sky-500',
         )}
       />
-      {getOrderStatusLabel(status)}
+      {getServiceOrderStatusLabel(status)}
     </span>
   );
 }
@@ -174,8 +163,6 @@ export function ServiceOrdersPage() {
       <PageHeader title="Ordens de serviço" description="Acompanhamento operacional e status da execução.">
         <IndicatorHeaderActions
           onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
-          primaryActionLabel="Nova OS"
-          onPrimaryAction={() => navigate('/app/ordens-servico')}
         >
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por OS, cliente ou veículo" />
           <Select value={selectedStatus} onValueChange={(value) => params.setStatus(value === 'ALL' ? '' : value)}>
@@ -185,6 +172,7 @@ export function ServiceOrdersPage() {
             <SelectContent>
               <SelectItem value="ALL">Todos</SelectItem>
               <SelectItem value="ABERTA">Aberta</SelectItem>
+              <SelectItem value="AGUARDANDO_PECA">Aguardando peça</SelectItem>
               <SelectItem value="EM_ANDAMENTO">Em andamento</SelectItem>
               <SelectItem value="FINALIZADA">Finalizada</SelectItem>
               <SelectItem value="ENTREGUE">Entregue</SelectItem>
@@ -268,13 +256,36 @@ export function ServiceOrdersPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button className="size-9 rounded-lg bg-white" size="icon" variant="outline" onClick={() => navigate(`/app/ordens-servico/${item.id}`)}>
+                          <Button
+                            aria-label={`Visualizar ${formatServiceOrderNumber(item.orderNumber)}`}
+                            className="size-9 rounded-lg bg-white"
+                            size="icon"
+                            title="Visualizar OS"
+                            variant="outline"
+                            onClick={() => navigate(`/app/ordens-servico/${item.id}?mode=view`)}
+                          >
                             <Eye className="size-4" strokeWidth={1.75} />
                           </Button>
-                          <Button className="size-9 rounded-lg bg-white" size="icon" variant="outline" onClick={() => navigate(`/app/ordens-servico/${item.id}`)}>
-                            <Pencil className="size-4" strokeWidth={1.75} />
-                          </Button>
-                          <Button className="size-9 rounded-lg bg-white" size="icon" variant="outline" onClick={() => navigate(`/app/ordens-servico/${item.id}`)}>
+                          {!isReadOnlyServiceOrderStatus(item.status) ? (
+                            <Button
+                              aria-label={`Operar ${formatServiceOrderNumber(item.orderNumber)}`}
+                              className="size-9 rounded-lg bg-white"
+                              size="icon"
+                              title="Operar OS"
+                              variant="outline"
+                              onClick={() => navigate(`/app/ordens-servico/${item.id}?mode=operate`)}
+                            >
+                              <Settings2 className="size-4" strokeWidth={1.75} />
+                            </Button>
+                          ) : null}
+                          <Button
+                            aria-label={`Imprimir ${formatServiceOrderNumber(item.orderNumber)}`}
+                            className="size-9 rounded-lg bg-white"
+                            size="icon"
+                            title="Imprimir OS"
+                            variant="outline"
+                            onClick={() => navigate(`/app/ordens-servico/${item.id}?mode=print`)}
+                          >
                             <Printer className="size-4" strokeWidth={1.75} />
                           </Button>
                         </div>

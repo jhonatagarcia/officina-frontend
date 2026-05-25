@@ -36,7 +36,10 @@ export interface ServiceOrder {
   vehicle?: ServiceOrderVehicleSummary;
   mechanic?: ServiceOrderMechanicSummary | null;
   budgetItems?: ServiceOrderBudgetItem[];
+  executionItems?: ServiceOrderBudgetItem[];
+  executionItemsMaterialized?: boolean;
   parts?: ServiceOrderPart[];
+  pendingParts?: ServiceOrderPendingPart[];
 }
 
 export interface ServiceOrderWhatsAppNotification {
@@ -44,9 +47,52 @@ export interface ServiceOrderWhatsAppNotification {
   reason?: string;
 }
 
+export type PendingPartStatus =
+  | 'PENDING'
+  | 'PARTIALLY_AVAILABLE'
+  | 'AVAILABLE'
+  | 'RESOLVED'
+  | 'CANCELED';
+
+export interface ServiceOrderPendingPart {
+  id: string;
+  serviceOrderId: string;
+  inventoryItemId: string;
+  quantityRequired: number;
+  quantityAvailable: number;
+  status: PendingPartStatus;
+  note: string | null;
+  expectedArrivalAt: string | null;
+  resolvedAt: string | null;
+  canceledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  inventoryItem: {
+    id: string;
+    name: string;
+    internalCode: string;
+    quantity: number;
+  };
+}
+
+export interface CreateServiceOrderPendingPartPayload {
+  inventoryItemId: string;
+  quantityRequired: number;
+  note?: string | null;
+  expectedArrivalAt?: string | null;
+}
+
+export type UpdateServiceOrderPendingPartPayload = Partial<CreateServiceOrderPendingPartPayload>;
+
+export type UpdateServiceOrderItemPayload = Pick<
+  ServiceOrderBudgetItem,
+  'type' | 'serviceCatalogItemId' | 'inventoryItemId' | 'description' | 'quantity' | 'unitPrice'
+>;
+
 export interface ServiceOrderBudgetItem {
   id: string;
   type: 'PART' | 'LABOR' | 'LABOR_AND_PART';
+  serviceCatalogItemId?: string | null;
   inventoryItemId: string | null;
   serviceCode: string | null;
   description: string;

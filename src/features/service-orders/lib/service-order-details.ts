@@ -63,11 +63,12 @@ export function formatServiceOrderStatusLabel(status: ServiceOrderStatus) {
 }
 
 export function getServiceOrderLaborItems(order: ServiceOrder): ServiceOrderBudgetItem[] {
-  const laborItems = (order.budgetItems ?? []).filter(
+  const laborItems = getEditableServiceOrderItems(order).filter(
     (item) => item.type === 'LABOR' || item.type === 'LABOR_AND_PART',
   );
 
   if (laborItems.length) return laborItems;
+  if (order.executionItemsMaterialized) return [];
 
   const performedDescription = order.servicesPerformed?.trim();
   if (!performedDescription) return [];
@@ -85,4 +86,12 @@ export function getServiceOrderLaborItems(order: ServiceOrder): ServiceOrderBudg
       inventoryItem: null,
     },
   ];
+}
+
+export function getEditableServiceOrderItems(order: ServiceOrder): ServiceOrderBudgetItem[] {
+  if (order.executionItemsMaterialized) {
+    return order.executionItems ?? [];
+  }
+
+  return order.executionItems?.length ? order.executionItems : order.budgetItems ?? [];
 }

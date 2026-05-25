@@ -110,5 +110,65 @@ describe('service-order-details helpers', () => {
         }),
       ]);
     });
+
+    it('prioriza o servico editado da execucao sem alterar o item orcado', () => {
+      const items = getServiceOrderLaborItems({
+        ...baseOrder,
+        budgetItems: [
+          {
+            id: 'budget-labor',
+            type: 'LABOR',
+            inventoryItemId: null,
+            serviceCode: 'SRV-001',
+            description: 'Servico aprovado',
+            quantity: 1,
+            unitPrice: 100,
+            totalPrice: 100,
+            inventoryItem: null,
+          },
+        ],
+        executionItems: [
+          {
+            id: 'execution-labor',
+            type: 'LABOR',
+            inventoryItemId: null,
+            serviceCode: 'SRV-001',
+            description: 'Servico executado corrigido',
+            quantity: 2,
+            unitPrice: 100,
+            totalPrice: 200,
+            inventoryItem: null,
+          },
+        ],
+      });
+
+      expect(items).toEqual([
+        expect.objectContaining({ id: 'execution-labor', description: 'Servico executado corrigido', quantity: 2 }),
+      ]);
+    });
+
+    it('nao restaura servico orcado ou legado apos excluir todos os itens da execucao', () => {
+      const items = getServiceOrderLaborItems({
+        ...baseOrder,
+        servicesPerformed: 'Servico legado',
+        executionItemsMaterialized: true,
+        executionItems: [],
+        budgetItems: [
+          {
+            id: 'budget-labor',
+            type: 'LABOR',
+            inventoryItemId: null,
+            serviceCode: 'SRV-001',
+            description: 'Servico aprovado',
+            quantity: 1,
+            unitPrice: 100,
+            totalPrice: 100,
+            inventoryItem: null,
+          },
+        ],
+      });
+
+      expect(items).toEqual([]);
+    });
   });
 });

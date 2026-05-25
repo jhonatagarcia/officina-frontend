@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, Clock, DollarSign, Eye, FileText, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, DollarSign, Eye, FileText, Pencil, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { budgetsService } from '@/features/budgets/services/budgets-service';
+import type { Budget } from '@/features/budgets/types';
 import { useListParams } from '@/hooks/use-list-params';
 import { useSortableData } from '@/hooks/use-sortable-data';
 import { PageContainer } from '@/components/shared/page-container';
@@ -31,6 +32,15 @@ function getBudgetRowClass(status: string) {
   return undefined;
 }
 
+function canEditBudget(budget: Budget) {
+  if (budget.serviceOrder) return budget.serviceOrder.status !== 'ENTREGUE';
+
+  return (
+    !budget.convertedToServiceOrder &&
+    (budget.status === 'PENDENTE' || budget.status === 'APROVADO')
+  );
+}
+
 export function BudgetsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -56,16 +66,33 @@ export function BudgetsPage() {
   });
   const convertMutation = useMutation({
     mutationFn: budgetsService.convert,
-    onSuccess: (result) => {
+    onSuccess: async (result, budgetId) => {
       queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
       queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success('Orçamento convertido em ordem de serviço.');
 
-      const serviceOrderId = result?.serviceOrder?.id;
+      let serviceOrderId = result?.serviceOrder?.id;
+      if (!serviceOrderId) {
+        try {
+          const convertedBudget = await budgetsService.getById(budgetId);
+          serviceOrderId = convertedBudget.serviceOrder?.id;
+        } catch {
+          serviceOrderId = undefined;
+        }
+      }
+
       if (serviceOrderId) {
         navigate(`/app/ordens-servico/${serviceOrderId}`);
+        return;
       }
+
+      toast.warning('OS criada, mas não foi possível abrir o detalhe automaticamente.');
+      navigate('/app/ordens-servico');
+    },
+    onError: (error: { message?: string | string[] }) => {
+      const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      toast.error(message || 'Não foi possível converter o orçamento em OS.');
     },
   });
   const selectedStatus = params.status || 'ALL';
@@ -214,9 +241,19 @@ export function BudgetsPage() {
                       <TableCell className="font-bold [font-variant-numeric:tabular-nums]">{formatCurrency(budget.total)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button size="icon" variant="outline" onClick={() => navigate(`/app/orcamentos/${budget.id}`)}>
+                          <Button aria-label={`Visualizar orçamento ${budget.code}`} size="icon" variant="outline" onClick={() => navigate(`/app/orcamentos/${budget.id}`)}>
                             <Eye className="size-4" />
                           </Button>
+                          {canEditBudget(budget) ? (
+                            <Button
+                              aria-label={`Editar orçamento ${budget.code}`}
+                              size="icon"
+                              variant="outline"
+                              onClick={() => navigate(`/app/orcamentos/${budget.id}/editar`)}
+                            >
+                              <Pencil className="size-4" />
+                            </Button>
+                          ) : null}
                           {budget.status === 'PENDENTE' && !budget.convertedToServiceOrder ? (
                             <>
                               <Button

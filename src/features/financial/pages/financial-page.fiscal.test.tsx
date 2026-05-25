@@ -19,6 +19,7 @@ describe('FinancialPage fiscal gate', () => {
       page: 1,
       pageSize: 10,
       total: 0,
+      totalPages: 0,
     });
     vi.mocked(financialService.getSummary).mockResolvedValue({
       receivablesValue: 0,
