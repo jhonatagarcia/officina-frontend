@@ -1,7 +1,13 @@
 import { http } from '@/services/api/http';
 import { buildQueryParams, mapPaginatedResponse } from '@/services/api/query-string';
 import type { ApiPaginatedResponse, QueryParams } from '@/types/common';
-import type { FinancialEntry, FinancialStatus, FinancialType, PaymentMethod } from '@/features/financial/types';
+import type {
+  FinancialEntry,
+  FinancialEntryFiscalEmission,
+  FinancialStatus,
+  FinancialType,
+  PaymentMethod,
+} from '@/features/financial/types';
 import { toNumber } from '@/lib/utils';
 
 interface FinancialEntryApiResponse extends Omit<FinancialEntry, 'amount' | 'status' | 'type'> {
@@ -99,8 +105,29 @@ export const financialService = {
     const response = await http.patch<FinancialEntryApiResponse>(`/financial/${id}`, payload);
     return mapFinancialEntry(response.data);
   },
-  async markAsPaid(id: string, payload: { paymentMethod: PaymentMethod; paidAt: string }) {
-    const response = await http.patch<FinancialEntryApiResponse>(`/financial/${id}/pay`, payload);
+  async markAsPaid(
+    id: string,
+    payload: { paymentMethod: PaymentMethod; paidAt: string; requestNfseEmission: boolean },
+  ) {
+    const response = await http.patch<FinancialEntryApiResponse>(`/financial/${id}/pay`, payload, {
+      headers: payload.requestNfseEmission
+        ? { 'X-Idempotency-Key': `payment-${id}-nfse-v1` }
+        : undefined,
+    });
     return mapFinancialEntry(response.data);
+  },
+  async requestNfseEmission(financialEntryId: string) {
+    const response = await http.post<FinancialEntryFiscalEmission>(
+      `/financial/${financialEntryId}/nfse-emissions`,
+      undefined,
+      { headers: { 'X-Idempotency-Key': `payment-${financialEntryId}-nfse-v1` } },
+    );
+    return response.data;
+  },
+  async getDanfseDownload(emissionId: string) {
+    const response = await http.get<{ downloadUrl: string }>(
+      `/fiscal/nfse/emissions/${emissionId}/danfse`,
+    );
+    return response.data.downloadUrl;
   },
 };

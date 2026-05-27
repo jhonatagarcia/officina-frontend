@@ -58,4 +58,39 @@ describe('financialService', () => {
       }),
     ]);
   });
+
+  it('envia chave idempotente quando o pagamento solicita NFSe', async () => {
+    vi.mocked(http.patch).mockResolvedValueOnce({
+      data: {
+        id: 'entry-1',
+        type: 'RECEIVABLE',
+        amount: '120.00',
+        status: 'PAGO',
+      },
+    });
+
+    await financialService.markAsPaid('entry-1', {
+      paymentMethod: 'PIX',
+      paidAt: '2026-05-25T12:00:00.000Z',
+      requestNfseEmission: true,
+    });
+
+    expect(http.patch).toHaveBeenCalledWith(
+      '/financial/entry-1/pay',
+      expect.objectContaining({ requestNfseEmission: true }),
+      { headers: { 'X-Idempotency-Key': 'payment-entry-1-nfse-v1' } },
+    );
+  });
+
+  it('envia chave idempotente ao gerar NFSe de pagamento ja registrado', async () => {
+    vi.mocked(http.post).mockResolvedValueOnce({ data: { status: 'PENDENTE' } });
+
+    await financialService.requestNfseEmission('entry-1');
+
+    expect(http.post).toHaveBeenCalledWith(
+      '/financial/entry-1/nfse-emissions',
+      undefined,
+      { headers: { 'X-Idempotency-Key': 'payment-entry-1-nfse-v1' } },
+    );
+  });
 });

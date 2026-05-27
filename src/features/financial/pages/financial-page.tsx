@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, CheckCircle2, Clock, DollarSign, PackageSearch, TrendingUp } from 'lucide-react';
+import { toast } from 'sonner';
 import { financialService } from '@/features/financial/services/financial-service';
+import { useFiscalStatusSocket } from '@/features/financial/hooks/use-fiscal-status-socket';
 import type { FinancialEntry, PaymentMethod } from '@/features/financial/types';
 import { useListParams } from '@/hooks/use-list-params';
 import { useSortableData } from '@/hooks/use-sortable-data';
@@ -22,11 +24,46 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 
 function canRegisterPayment(status: string) {
   return status === 'PENDENTE' || status === 'VENCIDO';
+}
+
+function canRequestNfse(entry: FinancialEntry) {
+  return (
+    entry.type === 'RECEIVABLE' &&
+    entry.status === 'PAGO' &&
+    Boolean(entry.serviceOrderId) &&
+    entry.fiscalEmission === null
+  );
+}
+
+function isPaymentEligibleForNfse(entry: FinancialEntry) {
+  return entry.type === 'RECEIVABLE' && Boolean(entry.serviceOrderId);
+}
+
+function getFiscalStatusLabel(entry: FinancialEntry) {
+  const emission = entry.fiscalEmission;
+  if (!emission) return 'Sem NFSe';
+  const labels = {
+    PENDENTE: 'Pendente',
+    PROCESSANDO: 'Processando',
+    AUTORIZADA: 'Autorizada',
+    REJEITADA: 'Rejeitada',
+    CANCELADA: 'Cancelada',
+    ERRO_PERMANENTE: 'Erro permanente',
+  } as const;
+  return labels[emission.status];
 }
 
 function getFinancialRowClass(status: string) {
@@ -57,10 +94,14 @@ export function FinancialPage() {
 }
 
 function FinancialPageContent() {
+  useFiscalStatusSocket();
   const params = useListParams();
   const queryClient = useQueryClient();
   const [isConfiguringPanel, setIsConfiguringPanel] = useState(false);
-  const [paymentDates, setPaymentDates] = useState<Record<string, string>>({});
+  const [entryToPay, setEntryToPay] = useState<FinancialEntry | null>(null);
+  const [paymentDate, setPaymentDate] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('PIX');
+  const [requestNfseEmission, setRequestNfseEmission] = useState(false);
   const today = toDateInputValue(new Date());
   const query = useQuery({
     queryKey: ['financeiro', params.page, DEFAULT_TABLE_PAGE_SIZE, params.search, params.status],
@@ -76,12 +117,50 @@ function FinancialPageContent() {
     queryFn: financialService.getSummary,
   });
   const mutation = useMutation({
-    mutationFn: ({ id, paymentMethod, paidAt }: { id: string; paymentMethod: PaymentMethod; paidAt: string }) =>
-      financialService.markAsPaid(id, { paymentMethod, paidAt }),
-    onSuccess: () => {
+    mutationFn: ({
+      id,
+      selectedPaymentMethod,
+      paidAt,
+      requestNfse,
+    }: {
+      id: string;
+      selectedPaymentMethod: PaymentMethod;
+      paidAt: string;
+      requestNfse: boolean;
+    }) =>
+      financialService.markAsPaid(id, {
+        paymentMethod: selectedPaymentMethod,
+        paidAt,
+        requestNfseEmission: requestNfse,
+      }),
+    onSuccess: (updatedEntry) => {
       queryClient.invalidateQueries({ queryKey: ['financeiro'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setEntryToPay(null);
+      toast.success('Pagamento registrado.');
+      if (updatedEntry.fiscalEmission?.status === 'PENDENTE') {
+        toast.success('Solicitacao de NFSe registrada e aguardando processamento.');
+      }
     },
+    onError: (error: { message?: string }) =>
+      toast.error(error.message ?? 'Nao foi possivel registrar o pagamento.'),
+  });
+  const nfseMutation = useMutation({
+    mutationFn: (financialEntryId: string) => financialService.requestNfseEmission(financialEntryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['financeiro'] });
+      toast.success('Solicitacao de NFSe registrada e aguardando processamento.');
+    },
+    onError: (error: { message?: string }) =>
+      toast.error(error.message ?? 'Nao foi possivel solicitar a NFSe.'),
+  });
+  const danfseMutation = useMutation({
+    mutationFn: (emissionId: string) => financialService.getDanfseDownload(emissionId),
+    onSuccess: (downloadUrl) => {
+      window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+    },
+    onError: (error: { message?: string }) =>
+      toast.error(error.message ?? 'DANFSE indisponivel para download.'),
   });
   const selectedStatus = params.status || 'ALL';
   const filteredEntries =
@@ -206,7 +285,7 @@ function FinancialPageContent() {
           ) : null}
           {filteredEntries.length ? (
             <div className="overflow-x-auto">
-              <Table className="min-w-[900px]">
+              <Table className="min-w-[1080px]">
                 <TableHeader>
                   <TableRow>
                     <SortableTableHead column="description" sortState={sortState} onSort={requestSort}>Descrição</SortableTableHead>
@@ -215,6 +294,7 @@ function FinancialPageContent() {
                     <SortableTableHead column="paidAt" sortState={sortState} onSort={requestSort}>Data do pagamento</SortableTableHead>
                     <SortableTableHead column="client" sortState={sortState} onSort={requestSort}>Cliente</SortableTableHead>
                     <SortableTableHead column="origin" sortState={sortState} onSort={requestSort}>Origem</SortableTableHead>
+                    <TableHead>NFSe</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -229,40 +309,48 @@ function FinancialPageContent() {
                         {formatCurrency(entry.amount)}
                       </TableCell>
                       <TableCell>
-                        {entry.paidAt ? (
-                          formatDate(entry.paidAt)
-                        ) : canRegisterPayment(entry.status) ? (
-                          <Input
-                            className="w-[170px]"
-                            type="date"
-                            value={paymentDates[entry.id] ?? today}
-                            onChange={(event) =>
-                              setPaymentDates((current) => ({
-                                ...current,
-                                [entry.id]: event.target.value,
-                              }))
-                            }
-                          />
-                        ) : (
-                          '-'
-                        )}
+                        {entry.paidAt ? formatDate(entry.paidAt) : '-'}
                       </TableCell>
                       <TableCell>{entry.client?.name ?? '-'}</TableCell>
                       <TableCell>{getEntryOriginLabel(entry)}</TableCell>
+                      <TableCell>
+                        <span className="text-sm font-medium">{getFiscalStatusLabel(entry)}</span>
+                      </TableCell>
                       <TableCell className="text-right">
                         {canRegisterPayment(entry.status) ? (
                           <Button
                             size="sm"
                             disabled={mutation.isPending}
-                            onClick={() =>
-                              mutation.mutate({
-                                id: entry.id,
-                                paymentMethod: 'PIX',
-                                paidAt: toPaidAtIsoString(paymentDates[entry.id] ?? today),
-                              })
-                            }
+                            onClick={() => {
+                              setEntryToPay(entry);
+                              setPaymentDate(today);
+                              setPaymentMethod('PIX');
+                              setRequestNfseEmission(false);
+                            }}
                           >
                             Registrar pagamento
+                          </Button>
+                        ) : canRequestNfse(entry) ? (
+                          <Button
+                            size="sm"
+                            disabled={nfseMutation.isPending}
+                            onClick={() => nfseMutation.mutate(entry.id)}
+                          >
+                            Gerar NFSe
+                          </Button>
+                        ) : entry.fiscalEmission?.status === 'AUTORIZADA' &&
+                          entry.fiscalEmission.danfseAvailable ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={danfseMutation.isPending}
+                            onClick={() => {
+                              if (entry.fiscalEmission) {
+                                danfseMutation.mutate(entry.fiscalEmission.id);
+                              }
+                            }}
+                          >
+                            Baixar DANFSE
                           </Button>
                         ) : null}
                       </TableCell>
@@ -279,6 +367,78 @@ function FinancialPageContent() {
           ) : null}
         </CardContent>
       </Card>
+      <Dialog open={Boolean(entryToPay)} onOpenChange={(open) => !open && setEntryToPay(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar pagamento</DialogTitle>
+            <DialogDescription>
+              Confirme o recebimento e escolha se deseja solicitar a NFSe de servicos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <label className="grid gap-2 text-sm font-medium">
+              Data do pagamento
+              <Input
+                type="date"
+                value={paymentDate || today}
+                onChange={(event) => setPaymentDate(event.target.value)}
+              />
+            </label>
+            <label className="grid gap-2 text-sm font-medium">
+              Forma de pagamento
+              <Select value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PIX">PIX</SelectItem>
+                  <SelectItem value="DINHEIRO">Dinheiro</SelectItem>
+                  <SelectItem value="CARTAO_CREDITO">Cartao de credito</SelectItem>
+                  <SelectItem value="CARTAO_DEBITO">Cartao de debito</SelectItem>
+                  <SelectItem value="TRANSFERENCIA">Transferencia</SelectItem>
+                  <SelectItem value="OUTRO">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </label>
+            <label className="flex items-start gap-3 rounded-md border p-3 text-sm">
+              <input
+                className="mt-1"
+                type="checkbox"
+                checked={requestNfseEmission}
+                disabled={!entryToPay || !isPaymentEligibleForNfse(entryToPay)}
+                onChange={(event) => setRequestNfseEmission(event.target.checked)}
+              />
+              <span>
+                Solicitar emissao da NFSe apos registrar o pagamento
+                {!entryToPay || isPaymentEligibleForNfse(entryToPay) ? null : (
+                  <span className="mt-1 block text-muted-foreground">
+                    Disponivel somente para contas a receber vinculadas a uma OS.
+                  </span>
+                )}
+              </span>
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEntryToPay(null)}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={!entryToPay || mutation.isPending}
+              onClick={() => {
+                if (!entryToPay) return;
+                mutation.mutate({
+                  id: entryToPay.id,
+                  selectedPaymentMethod: paymentMethod,
+                  paidAt: toPaidAtIsoString(paymentDate || today),
+                  requestNfse: requestNfseEmission,
+                });
+              }}
+            >
+              Confirmar pagamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }

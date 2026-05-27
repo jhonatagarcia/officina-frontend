@@ -9,6 +9,27 @@ export type PaymentMethod =
   | 'TRANSFERENCIA'
   | 'OUTRO';
 
+export type FiscalEmissionStatus =
+  | 'PENDENTE'
+  | 'PROCESSANDO'
+  | 'AUTORIZADA'
+  | 'REJEITADA'
+  | 'CANCELADA'
+  | 'ERRO_PERMANENTE';
+
+export interface FinancialEntryFiscalEmission {
+  id: string;
+  financialEntryId: string;
+  serviceOrderId: string;
+  status: FiscalEmissionStatus;
+  serviceAmount: string;
+  invoiceNumber: string | null;
+  danfseAvailable: boolean;
+  rejectionReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface FinancialEntry {
   id: string;
   type: FinancialType;
@@ -34,4 +55,5 @@ export interface FinancialEntry {
     orderNumber: string;
     status: string;
   } | null;
+  fiscalEmission: FinancialEntryFiscalEmission | null;
 }
