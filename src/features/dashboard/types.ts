@@ -2,6 +2,7 @@ import type { Budget } from '@/features/budgets/types';
 import type { ServiceOrder } from '@/features/service-orders/types';
 
 export type DashboardAlertSeverity = 'danger' | 'warning' | 'info';
+export type DashboardPeriod = 'WEEK' | 'MONTH' | 'BIMESTER' | 'TRIMESTER' | 'YEAR';
 
 export interface DashboardOperationalAlert {
   id: string;
@@ -25,6 +26,7 @@ export interface DashboardOverview {
   financial: {
     monthRevenue: number;
     stockOutValue: number;
+    averageTicket: number;
   };
   inventory: {
     lowStockCount: number;

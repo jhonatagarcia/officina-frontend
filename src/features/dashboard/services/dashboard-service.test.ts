@@ -44,6 +44,7 @@ const emptySummary = {
   financial: {
     monthRevenue: '0',
     stockOutValue: '0',
+    averageTicket: '0',
   },
   inventory: {
     lowStockCount: 0,
@@ -184,6 +185,7 @@ describe('dashboardService', () => {
       financial: {
         monthRevenue: '12345.67',
         stockOutValue: '890.25',
+        averageTicket: '4115.22',
       },
       inventory: {
         lowStockCount: 3,
@@ -213,6 +215,10 @@ describe('dashboardService', () => {
 
     expect(overview.financial.monthRevenue).toBe(12345.67);
     expect(overview.financial.stockOutValue).toBe(890.25);
+    expect(overview.financial.averageTicket).toBe(4115.22);
+    expect(http.get).toHaveBeenCalledWith('/dashboard/summary', {
+      params: { period: 'YEAR' },
+    });
     expect(serviceOrdersService.list).toHaveBeenNthCalledWith(1, {
       page: 1,
       pageSize: 100,
@@ -254,6 +260,17 @@ describe('dashboardService', () => {
         }),
       ]),
     );
+  });
+
+  it('envia o periodo selecionado para o resumo do dashboard', async () => {
+    mockSummary();
+    mockLists({});
+
+    await dashboardService.getOverview('TRIMESTER');
+
+    expect(http.get).toHaveBeenCalledWith('/dashboard/summary', {
+      params: { period: 'TRIMESTER' },
+    });
   });
 
   it('ignora orcamentos aprovados nos alertas operacionais e usa o nome do cliente do pendente', async () => {

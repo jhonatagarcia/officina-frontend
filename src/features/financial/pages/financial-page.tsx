@@ -21,7 +21,6 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 
@@ -103,6 +102,7 @@ function FinancialPageContent() {
   const pagination = query.data;
   const income = summaryQuery.data?.receivablesValue ?? filteredEntries.filter((item) => item.type === 'RECEIVABLE').reduce((acc, item) => acc + item.amount, 0) ?? 0;
   const stockOutValue = summaryQuery.data?.stockOutValue ?? 0;
+  const projectedBalance = income - stockOutValue;
   const pendingEntriesCount = filteredEntries.filter((item) => item.status === 'PENDENTE').length;
   const paidEntriesCount = filteredEntries.filter((item) => item.status === 'PAGO').length;
   const overdueEntriesCount = filteredEntries.filter((item) => item.status === 'VENCIDO').length;
@@ -111,9 +111,9 @@ function FinancialPageContent() {
     {
       id: 'projected-balance',
       title: 'Saldo projetado',
-      value: formatCurrency(income - stockOutValue),
+      value: formatCurrency(projectedBalance),
       icon: DollarSign,
-      valueClassName: 'text-sky-600',
+      valueClassName: projectedBalance < 0 ? 'text-rose-600' : 'text-sky-600',
       mediaClassName: 'border-sky-200 bg-sky-50 text-sky-700',
     },
     {
@@ -167,15 +167,6 @@ function FinancialPageContent() {
       <PageHeader title="Financeiro" description="Contas a receber, saída de estoque e conciliação.">
         <IndicatorHeaderActions onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}>
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por descrição ou origem" />
-          <Select value={selectedStatus} onValueChange={(value) => params.setStatus(value === 'ALL' ? '' : value)}>
-            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos</SelectItem>
-              <SelectItem value="PENDENTE">Pendente</SelectItem>
-              <SelectItem value="PAGO">Pago</SelectItem>
-              <SelectItem value="VENCIDO">Vencido</SelectItem>
-            </SelectContent>
-          </Select>
         </IndicatorHeaderActions>
       </PageHeader>
       <CustomizableSummaryCards

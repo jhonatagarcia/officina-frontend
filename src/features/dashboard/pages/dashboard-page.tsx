@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle,
   BellRing,
+  CalendarDays,
   ClipboardList,
   DollarSign,
   Gauge,
@@ -34,11 +35,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn, formatCurrency, formatDateOnly, formatServiceOrderNumber } from '@/lib/utils';
-import type { DashboardOperationalAlert } from '@/features/dashboard/types';
+import type { DashboardOperationalAlert, DashboardPeriod } from '@/features/dashboard/types';
 
 const ACTIVE_SERVICE_ORDERS_PAGE_SIZE = 4;
 const DASHBOARD_SECONDARY_TABLE_PAGE_SIZE = 5;
 type MetricTone = 'orange' | 'green' | 'red' | 'blue' | 'amber' | 'slate';
+
+const dashboardPeriodOptions: Array<{ value: DashboardPeriod; label: string }> = [
+  { value: 'WEEK', label: 'Semanal' },
+  { value: 'MONTH', label: 'Mensal' },
+  { value: 'BIMESTER', label: 'Bimestre' },
+  { value: 'TRIMESTER', label: 'Trimestre' },
+  { value: 'YEAR', label: 'Anual' },
+];
+
+const dashboardPeriodLabels: Record<DashboardPeriod, string> = {
+  WEEK: 'últimos 7 dias',
+  MONTH: 'últimos 30 dias',
+  BIMESTER: 'últimos 2 meses',
+  TRIMESTER: 'últimos 3 meses',
+  YEAR: 'últimos 12 meses',
+};
 
 const toneMap: Record<MetricTone, { text: string; soft: string; line: string; fill: string; bar: string }> = {
   orange: {
@@ -276,6 +293,39 @@ function DotStatusPill({ label, tone = 'amber' }: { label: string; tone?: Metric
   );
 }
 
+function DashboardPeriodFilter({
+  value,
+  onChange,
+}: {
+  value: DashboardPeriod;
+  onChange: (value: DashboardPeriod) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2 rounded-xl border border-border-soft bg-white p-4 shadow-xs">
+      {dashboardPeriodOptions.map((option) => {
+        const isActive = value === option.value;
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            className={cn(
+              'inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold shadow-xs transition',
+              isActive
+                ? 'border-slate-900 bg-slate-900 text-white shadow-md'
+                : 'border-border bg-white text-muted-foreground hover:border-border-strong hover:text-foreground',
+            )}
+            onClick={() => onChange(option.value)}
+          >
+            <CalendarDays className={cn('size-4', !isActive && 'text-sky-600')} strokeWidth={1.75} />
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function DashboardTableCard({
   id,
   title,
@@ -338,12 +388,13 @@ function serviceOrderStatusTone(status: string): MetricTone {
 export function DashboardPage() {
   const navigate = useNavigate();
   const [isConfiguringPanel, setIsConfiguringPanel] = useState(false);
+  const [dashboardPeriod, setDashboardPeriod] = useState<DashboardPeriod>('YEAR');
   const [activeServiceOrdersPage, setActiveServiceOrdersPage] = useState(1);
   const [pendingBudgetsPage, setPendingBudgetsPage] = useState(1);
   const [lowStockItemsPage, setLowStockItemsPage] = useState(1);
   const query = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: dashboardService.getOverview,
+    queryKey: ['dashboard', dashboardPeriod],
+    queryFn: () => dashboardService.getOverview(dashboardPeriod),
   });
   const activeServiceOrdersTotalPages = Math.max(1, Math.ceil((query.data?.activeServiceOrders.length ?? 0) / ACTIVE_SERVICE_ORDERS_PAGE_SIZE));
   const pendingBudgetsTotalPages = Math.max(1, Math.ceil((query.data?.pendingBudgets.length ?? 0) / DASHBOARD_SECONDARY_TABLE_PAGE_SIZE));
@@ -384,7 +435,8 @@ export function DashboardPage() {
   const pendingBudgetsCount = budgets.pending;
   const activeOrderTotal = openOrdersCount + inProgressOrdersCount + readyOrdersCount;
   const projectedBalance = financial.monthRevenue - financial.stockOutValue;
-  const averageTicket = activeOrderTotal > 0 ? financial.monthRevenue / activeOrderTotal : financial.monthRevenue;
+  const averageTicket = financial.averageTicket;
+  const periodSubtitle = dashboardPeriodLabels[dashboardPeriod];
   const pendingBudgetTotal = pendingBudgets.reduce((total, budget) => total + budget.total, 0);
   const stockUnitsAtRisk = inventoryData.lowStockItems.reduce((total, item) => total + Math.max(item.minimumQuantity - item.quantity, 0), 0);
   const sparklineFromValue = (value: number) => {
@@ -490,6 +542,7 @@ export function DashboardPage() {
           title="Faturamento"
           value={formatCurrency(financial.monthRevenue)}
           delta={12.3}
+          subtitle={periodSubtitle}
           tone="orange"
           icon={DollarSign}
           sparkline={sparklineFromValue(financial.monthRevenue)}
@@ -506,6 +559,7 @@ export function DashboardPage() {
           title="Despesas"
           value={formatCurrency(financial.stockOutValue)}
           delta={6.4}
+          subtitle={periodSubtitle}
           tone="red"
           icon={TrendingDown}
           sparkline={sparklineFromValue(financial.stockOutValue)}
@@ -522,6 +576,7 @@ export function DashboardPage() {
           title="Lucro líquido"
           value={formatCurrency(projectedBalance)}
           delta={21.3}
+          subtitle={periodSubtitle}
           tone={projectedBalance >= 0 ? 'green' : 'red'}
           icon={TrendingUp}
           sparkline={sparklineFromValue(Math.abs(projectedBalance))}
@@ -532,7 +587,7 @@ export function DashboardPage() {
       id: 'average-ticket',
       title: 'Ticket médio',
       category: 'Financeiro',
-      render: () => <MetricCard title="Ticket médio" value={formatCurrency(averageTicket)} delta={12.4} tone="orange" icon={Gauge} />,
+      render: () => <MetricCard title="Ticket médio" value={formatCurrency(averageTicket)} delta={12.4} subtitle={periodSubtitle} tone="orange" icon={Gauge} />,
     },
     {
       id: 'accounts-receivable',
@@ -937,6 +992,7 @@ export function DashboardPage() {
           Nova OS
         </Button>
       </PageHeader>
+      <DashboardPeriodFilter value={dashboardPeriod} onChange={setDashboardPeriod} />
       <CustomizableWidgetGrid
         storageKey="oficina:dashboard:widgets:v1"
         widgets={dashboardWidgets}

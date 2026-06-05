@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import type { ReactElement } from 'react';
@@ -252,73 +252,14 @@ describe('LoginPage', () => {
     expect(screen.queryByText('Dashboard seguro')).not.toBeInTheDocument();
   });
 
-  it('abre e fecha o modal de cadastro a partir de Cadastre-se', () => {
+  it('mantem o cadastro de oficina bloqueado temporariamente', async () => {
     renderWithProviders(<LoginPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: /cadastre-se/i }));
-
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /cadastrar oficina/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/nome fantasia da oficina/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^cnpj$/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/confirmar senha/i)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /cancelar/i }));
+    const registerButton = await screen.findByRole('button', { name: /cadastre-se/i });
+    expect(registerButton).toBeDisabled();
+    fireEvent.click(registerButton);
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-  });
-
-  it('envia confirmacao de senha no cadastro de oficina', async () => {
-    const user = userEvent.setup();
-    registerWorkshopMock.mockResolvedValueOnce({ message: 'ok' });
-
-    renderWithProviders(<LoginPage />);
-
-    await user.click(screen.getByRole('button', { name: /cadastre-se/i }));
-
-    const dialog = screen.getByRole('dialog');
-    await user.type(within(dialog).getByLabelText(/nome fantasia da oficina/i), 'Oficina Avenida');
-    await user.type(within(dialog).getByLabelText(/^e-mail$/i), 'admin@oficina.com');
-    await user.type(within(dialog).getByLabelText(/^senha$/i), 'Senha123');
-    await user.type(within(dialog).getByLabelText(/confirmar senha/i), 'Senha123');
-    await user.click(within(dialog).getByRole('checkbox', { name: /não sou um robô/i }));
-    await user.click(within(dialog).getByRole('button', { name: /criar cadastro/i }));
-
-    await waitFor(() =>
-      expect(registerWorkshopMock.mock.calls[0]?.[0]).toEqual({
-        tradeName: 'Oficina Avenida',
-        cnpj: null,
-        email: 'admin@oficina.com',
-        password: 'Senha123',
-        confirmPassword: 'Senha123',
-        captchaToken: 'local-captcha-ok',
-      }),
-    );
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(toastSuccessMock).toHaveBeenCalledWith('Cadastro realizado com sucesso.');
-    expect(screen.getByLabelText(/e-mail/i)).toHaveValue('admin@oficina.com');
-    expect(screen.getByLabelText(/^senha$/i)).toHaveValue('');
-    expect(screen.getByRole('button', { name: /^entrar$/i })).toBeInTheDocument();
-  });
-
-  it('mantem modal aberto e mostra mensagem quando cadastro falha', async () => {
-    const user = userEvent.setup();
-    registerWorkshopMock.mockRejectedValueOnce({ message: 'E-mail já cadastrado' });
-
-    renderWithProviders(<LoginPage />);
-
-    await user.click(screen.getByRole('button', { name: /cadastre-se/i }));
-
-    const dialog = screen.getByRole('dialog');
-    await user.type(within(dialog).getByLabelText(/nome fantasia da oficina/i), 'Oficina Avenida');
-    await user.type(within(dialog).getByLabelText(/^e-mail$/i), 'admin@oficina.com');
-    await user.type(within(dialog).getByLabelText(/^senha$/i), 'Senha123');
-    await user.type(within(dialog).getByLabelText(/confirmar senha/i), 'Senha123');
-    await user.click(within(dialog).getByRole('checkbox', { name: /não sou um robô/i }));
-    await user.click(within(dialog).getByRole('button', { name: /criar cadastro/i }));
-
-    await waitFor(() => expect(toastErrorMock).toHaveBeenCalledWith('E-mail já cadastrado'));
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
   it('permite mostrar e ocultar a senha', () => {
@@ -366,44 +307,15 @@ describe('LoginPage', () => {
     expect(toastErrorMock).not.toHaveBeenCalledWith('stack trace ou detalhe interno');
   });
 
-  it('executa fluxo seguro de esqueci senha com captcha', async () => {
-    const user = userEvent.setup();
-    forgotPasswordMock.mockResolvedValueOnce({});
-
+  it('mantem recuperacao de senha bloqueada temporariamente', () => {
     renderWithProviders(<LoginPage />);
 
-    await user.click(screen.getByRole('button', { name: /esqueci minha senha/i }));
-    await user.type(screen.getByLabelText(/e-mail/i), 'gestor@oficina.com');
-    await user.click(screen.getByRole('checkbox', { name: /não sou um robô/i }));
-    await user.click(screen.getByRole('button', { name: /enviar instruções/i }));
+    const forgotButton = screen.getByRole('button', { name: /esqueci minha senha/i });
+    expect(forgotButton).toBeDisabled();
+    fireEvent.click(forgotButton);
 
-    await waitFor(() =>
-      expect(forgotPasswordMock.mock.calls[0]?.[0]).toEqual({
-        email: 'gestor@oficina.com',
-        captchaToken: 'local-captcha-ok',
-      }),
-    );
-    expect(toastSuccessMock).toHaveBeenCalledWith('Se o e-mail estiver cadastrado, enviaremos as instruções de redefinição.');
-  });
-
-  it('mostra loading durante envio de recuperacao de senha', async () => {
-    const user = userEvent.setup();
-    let resolveForgot: (value: unknown) => void = () => undefined;
-    forgotPasswordMock.mockReturnValueOnce(new Promise((resolve) => {
-      resolveForgot = resolve;
-    }));
-
-    renderWithProviders(<LoginPage />);
-
-    await user.click(screen.getByRole('button', { name: /esqueci minha senha/i }));
-    await user.type(screen.getByLabelText(/e-mail/i), 'gestor@oficina.com');
-    await user.click(screen.getByRole('checkbox', { name: /não sou um robô/i }));
-    await user.click(screen.getByRole('button', { name: /enviar instruções/i }));
-
-    expect(await screen.findByRole('button', { name: /enviando/i })).toBeDisabled();
-
-    resolveForgot({});
-    await waitFor(() => expect(toastSuccessMock).toHaveBeenCalledWith('Se o e-mail estiver cadastrado, enviaremos as instruções de redefinição.'));
+    expect(screen.queryByRole('heading', { name: /recuperar senha/i })).not.toBeInTheDocument();
+    expect(forgotPasswordMock).not.toHaveBeenCalled();
   });
 
   it('redireciona para dashboard quando o destino salvo nao pertence a /app', async () => {

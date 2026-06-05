@@ -21,7 +21,6 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -177,17 +176,6 @@ export function BudgetsPage() {
           onPrimaryAction={() => navigate('/app/orcamentos/novo')}
         >
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por cliente, veículo ou problema" />
-          <Select value={selectedStatus} onValueChange={(value) => params.setStatus(value === 'ALL' ? '' : value)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos</SelectItem>
-              <SelectItem value="PENDENTE">Pendente</SelectItem>
-              <SelectItem value="APROVADO">Aprovado</SelectItem>
-              <SelectItem value="REPROVADO">Reprovado</SelectItem>
-            </SelectContent>
-          </Select>
         </IndicatorHeaderActions>
       </PageHeader>
       <CustomizableSummaryCards

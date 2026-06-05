@@ -15,7 +15,6 @@ import { TableFilterChips } from '@/components/shared/table-filter-chips';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { mechanicsService } from '@/features/mechanics/services/mechanics-service';
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
@@ -99,16 +98,6 @@ export function MechanicsPage() {
           onPrimaryAction={() => navigate('/app/mecanicos/novo')}
         >
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por nome ou e-mail" />
-          <Select value={activeFilter} onValueChange={(value) => handleActiveFilterChange(value as ActiveFilter)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Situação" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos</SelectItem>
-              <SelectItem value="ACTIVE">Ativos</SelectItem>
-              <SelectItem value="INACTIVE">Inativos</SelectItem>
-            </SelectContent>
-          </Select>
         </IndicatorHeaderActions>
       </PageHeader>
       <CustomizableSummaryCards

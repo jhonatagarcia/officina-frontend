@@ -227,7 +227,7 @@ export function LoginPage() {
                   <button
                     className="text-sm font-medium text-orange-300 transition-colors hover:text-orange-200"
                     type="button"
-                    disabled={isAuthenticating}
+                    disabled={true}
                     onClick={() => setMode('forgot')}
                   >
                     Esqueci minha senha

@@ -18,7 +18,6 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 import { getServiceOrderStatusLabel, getServiceOrderStatusTone, isReadOnlyServiceOrderStatus } from '@/features/service-orders/lib/service-order-status';
@@ -165,19 +164,6 @@ export function ServiceOrdersPage() {
           onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
         >
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por OS, cliente ou veículo" />
-          <Select value={selectedStatus} onValueChange={(value) => params.setStatus(value === 'ALL' ? '' : value)}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Todos</SelectItem>
-              <SelectItem value="ABERTA">Aberta</SelectItem>
-              <SelectItem value="AGUARDANDO_PECA">Aguardando peça</SelectItem>
-              <SelectItem value="EM_ANDAMENTO">Em andamento</SelectItem>
-              <SelectItem value="FINALIZADA">Finalizada</SelectItem>
-              <SelectItem value="ENTREGUE">Entregue</SelectItem>
-            </SelectContent>
-          </Select>
         </IndicatorHeaderActions>
       </PageHeader>
       <CustomizableSummaryCards

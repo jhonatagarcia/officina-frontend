@@ -1,6 +1,6 @@
 import type { Budget } from '@/features/budgets/types';
 import { budgetsService } from '@/features/budgets/services/budgets-service';
-import type { DashboardOperationalAlert, DashboardOverview } from '@/features/dashboard/types';
+import type { DashboardOperationalAlert, DashboardOverview, DashboardPeriod } from '@/features/dashboard/types';
 import { inventoryService } from '@/features/inventory/services/inventory-service';
 import type { InventoryItem } from '@/features/inventory/types';
 import type { ServiceOrder } from '@/features/service-orders/types';
@@ -20,6 +20,7 @@ interface DashboardSummaryApiResponse {
   financial: {
     monthRevenue: number | string;
     stockOutValue: number | string;
+    averageTicket?: number | string;
   };
   inventory: {
     lowStockCount: number;
@@ -42,6 +43,7 @@ function mapDashboardSummary(response: DashboardSummaryApiResponse): DashboardSu
     financial: {
       monthRevenue: toNumber(response.financial.monthRevenue),
       stockOutValue: toNumber(response.financial.stockOutValue),
+      averageTicket: toNumber(response.financial.averageTicket),
     },
     inventory: response.inventory,
   };
@@ -178,9 +180,11 @@ function buildOperationalAlerts(params: {
 }
 
 export const dashboardService = {
-  async getOverview(): Promise<DashboardOverview> {
+  async getOverview(period: DashboardPeriod = 'YEAR'): Promise<DashboardOverview> {
     const [summaryResponse, lowStockItems, openOrders, inProgressOrders, pendingBudgets] = await Promise.all([
-      http.get<DashboardSummaryApiResponse>('/dashboard/summary'),
+      http.get<DashboardSummaryApiResponse>('/dashboard/summary', {
+        params: { period },
+      }),
       inventoryService.getLowStockAlerts(),
       serviceOrdersService.list({
         page: 1,
