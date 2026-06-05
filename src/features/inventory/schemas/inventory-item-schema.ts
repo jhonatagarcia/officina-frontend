@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 export const inventoryItemSchema = z.object({
   name: z.string().min(2, 'Informe o nome da peça'),
-  internalCode: z.string().min(1, 'Informe o código interno'),
   category: z.string().optional().or(z.literal('')),
   supplier: z.string().optional().or(z.literal('')),
   quantity: z.coerce.number().min(0, 'A quantidade não pode ser negativa'),

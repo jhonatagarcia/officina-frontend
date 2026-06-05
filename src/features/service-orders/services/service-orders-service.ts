@@ -1,7 +1,16 @@
 import { http } from '@/services/api/http';
 import { buildQueryParams, mapPaginatedResponse } from '@/services/api/query-string';
-import type { ApiPaginatedResponse, PaginatedResponse, QueryParams } from '@/types/common';
-import type { ServiceOrder, ServiceOrderPart, ServiceOrderStatus } from '@/features/service-orders/types';
+import type { ApiPaginatedResponse, QueryParams } from '@/types/common';
+import type {
+  CreateServiceOrderPendingPartPayload,
+  ServiceOrder,
+  ServiceOrderBudgetItem,
+  ServiceOrderPart,
+  ServiceOrderPendingPart,
+  ServiceOrderStatus,
+  UpdateServiceOrderPendingPartPayload,
+  UpdateServiceOrderItemPayload,
+} from '@/features/service-orders/types';
 import { toNumber } from '@/lib/utils';
 
 interface ServiceOrderPartApiResponse extends Omit<ServiceOrderPart, 'unitPrice' | 'totalPrice'> {
@@ -9,11 +18,50 @@ interface ServiceOrderPartApiResponse extends Omit<ServiceOrderPart, 'unitPrice'
   totalPrice: number | string;
 }
 
-interface ServiceOrderApiResponse extends Omit<ServiceOrder, 'clientName' | 'vehicleLabel' | 'mechanicName' | 'parts'> {
+interface ServiceOrderBudgetItemApiResponse
+  extends Omit<ServiceOrderBudgetItem, 'unitPrice' | 'totalPrice'> {
+  unitPrice: number | string;
+  totalPrice: number | string;
+}
+
+interface ServiceOrderPendingPartApiResponse
+  extends Omit<ServiceOrderPendingPart, 'quantityRequired' | 'quantityAvailable' | 'inventoryItem'> {
+  quantityRequired: number | string;
+  quantityAvailable: number | string;
+  inventoryItem: Omit<ServiceOrderPendingPart['inventoryItem'], 'quantity'> & {
+    quantity: number | string;
+  };
+}
+
+interface ServiceOrderApiResponse
+  extends Omit<
+    ServiceOrder,
+    | 'clientName'
+    | 'vehicleLabel'
+    | 'mechanicName'
+    | 'parts'
+    | 'budgetItems'
+    | 'executionItems'
+    | 'pendingParts'
+    | 'partsTotal'
+    | 'laborTotal'
+    | 'discount'
+    | 'total'
+  > {
+  partsTotal?: number | string;
+  laborTotal?: number | string;
+  discount?: number | string;
+  total?: number | string;
+  budgetItems?: ServiceOrderBudgetItemApiResponse[];
+  executionItems?: ServiceOrderBudgetItemApiResponse[];
   client?: ServiceOrder['client'];
   vehicle?: ServiceOrder['vehicle'];
   mechanic?: ServiceOrder['mechanic'] | null;
   parts?: ServiceOrderPartApiResponse[];
+  pendingParts?: ServiceOrderPendingPartApiResponse[];
+  budget?: {
+    items?: ServiceOrderBudgetItemApiResponse[];
+  } | null;
 }
 
 function mapServiceOrderPart(part: ServiceOrderPartApiResponse): ServiceOrderPart {
@@ -24,13 +72,40 @@ function mapServiceOrderPart(part: ServiceOrderPartApiResponse): ServiceOrderPar
   };
 }
 
+function mapServiceOrderBudgetItem(item: ServiceOrderBudgetItemApiResponse): ServiceOrderBudgetItem {
+  return {
+    ...item,
+    unitPrice: toNumber(item.unitPrice),
+    totalPrice: toNumber(item.totalPrice),
+  };
+}
+
+function mapServiceOrderPendingPart(part: ServiceOrderPendingPartApiResponse): ServiceOrderPendingPart {
+  return {
+    ...part,
+    quantityRequired: toNumber(part.quantityRequired),
+    quantityAvailable: toNumber(part.quantityAvailable),
+    inventoryItem: {
+      ...part.inventoryItem,
+      quantity: toNumber(part.inventoryItem.quantity),
+    },
+  };
+}
+
 function mapServiceOrder(order: ServiceOrderApiResponse): ServiceOrder {
   return {
     ...order,
     clientName: order.client?.name ?? '-',
     vehicleLabel: order.vehicle ? `${order.vehicle.plate} • ${order.vehicle.brand} ${order.vehicle.model}` : '-',
     mechanicName: order.mechanic?.name ?? null,
+    partsTotal: order.partsTotal !== undefined ? toNumber(order.partsTotal) : undefined,
+    laborTotal: order.laborTotal !== undefined ? toNumber(order.laborTotal) : undefined,
+    discount: order.discount !== undefined ? toNumber(order.discount) : undefined,
+    total: order.total !== undefined ? toNumber(order.total) : undefined,
+    budgetItems: (order.budgetItems ?? order.budget?.items)?.map(mapServiceOrderBudgetItem),
+    executionItems: order.executionItems?.map(mapServiceOrderBudgetItem),
     parts: order.parts?.map(mapServiceOrderPart),
+    pendingParts: order.pendingParts?.map(mapServiceOrderPendingPart),
   };
 }
 
@@ -43,7 +118,7 @@ export const serviceOrdersService = {
     return mapPaginatedResponse({
       ...response.data,
       data: response.data.data.map(mapServiceOrder),
-    }) as PaginatedResponse<ServiceOrder>;
+    });
   },
   async getById(id: string) {
     const response = await http.get<ServiceOrderApiResponse>(`/service-orders/${id}`);
@@ -53,9 +128,34 @@ export const serviceOrdersService = {
     const response = await http.patch<ServiceOrderApiResponse>(`/service-orders/${id}/status`, { status });
     return mapServiceOrder(response.data);
   },
+  async resumeAfterPartsArrival(id: string) {
+    const response = await http.post<ServiceOrderApiResponse>(`/service-orders/${id}/resume-after-parts-arrival`);
+    return mapServiceOrder(response.data);
+  },
   async update(id: string, payload: Partial<ServiceOrder>) {
     const response = await http.patch<ServiceOrderApiResponse>(`/service-orders/${id}`, payload);
     return mapServiceOrder(response.data);
+  },
+  async listPendingParts(id: string) {
+    const response = await http.get<ServiceOrderPendingPartApiResponse[]>(`/service-orders/${id}/pending-parts`);
+    return response.data.map(mapServiceOrderPendingPart);
+  },
+  async createPendingPart(id: string, payload: CreateServiceOrderPendingPartPayload) {
+    const response = await http.post<ServiceOrderPendingPartApiResponse>(`/service-orders/${id}/pending-parts`, payload);
+    return mapServiceOrderPendingPart(response.data);
+  },
+  async updatePendingPart(id: string, pendingPartId: string, payload: UpdateServiceOrderPendingPartPayload) {
+    const response = await http.patch<ServiceOrderPendingPartApiResponse>(
+      `/service-orders/${id}/pending-parts/${pendingPartId}`,
+      payload,
+    );
+    return mapServiceOrderPendingPart(response.data);
+  },
+  async cancelPendingPart(id: string, pendingPartId: string) {
+    const response = await http.delete<ServiceOrderPendingPartApiResponse | null>(
+      `/service-orders/${id}/pending-parts/${pendingPartId}`,
+    );
+    return response.data ? mapServiceOrderPendingPart(response.data) : null;
   },
   async listParts(id: string) {
     const response = await http.get<ServiceOrderPartApiResponse[]>(`/service-orders/${id}/parts`);
@@ -64,5 +164,22 @@ export const serviceOrdersService = {
   async addPart(id: string, payload: { inventoryItemId: string; quantity: number; unitPrice: number }) {
     const response = await http.post<ServiceOrderPartApiResponse>(`/service-orders/${id}/parts`, payload);
     return mapServiceOrderPart(response.data);
+  },
+  async removePart(id: string, partId: string) {
+    const response = await http.delete<ServiceOrderPartApiResponse>(`/service-orders/${id}/parts/${partId}`);
+    return mapServiceOrderPart(response.data);
+  },
+  async updateItem(id: string, itemId: string, payload: UpdateServiceOrderItemPayload) {
+    const response = await http.patch<ServiceOrderBudgetItemApiResponse>(
+      `/service-orders/${id}/items/${itemId}`,
+      payload,
+    );
+    return mapServiceOrderBudgetItem(response.data);
+  },
+  async removeItem(id: string, itemId: string) {
+    const response = await http.delete<ServiceOrderBudgetItemApiResponse>(
+      `/service-orders/${id}/items/${itemId}`,
+    );
+    return mapServiceOrderBudgetItem(response.data);
   },
 };

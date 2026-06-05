@@ -30,6 +30,21 @@ export function formatDate(value: string) {
   return new Intl.DateTimeFormat('pt-BR').format(new Date(value));
 }
 
+export function formatDateOnly(value: string) {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+  if (!match) {
+    return formatDate(value);
+  }
+
+  const [, year, month, day] = match;
+  return `${day}/${month}/${year}`;
+}
+
+export function onlyDigits(value?: string | null) {
+  return value?.replace(/\D/g, '') ?? '';
+}
+
 export function normalizePlate(value: string) {
   return value.toUpperCase().replace(/[^A-Z0-9]/g, '');
 }
@@ -44,7 +59,7 @@ export function normalizeNullableString(value?: string | null) {
 }
 
 export function formatPhone(value?: string | null) {
-  const digits = value?.replace(/\D/g, '').slice(0, 11) ?? '';
+  const digits = onlyDigits(value).slice(0, 11);
   if (!digits) return '-';
 
   if (digits.length <= 10) {
@@ -58,21 +73,8 @@ export function formatPhone(value?: string | null) {
     .replace(/(\d{5})(\d)/, '$1-$2');
 }
 
-export function buildWhatsAppUrl(phone?: string | null, message?: string) {
-  const digits = phone?.replace(/\D/g, '') ?? '';
-  if (!digits) return null;
-
-  const phoneWithCountryCode =
-    digits.length === 10 || digits.length === 11
-      ? `55${digits}`
-      : digits;
-
-  const encodedMessage = encodeURIComponent(message ?? '');
-  return `https://wa.me/${phoneWithCountryCode}?text=${encodedMessage}`;
-}
-
 export function formatCpfCnpj(value?: string | null) {
-  const digits = value?.replace(/\D/g, '').slice(0, 14) ?? '';
+  const digits = onlyDigits(value).slice(0, 14);
   if (!digits) return '-';
 
   if (digits.length <= 11) {
@@ -89,17 +91,7 @@ export function formatCpfCnpj(value?: string | null) {
     .replace(/(\d{4})(\d)/, '$1-$2');
 }
 
-export function formatarMoeda(valorDigitado: string) {
-  const numeros = valorDigitado.replace(/\D/g, '');
-  const valorNumerico = Number(numeros) / 100;
-
-  return valorNumerico.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  });
-}
-
 export function parseCurrencyInput(value: string) {
-  const digits = value.replace(/\D/g, '');
+  const digits = onlyDigits(value);
   return Number(digits) / 100;
 }

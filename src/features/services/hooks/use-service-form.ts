@@ -25,7 +25,7 @@ export function useServiceForm(mode: 'create' | 'edit' | 'view', id: string, onS
         description: query.data.description ?? '',
         internalNotes: query.data.internalNotes ?? '',
         laborPrice: query.data.laborPrice,
-        productPrice: query.data.productPrice,
+        productPrice: 0,
         billingType: query.data.billingType,
         materialSource: query.data.materialSource,
         warrantyDays: query.data.warrantyDays ?? undefined,
@@ -44,14 +44,9 @@ export function useServiceForm(mode: 'create' | 'edit' | 'view', id: string, onS
       },
   });
 
-  const billingType = form.watch('billingType');
-  const materialSource = form.watch('materialSource');
-
   useEffect(() => {
-    if (billingType === 'LABOR_ONLY' || materialSource === 'NO_PARTS_REQUIRED') {
-      form.setValue('productPrice', 0, { shouldValidate: true, shouldDirty: true });
-    }
-  }, [billingType, form, materialSource]);
+    form.setValue('productPrice', 0, { shouldValidate: true });
+  }, [form]);
 
   const mutation = useMutation({
     mutationFn: async (values: ServiceCatalogSchema) => {
@@ -61,7 +56,7 @@ export function useServiceForm(mode: 'create' | 'edit' | 'view', id: string, onS
         description: normalizeNullableString(values.description),
         internalNotes: normalizeNullableString(values.internalNotes),
         laborPrice: values.laborPrice,
-        productPrice: values.productPrice,
+        productPrice: 0,
         billingType: values.billingType,
         materialSource: values.materialSource,
         warrantyDays: values.warrantyDays ?? null,
@@ -82,6 +77,7 @@ export function useServiceForm(mode: 'create' | 'edit' | 'view', id: string, onS
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['servicos'] });
       queryClient.invalidateQueries({ queryKey: ['servico'] });
+      queryClient.invalidateQueries({ queryKey: ['reference', 'servicos'] });
       toast.success('Serviço salvo com sucesso.');
       onSuccess();
     },

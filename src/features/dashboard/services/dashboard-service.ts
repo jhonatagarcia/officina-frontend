@@ -1,6 +1,6 @@
 import type { Budget } from '@/features/budgets/types';
 import { budgetsService } from '@/features/budgets/services/budgets-service';
-import type { DashboardOperationalAlert, DashboardOverview } from '@/features/dashboard/types';
+import type { DashboardOperationalAlert, DashboardOverview, DashboardPeriod } from '@/features/dashboard/types';
 import { inventoryService } from '@/features/inventory/services/inventory-service';
 import type { InventoryItem } from '@/features/inventory/types';
 import type { ServiceOrder } from '@/features/service-orders/types';
@@ -19,6 +19,8 @@ interface DashboardSummaryApiResponse {
   };
   financial: {
     monthRevenue: number | string;
+    stockOutValue: number | string;
+    averageTicket?: number | string;
   };
   inventory: {
     lowStockCount: number;
@@ -32,12 +34,16 @@ interface DashboardSummaryApiResponse {
   };
 }
 
-function mapDashboardSummary(response: DashboardSummaryApiResponse): Omit<DashboardOverview, 'operationalAlerts'> {
+type DashboardSummary = Omit<DashboardOverview, 'activeServiceOrders' | 'pendingBudgets' | 'operationalAlerts'>;
+
+function mapDashboardSummary(response: DashboardSummaryApiResponse): DashboardSummary {
   return {
     serviceOrders: response.serviceOrders,
     budgets: response.budgets,
     financial: {
       monthRevenue: toNumber(response.financial.monthRevenue),
+      stockOutValue: toNumber(response.financial.stockOutValue),
+      averageTicket: toNumber(response.financial.averageTicket),
     },
     inventory: response.inventory,
   };
@@ -82,7 +88,7 @@ function describeCriticalItems(items: InventoryItem[]) {
 }
 
 function buildOperationalAlerts(params: {
-  summary: Omit<DashboardOverview, 'operationalAlerts'>;
+  summary: DashboardSummary;
   lowStockItems: InventoryItem[];
   activeServiceOrders: ServiceOrder[];
   pendingBudgets: Budget[];
@@ -174,9 +180,11 @@ function buildOperationalAlerts(params: {
 }
 
 export const dashboardService = {
-  async getOverview(): Promise<DashboardOverview> {
+  async getOverview(period: DashboardPeriod = 'YEAR'): Promise<DashboardOverview> {
     const [summaryResponse, lowStockItems, openOrders, inProgressOrders, pendingBudgets] = await Promise.all([
-      http.get<DashboardSummaryApiResponse>('/dashboard/summary'),
+      http.get<DashboardSummaryApiResponse>('/dashboard/summary', {
+        params: { period },
+      }),
       inventoryService.getLowStockAlerts(),
       serviceOrdersService.list({
         page: 1,
@@ -194,7 +202,7 @@ export const dashboardService = {
       }),
       budgetsService.list({
         page: 1,
-        pageSize: 5,
+        pageSize: 100,
         status: 'PENDENTE',
         sortBy: 'createdAt',
         sortOrder: 'asc',
@@ -211,6 +219,8 @@ export const dashboardService = {
 
     return {
       ...summary,
+      activeServiceOrders: [...openOrders.data, ...inProgressOrders.data],
+      pendingBudgets: pendingBudgets.data,
       operationalAlerts,
     };
   },

@@ -2,13 +2,17 @@ import { z } from 'zod';
 
 const optionalText = z.string().trim().optional().or(z.literal(''));
 const documentPattern = /^[\d./-]*$/;
-const digitsPattern = /^\d*$/;
+const phonePattern = /^[\d()\s-]*$/;
 
 export const clientSchema = z.object({
   name: z.string().min(3, 'Informe o nome do cliente'),
   phone: optionalText
-    .refine((value) => !value || digitsPattern.test(value), 'Telefone deve conter apenas números')
-    .refine((value) => !value || value.length >= 10, 'Informe um telefone válido'),
+    .refine((value) => !value || phonePattern.test(value), 'Celular inválido')
+    .refine((value) => {
+      if (!value) return true;
+      const digits = value.replace(/\D/g, '');
+      return digits.length >= 10 && digits.length <= 11;
+    }, 'Informe um celular válido'),
   document: optionalText
     .refine((value) => !value || documentPattern.test(value), 'CPF/CNPJ inválido')
     .refine((value) => {

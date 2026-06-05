@@ -1,55 +1,71 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { inventoryItemSchema, type InventoryItemSchema } from '@/features/inventory/schemas/inventory-item-schema';
 import { inventoryService } from '@/features/inventory/services/inventory-service';
 import { normalizeNullableString } from '@/lib/utils';
 import type { ApiErrorResponse } from '@/types/common';
+import type { InventoryItemSaveResult } from '@/features/inventory/types';
 
-export function useInventoryForm(onSuccess: () => void) {
+export function useInventoryForm(mode: 'create' | 'edit', id: string, onSuccess: (result: InventoryItemSaveResult) => void) {
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: ['estoque-item', id],
+    queryFn: () => inventoryService.getById(id),
+    enabled: mode === 'edit',
+  });
+
   const form = useForm<InventoryItemSchema>({
     resolver: zodResolver(inventoryItemSchema),
-    values: {
-      name: '',
-      internalCode: '',
-      category: '',
-      supplier: '',
-      quantity: 0,
-      minimumQuantity: 0,
-      cost: 0,
-      salePrice: 0,
-    },
+    values:
+      (query.data && {
+        name: query.data.name,
+        category: query.data.category ?? '',
+        supplier: query.data.supplier ?? '',
+        quantity: query.data.quantity,
+        minimumQuantity: query.data.minimumQuantity,
+        cost: query.data.cost,
+        salePrice: query.data.salePrice,
+      }) ?? {
+        name: '',
+        category: '',
+        supplier: '',
+        quantity: 0,
+        minimumQuantity: 0,
+        cost: 0,
+        salePrice: 0,
+      },
   });
 
   const mutation = useMutation({
-    mutationFn: async (values: InventoryItemSchema) =>
-      inventoryService.create({
+    mutationFn: async (values: InventoryItemSchema) => {
+      const payload = {
         name: values.name.trim(),
-        internalCode: values.internalCode.trim(),
         category: normalizeNullableString(values.category),
         supplier: normalizeNullableString(values.supplier),
         quantity: values.quantity,
         minimumQuantity: values.minimumQuantity,
         cost: values.cost,
         salePrice: values.salePrice,
-      }),
-    onSuccess: () => {
-      toast.success('Peça cadastrada com sucesso.');
-      onSuccess();
+      };
+
+      if (mode === 'edit') return inventoryService.update(id, payload);
+      return inventoryService.create(payload);
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['estoque'] });
+      queryClient.invalidateQueries({ queryKey: ['estoque-item'] });
+      queryClient.invalidateQueries({ queryKey: ['reference', 'estoque'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['financeiro'] });
+      toast.success('Peça salva com sucesso.');
+      onSuccess(result);
     },
     onError: (error: ApiErrorResponse) => {
-      if (error.statusCode === 409) {
-        form.setError('internalCode', {
-          type: 'server',
-          message: error.message || 'Já existe uma peça cadastrada com este código interno.',
-        });
-        return;
-      }
-
       toast.error(error.message || 'Não foi possível salvar a peça.');
     },
   });
 
-  return { form, mutation };
+  return { query, form, mutation };
 }

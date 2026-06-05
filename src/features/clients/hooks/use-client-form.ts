@@ -1,34 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { clientSchema, type ClientSchema } from '@/features/clients/schemas/client-schema';
 import { clientsService } from '@/features/clients/services/clients-service';
-import { normalizeNullableString } from '@/lib/utils';
-import { ApiErrorResponse } from '@/types/common';
-
-function onlyDigits(value: string | null | undefined) {
-  return value?.replace(/\D/g, '') ?? '';
-}
-
-function formatCpfCnpj(value: string | null | undefined) {
-  const digits = onlyDigits(value).slice(0, 14);
-
-  if (digits.length <= 11) {
-    return digits
-      .replace(/^(\d{3})(\d)/, '$1.$2')
-      .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
-      .replace(/\.(\d{3})(\d)/, '.$1-$2');
-  }
-
-  return digits
-    .replace(/^(\d{2})(\d)/, '$1.$2')
-    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/\.(\d{3})(\d)/, '.$1/$2')
-    .replace(/(\d{4})(\d)/, '$1-$2');
-}
+import type { Client } from '@/features/clients/types';
+import { formatCpfCnpj, normalizeNullableString, onlyDigits } from '@/lib/utils';
+import type { ApiErrorResponse, PaginatedResponse } from '@/types/common';
 
 export function useClientForm(mode: 'create' | 'edit' | 'view', id: string, onSuccess: () => void) {
+  const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ['cliente', id],
     queryFn: () => clientsService.getById(id),
@@ -66,22 +47,42 @@ export function useClientForm(mode: 'create' | 'edit' | 'view', id: string, onSu
       if (mode === 'edit') return clientsService.update(id, payload);
       return clientsService.create(payload);
     },
-    onSuccess: () => {
+    onSuccess: (savedClient) => {
+      queryClient.setQueryData<Client>(['cliente', savedClient.id], (current) => ({
+        ...current,
+        ...savedClient,
+        vehicles: current?.vehicles ?? savedClient.vehicles,
+      }));
+      queryClient.setQueriesData<PaginatedResponse<Client>>({ queryKey: ['clientes'] }, (current) =>
+        current
+          ? {
+              ...current,
+              data: current.data.map((client) => (client.id === savedClient.id ? { ...client, ...savedClient } : client)),
+            }
+          : current,
+      );
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['cliente', savedClient.id] });
+      queryClient.invalidateQueries({ queryKey: ['reference', 'clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['veiculos'] });
+      queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
+      queryClient.invalidateQueries({ queryKey: ['financeiro'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success('Cliente salvo com sucesso.');
       onSuccess();
     },
-
     onError: (error: ApiErrorResponse) => {
-    if (error.statusCode === 409) {
-      form.setError('document', {
-        type: 'server',
-        message: error.message || 'Já existe um cliente cadastrado com este CPF/CNPJ.',
-      });
-      return;
-    }
+      if (error.statusCode === 409) {
+        form.setError('document', {
+          type: 'server',
+          message: error.message || 'Já existe um cliente cadastrado com este CPF/CNPJ.',
+        });
+        return;
+      }
 
-    toast.error(error.message || 'Não foi possível salvar o cliente.');
-  },
+      toast.error(error.message || 'Não foi possível salvar o cliente.');
+    },
   });
 
   return { query, form, mutation };

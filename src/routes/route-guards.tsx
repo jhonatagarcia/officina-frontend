@@ -19,7 +19,11 @@ export function ProtectedRoute() {
 }
 
 export function GuestRoute() {
-  const { isAuthenticated } = useAuthState();
+  const { isAuthenticated, hydrated } = useAuthState();
+
+  if (!hydrated) {
+    return null;
+  }
 
   if (isAuthenticated) {
     return <Navigate to="/app/dashboard" replace />;

@@ -1,5 +1,5 @@
 import { PropsWithChildren } from 'react';
 
 export function PageContainer({ children }: PropsWithChildren) {
-  return <div className="space-y-6">{children}</div>;
+  return <div className="space-y-7">{children}</div>;
 }

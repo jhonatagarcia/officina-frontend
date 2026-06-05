@@ -1,6 +1,6 @@
 import { http } from '@/services/api/http';
 import { buildQueryParams, mapPaginatedResponse } from '@/services/api/query-string';
-import type { ApiPaginatedResponse, PaginatedResponse, QueryParams } from '@/types/common';
+import type { ApiPaginatedResponse, QueryParams } from '@/types/common';
 import type { Budget, BudgetItem, BudgetItemType } from '@/features/budgets/types';
 import { toNumber } from '@/lib/utils';
 
@@ -9,6 +9,7 @@ interface BudgetItemApiResponse {
   budgetId: string;
   type: BudgetItemType;
   serviceCatalogItemId: string | null;
+  inventoryItemId: string | null;
   serviceCode: string | null;
   description: string;
   quantity: number;
@@ -40,6 +41,22 @@ interface BudgetApiResponse {
   serviceOrder?: Budget['serviceOrder'] | null;
 }
 
+export interface SaveBudgetPayload {
+  clientId: string;
+  vehicleId: string;
+  problemDescription: string;
+  notes?: string;
+  discount: number;
+  items: Array<{
+    type: BudgetItemType;
+    serviceCatalogItemId?: string;
+    inventoryItemId?: string;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
+}
+
 function mapBudgetItem(item: BudgetItemApiResponse): BudgetItem {
   return {
     ...item,
@@ -67,27 +84,18 @@ export const budgetsService = {
     return mapPaginatedResponse({
       ...response.data,
       data: response.data.data.map(mapBudget),
-    }) as PaginatedResponse<Budget>;
+    });
   },
   async getById(id: string) {
     const response = await http.get<BudgetApiResponse>(`/budgets/${id}`);
     return mapBudget(response.data);
   },
-  async create(payload: {
-    clientId: string;
-    vehicleId: string;
-    problemDescription: string;
-    notes?: string;
-    discount: number;
-    items: Array<{
-      type: BudgetItemType;
-      serviceCatalogItemId?: string;
-      description: string;
-      quantity: number;
-      unitPrice: number;
-    }>;
-  }) {
+  async create(payload: SaveBudgetPayload) {
     const response = await http.post<BudgetApiResponse>('/budgets', payload);
+    return mapBudget(response.data);
+  },
+  async update(id: string, payload: SaveBudgetPayload) {
+    const response = await http.patch<BudgetApiResponse>(`/budgets/${id}`, payload);
     return mapBudget(response.data);
   },
   async approve(id: string) {
@@ -99,7 +107,9 @@ export const budgetsService = {
     return mapBudget(response.data);
   },
   async convert(id: string) {
-    const response = await http.post(`/budgets/${id}/convert-to-service-order`);
+    const response = await http.post<{ serviceOrder?: { id: string } | null }>(
+      `/budgets/${id}/convert-to-service-order`,
+    );
     return response.data;
   },
 };

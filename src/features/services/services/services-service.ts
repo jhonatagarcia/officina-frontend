@@ -1,6 +1,6 @@
 import { http } from '@/services/api/http';
 import { buildQueryParams, mapPaginatedResponse } from '@/services/api/query-string';
-import type { ApiPaginatedResponse, PaginatedResponse, QueryParams } from '@/types/common';
+import type { ApiPaginatedResponse, QueryParams } from '@/types/common';
 import type { ServiceBillingType, ServiceCatalogItem, ServiceMaterialSource } from '@/features/services/types';
 import { toNumber } from '@/lib/utils';
 
@@ -41,7 +41,7 @@ export const servicesService = {
     return mapPaginatedResponse({
       ...response.data,
       data: response.data.data.map(mapServiceCatalogItem),
-    }) as PaginatedResponse<ServiceCatalogItem>;
+    });
   },
   async getById(id: string) {
     const response = await http.get<ServiceCatalogItemApiResponse>(`/services/${id}`);

@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Option } from '@/types/common';
+import { capitalizeFirstLetter } from '@/lib/utils';
+import type { Option } from '@/types/common';
 
 interface FieldWrapperProps {
   label: string;
@@ -35,6 +36,10 @@ interface ControlledFieldProps<TFieldValues extends FieldValues> {
   transformValue?: (value: string) => string;
 }
 
+function normalizeStringInputValue(value: string) {
+  return value ? capitalizeFirstLetter(value) : value;
+}
+
 export function TextField<TFieldValues extends FieldValues>({
   control,
   name,
@@ -59,7 +64,11 @@ export function TextField<TFieldValues extends FieldValues>({
             placeholder={placeholder}
             type={type}
             {...field}
-            onChange={(event) => field.onChange(transformValue ? transformValue(event.target.value) : event.target.value)}
+            onChange={(event) => {
+              const nextValue = transformValue ? transformValue(event.target.value) : event.target.value;
+              const shouldCapitalize = !type || type === 'text';
+              field.onChange(shouldCapitalize ? normalizeStringInputValue(nextValue) : nextValue);
+            }}
           />
         </FieldWrapper>
       )}
@@ -87,7 +96,10 @@ export function TextAreaField<TFieldValues extends FieldValues>({
             disabled={disabled}
             placeholder={placeholder}
             {...field}
-            onChange={(event) => field.onChange(transformValue ? transformValue(event.target.value) : event.target.value)}
+            onChange={(event) => {
+              const nextValue = transformValue ? transformValue(event.target.value) : event.target.value;
+              field.onChange(normalizeStringInputValue(nextValue));
+            }}
           />
         </FieldWrapper>
       )}
@@ -137,7 +149,12 @@ export function SelectField<TFieldValues extends FieldValues>({
             <SelectTrigger>
               <SelectValue placeholder={placeholder ?? 'Selecione'} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent
+              align={searchable ? 'start' : undefined}
+              className={searchable ? 'max-h-[min(var(--radix-select-content-available-height),22rem)] w-[var(--radix-select-trigger-width)]' : undefined}
+              position={searchable ? 'popper' : undefined}
+              sideOffset={searchable ? 6 : undefined}
+            >
               {searchable ? (
                 <div className="p-2">
                   <Input

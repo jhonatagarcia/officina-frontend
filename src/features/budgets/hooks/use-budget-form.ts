@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { budgetSchema, type BudgetSchema } from '@/features/budgets/schemas/budget-schema';
 import { budgetsService } from '@/features/budgets/services/budgets-service';
@@ -12,14 +12,25 @@ const defaultBudgetValues: BudgetSchema = {
   problemDescription: '',
   notes: '',
   discount: 0,
-  items: [{ type: 'PART', serviceCatalogItemId: '', serviceCode: '', description: '', quantity: 1, unitPrice: 1 }],
+  items: [
+    {
+      type: 'LABOR',
+      serviceCatalogItemId: '',
+      inventoryItemId: '',
+      serviceCode: '',
+      description: '',
+      quantity: 1,
+      unitPrice: 1,
+    },
+  ],
 };
 
-export function useBudgetForm(mode: 'create' | 'view', id: string, onSuccess: () => void) {
+export function useBudgetForm(mode: 'create' | 'edit' | 'view', id: string, onSuccess: () => void) {
+  const queryClient = useQueryClient();
   const budgetQuery = useQuery({
     queryKey: ['orcamento', id],
     queryFn: () => budgetsService.getById(id),
-    enabled: mode === 'view',
+    enabled: mode !== 'create',
   });
 
   const form = useForm<BudgetSchema>({
@@ -34,6 +45,7 @@ export function useBudgetForm(mode: 'create' | 'view', id: string, onSuccess: ()
         items: budgetQuery.data.items.map((item) => ({
           type: item.type,
           serviceCatalogItemId: item.serviceCatalogItemId ?? '',
+          inventoryItemId: item.inventoryItemId ?? '',
           serviceCode: item.serviceCode ?? '',
           description: item.description,
           quantity: item.quantity,
@@ -47,7 +59,7 @@ export function useBudgetForm(mode: 'create' | 'view', id: string, onSuccess: ()
 
   const mutation = useMutation({
     mutationFn: async (values: BudgetSchema) => {
-      return budgetsService.create({
+      const payload = {
         clientId: values.clientId,
         vehicleId: values.vehicleId,
         problemDescription: values.problemDescription,
@@ -56,14 +68,27 @@ export function useBudgetForm(mode: 'create' | 'view', id: string, onSuccess: ()
         items: values.items.map((item) => ({
           type: item.type,
           serviceCatalogItemId: item.serviceCatalogItemId || undefined,
+          inventoryItemId: item.inventoryItemId || undefined,
           description: item.description,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
         })),
-      });
+      };
+
+      if (mode === 'edit') return budgetsService.update(id, payload);
+      return budgetsService.create(payload);
     },
-    onSuccess: () => {
-      toast.success('Orçamento criado com sucesso.');
+    onSuccess: (savedBudget) => {
+      queryClient.setQueryData(['orcamento', savedBudget.id], savedBudget);
+      queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      toast.success(
+        mode === 'edit' && budgetQuery.data?.status === 'APROVADO'
+          ? 'Orçamento atualizado e enviado para nova aprovação.'
+          : mode === 'edit'
+            ? 'Orçamento atualizado com sucesso.'
+            : 'Orçamento criado com sucesso.',
+      );
       onSuccess();
     },
   });

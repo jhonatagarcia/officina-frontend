@@ -1,58 +1,27 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { useClientForm } from '@/features/clients/hooks/use-client-form';
 import { TextAreaField, TextField } from '@/components/shared/form-fields';
 import { LoadingState } from '@/components/shared/loading-state';
 import { ErrorState } from '@/components/shared/error-state';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  FormActions,
+  FormCard,
+  FormSectionHeader,
+  formPrimaryButtonClassName,
+} from '@/components/shared/form-layout';
 import { Button } from '@/components/ui/button';
-
-function onlyDigits(value: string) {
-  return value.replace(/\D/g, '');
-}
-
-function capitalizeFirstLetter(value: string) {
-  if (!value) return value;
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function formatPhone(value: string) {
-  const digits = onlyDigits(value).slice(0, 11);
-
-  if (digits.length <= 10) {
-    return digits
-      .replace(/^(\d{2})(\d)/, '($1) $2')
-      .replace(/(\d{4})(\d)/, '$1-$2');
-  }
-
-  return digits
-    .replace(/^(\d{2})(\d)/, '($1) $2')
-    .replace(/(\d{5})(\d)/, '$1-$2');
-}
-
-function formatCpfCnpj(value: string) {
-  const digits = onlyDigits(value).slice(0, 14);
-
-  if (digits.length <= 11) {
-    return digits
-      .replace(/^(\d{3})(\d)/, '$1.$2')
-      .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
-      .replace(/\.(\d{3})(\d)/, '.$1-$2');
-  }
-
-  return digits
-    .replace(/^(\d{2})(\d)/, '$1.$2')
-    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/\.(\d{3})(\d)/, '.$1/$2')
-    .replace(/(\d{4})(\d)/, '$1-$2');
-}
+import { capitalizeFirstLetter, formatCpfCnpj, formatPhone } from '@/lib/utils';
 
 export function ClientFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
   const navigate = useNavigate();
   const { id = '' } = useParams();
   const isReadOnly = mode === 'view';
-  const { query, form, mutation } = useClientForm(mode, id, () => navigate('/app/clientes'));
+  const { query, form, mutation } = useClientForm(mode, id, () =>
+    navigate('/app/clientes'),
+  );
 
   if (query.isLoading) return <LoadingState />;
   if (query.isError) return <ErrorState onRetry={() => query.refetch()} />;
@@ -60,56 +29,82 @@ export function ClientFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
   return (
     <PageContainer>
       <PageHeader
-        title={mode === 'create' ? 'Novo cliente' : mode === 'edit' ? 'Editar cliente' : 'Detalhes do cliente'}
+        title={
+          mode === 'create'
+            ? 'Novo cliente'
+            : mode === 'edit'
+              ? 'Editar cliente'
+              : 'Detalhes do cliente'
+        }
         description="Dados cadastrais e observações do cliente."
-      />
-      <Card>
-        <CardContent className="p-6">
-          <form className="grid gap-4 md:grid-cols-2" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
-            <fieldset className="contents" disabled={isReadOnly}>
-              <TextField
+      >
+        <Button
+          className="min-h-11 rounded-xl bg-white/90 font-semibold"
+          variant="outline"
+          onClick={() => navigate('/app/clientes')}
+        >
+          <ArrowLeft className="size-4" strokeWidth={1.75} />
+          Voltar
+        </Button>
+      </PageHeader>
+      <FormCard>
+        <form
+          className="grid gap-5 md:grid-cols-2"
+          onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
+        >
+          <FormSectionHeader eyebrow="Cadastro" title="Dados do cliente" />
+          <fieldset className="contents" disabled={isReadOnly}>
+            <TextField
+              control={form.control}
+              name="name"
+              label="Nome"
+              error={form.formState.errors.name?.message}
+              transformValue={capitalizeFirstLetter}
+            />
+            <TextField
+              control={form.control}
+              name="phone"
+              label="Celular"
+              error={form.formState.errors.phone?.message}
+              inputMode="numeric"
+              transformValue={formatPhone}
+            />
+            <TextField
+              control={form.control}
+              name="document"
+              label="CPF/CNPJ"
+              error={form.formState.errors.document?.message}
+              inputMode="numeric"
+              transformValue={formatCpfCnpj}
+            />
+            <TextField
+              control={form.control}
+              name="email"
+              label="E-mail"
+              error={form.formState.errors.email?.message}
+            />
+            <div className="md:col-span-2">
+              <TextAreaField
                 control={form.control}
-                name="name"
-                label="Nome"
-                error={form.formState.errors.name?.message}
+                name="notes"
+                label="Observações"
+                error={form.formState.errors.notes?.message}
                 transformValue={capitalizeFirstLetter}
               />
-              <TextField
-                control={form.control}
-                name="phone"
-                label="Telefone"
-                error={form.formState.errors.phone?.message}
-                inputMode="numeric"
-                transformValue={formatPhone}
-              />
-              <TextField
-                control={form.control}
-                name="document"
-                label="CPF/CNPJ"
-                error={form.formState.errors.document?.message}
-                inputMode="numeric"
-                transformValue={formatCpfCnpj}
-              />
-              <TextField control={form.control} name="email" label="E-mail" error={form.formState.errors.email?.message} />
-              <div className="md:col-span-2">
-                <TextAreaField
-                  control={form.control}
-                  name="notes"
-                  label="Observações"
-                  error={form.formState.errors.notes?.message}
-                  transformValue={capitalizeFirstLetter}
-                />
-              </div>
-            </fieldset>
-            <div className="md:col-span-2 flex justify-end gap-3">
-              <Button variant="outline" type="button" onClick={() => navigate('/app/clientes')}>
-                Voltar
-              </Button>
-              {!isReadOnly ? <Button disabled={mutation.isPending}>{mutation.isPending ? 'Salvando...' : 'Salvar'}</Button> : null}
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </fieldset>
+          <FormActions>
+            {!isReadOnly ? (
+              <Button
+                className={formPrimaryButtonClassName}
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending ? 'Salvando...' : 'Salvar'}
+              </Button>
+            ) : null}
+          </FormActions>
+        </form>
+      </FormCard>
     </PageContainer>
   );
 }

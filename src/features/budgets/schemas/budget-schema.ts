@@ -1,18 +1,27 @@
 import { z } from 'zod';
 
 export const budgetItemSchema = z.object({
-  type: z.enum(['PART', 'LABOR']),
+  type: z.enum(['PART', 'LABOR', 'LABOR_AND_PART']),
   serviceCatalogItemId: z.string().optional().or(z.literal('')),
+  inventoryItemId: z.string().optional().or(z.literal('')),
   serviceCode: z.string().optional().or(z.literal('')),
   description: z.string().min(3, 'Informe a descrição'),
   quantity: z.coerce.number().positive('Quantidade deve ser maior que zero'),
   unitPrice: z.coerce.number().nonnegative('Valor inválido'),
 }).superRefine((item, ctx) => {
-  if (item.type === 'LABOR' && !item.serviceCatalogItemId) {
+  if ((item.type === 'LABOR' || item.type === 'LABOR_AND_PART') && !item.serviceCatalogItemId) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['serviceCatalogItemId'],
       message: 'Selecione um serviço',
+    });
+  }
+
+  if ((item.type === 'PART' || item.type === 'LABOR_AND_PART') && !item.inventoryItemId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['inventoryItemId'],
+      message: 'Selecione uma peça ou produto',
     });
   }
 });

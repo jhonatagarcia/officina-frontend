@@ -1,6 +1,6 @@
 import { http } from '@/services/api/http';
 import { buildQueryParams, mapPaginatedResponse } from '@/services/api/query-string';
-import type { ApiPaginatedResponse, PaginatedResponse, QueryParams } from '@/types/common';
+import type { ApiPaginatedResponse, QueryParams } from '@/types/common';
 import type { Mechanic } from '@/features/mechanics/types';
 
 interface MechanicPayload {
@@ -26,7 +26,7 @@ export const mechanicsService = {
     return mapPaginatedResponse({
       ...response.data,
       data: response.data.data.map(mapMechanic),
-    }) as PaginatedResponse<Mechanic>;
+    });
   },
   async getById(id: string) {
     const response = await http.get<Mechanic>(`/mechanics/${id}`);

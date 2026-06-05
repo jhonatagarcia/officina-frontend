@@ -1,3 +1,4 @@
+import { cn } from '@/lib/utils';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
@@ -5,13 +6,14 @@ interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  className?: string;
 }
 
-export function SearchInput({ value, onChange, placeholder = 'Buscar...' }: SearchInputProps) {
+export function SearchInput({ value, onChange, placeholder = 'Buscar...', className }: SearchInputProps) {
   return (
-    <div className="relative">
-      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-      <Input className="pl-9" placeholder={placeholder} value={value} onChange={(event) => onChange(event.target.value)} />
+    <div className={cn('relative w-full min-w-[220px] md:min-w-[280px] lg:min-w-[320px] important', className)}>
+      <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Input className="pl-10" placeholder={placeholder} value={value} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
 }

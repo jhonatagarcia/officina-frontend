@@ -3,9 +3,12 @@ import { afterEach, beforeAll, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import { useAuthStore } from '@/store/auth-store';
 
+vi.stubEnv('VITE_API_BASE_URL', 'http://localhost:8080/api');
+vi.stubEnv('VITE_APP_NAME', 'OficinaPro');
+vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'google-client-id.test.apps.googleusercontent.com');
+
 beforeAll(() => {
-  vi.stubEnv('VITE_API_BASE_URL', 'http://localhost:8080/api');
-  vi.stubEnv('VITE_APP_NAME', 'OficinaPro');
+  Element.prototype.scrollIntoView = vi.fn();
 });
 
 afterEach(() => {
