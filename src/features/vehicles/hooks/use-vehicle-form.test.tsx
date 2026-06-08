@@ -33,7 +33,7 @@ function createWrapper(queryClient: QueryClient) {
 
 const validVehicle: VehicleSchema = {
   clientId: 'client-1',
-  plate: 'ABC1D23',
+  plate: 'ABC-1D23',
   brand: 'Fiat',
   model: 'Uno',
   year: 2020,
@@ -44,6 +44,41 @@ const validVehicle: VehicleSchema = {
 };
 
 describe('useVehicleForm', () => {
+  it('envia placa normalizada para API', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    vi.mocked(vehiclesService.create).mockResolvedValueOnce({
+      id: 'vehicle-1',
+      ...validVehicle,
+      clientName: null,
+      plate: 'ABC1D23',
+      color: null,
+      mileage: 1000,
+      fuel: null,
+      notes: null,
+      createdAt: '2026-06-07T00:00:00.000Z',
+      updatedAt: '2026-06-07T00:00:00.000Z',
+    });
+
+    const { result } = renderHook(() => useVehicleForm('create', '', vi.fn()), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await act(async () => {
+      await result.current.mutation.mutateAsync(validVehicle);
+    });
+
+    expect(vehiclesService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        plate: 'ABC1D23',
+      }),
+    );
+  });
+
   it('direciona conflito 409 de placa para o campo plate', async () => {
     const queryClient = new QueryClient({
       defaultOptions: {

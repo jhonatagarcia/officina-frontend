@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { vehicleSchema, type VehicleSchema } from '@/features/vehicles/schemas/vehicle-schema';
 import { vehiclesService } from '@/features/vehicles/services/vehicles-service';
 import type { Vehicle } from '@/features/vehicles/types';
-import { normalizeNullableString, normalizePlate } from '@/lib/utils';
+import { formatPlate, normalizeNullableString, normalizePlate } from '@/lib/utils';
 import type { ApiErrorResponse, PaginatedResponse } from '@/types/common';
 
 export function useVehicleForm(mode: 'create' | 'edit' | 'view', id: string, onSuccess: () => void) {
@@ -21,7 +21,7 @@ export function useVehicleForm(mode: 'create' | 'edit' | 'view', id: string, onS
     values:
       (query.data && {
         clientId: query.data.clientId,
-        plate: query.data.plate,
+        plate: formatPlate(query.data.plate),
         brand: query.data.brand,
         model: query.data.model,
         year: query.data.year,

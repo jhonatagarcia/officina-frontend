@@ -1,11 +1,19 @@
-import axios from 'axios';
+import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { env } from '@/lib/env';
 import { emitAuthEvent } from '@/features/auth/lib/auth-events';
 import { useAuthStore } from '@/store/auth-store';
 import type { ApiErrorResponse } from '@/types/common';
 
+declare module 'axios' {
+  interface InternalAxiosRequestConfig {
+    _skipRefreshRetry?: boolean;
+    _retried?: boolean;
+  }
+}
+
 export const http = axios.create({
   baseURL: env.VITE_API_BASE_URL,
+  withCredentials: true,
 });
 
 const defaultApiErrorMessage = 'Não foi possível processar a solicitação.';
@@ -26,7 +34,10 @@ function normalizeMessageValue(message: unknown) {
   return normalized ? normalized.slice(0, 180) : null;
 }
 
-export function normalizeApiErrorResponse(status?: number, payload?: ApiErrorResponse): ApiErrorResponse {
+export function normalizeApiErrorResponse(
+  status?: number,
+  payload?: ApiErrorResponse,
+): ApiErrorResponse {
   if (status === 401) {
     return {
       message: 'Sua sessão expirou. Faça login novamente.',
@@ -47,7 +58,7 @@ export function normalizeApiErrorResponse(status?: number, payload?: ApiErrorRes
 
   return {
     message: safeBackendMessage ?? defaultApiErrorMessage,
-    statusCode: status,
+    ...(status !== undefined ? { statusCode: status } : {}),
   };
 }
 
@@ -61,13 +72,43 @@ http.interceptors.request.use((config) => {
 
 http.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error: AxiosError) => {
     const status = error.response?.status as number | undefined;
+    const original = error.config as InternalAxiosRequestConfig | undefined;
+
+    if (
+      status === 401 &&
+      original &&
+      !original._retried &&
+      !original._skipRefreshRetry
+    ) {
+      original._retried = true;
+      const refreshed = await useAuthStore.getState().silentRefresh();
+
+      if (refreshed) {
+        const token = useAuthStore.getState().session?.accessToken;
+        if (token) {
+          original.headers.Authorization = `Bearer ${token}`;
+        }
+        return http(original);
+      }
+
+      useAuthStore.getState().setSession(null);
+      emitAuthEvent({ type: 'SESSION_EXPIRED' });
+      window.location.replace('/login');
+      return Promise.reject(
+        normalizeApiErrorResponse(
+          status,
+          error.response?.data as ApiErrorResponse | undefined,
+        ),
+      );
+    }
+
     const payload = error.response?.data as ApiErrorResponse | undefined;
     const normalizedError = normalizeApiErrorResponse(status, payload);
 
     if (status === 401) {
-      useAuthStore.getState().logout();
+      useAuthStore.getState().setSession(null);
       emitAuthEvent({ type: 'SESSION_EXPIRED' });
     } else if (status === 403) {
       emitAuthEvent({ type: 'FORBIDDEN' });

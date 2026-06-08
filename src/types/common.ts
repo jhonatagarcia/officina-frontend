@@ -1,6 +1,6 @@
 export interface ApiErrorResponse {
   message: string;
-  statusCode?: number;
+  statusCode?: number | undefined;
   details?: unknown;
 }
 
@@ -25,15 +25,15 @@ export interface PaginatedResponse<T> {
 }
 
 export interface QueryParams {
-  page?: number;
-  pageSize?: number;
-  search?: string;
-  status?: string;
-  type?: string;
-  category?: string;
-  active?: boolean;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  page?: number | undefined;
+  pageSize?: number | undefined;
+  search?: string | undefined;
+  status?: string | undefined;
+  type?: string | undefined;
+  category?: string | undefined;
+  active?: boolean | undefined;
+  sortBy?: string | undefined;
+  sortOrder?: 'asc' | 'desc' | undefined;
 }
 
 export interface Option {

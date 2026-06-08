@@ -143,13 +143,14 @@ function MiniSparkline({ values, tone = 'orange' }: { values: number[]; tone?: M
   const line = points.map((point) => `${point.x},${point.y}`).join(' ');
   const area = `0,${height} ${line} ${width},${height}`;
   const months = ['dez', 'jan', 'fev', 'mar', 'abr', 'mai'];
+  const lastPoint = points[points.length - 1];
 
   return (
     <div className="mt-4">
       <svg aria-hidden="true" className="h-20 w-full overflow-visible" viewBox={`0 0 ${width} ${height}`}>
         <polygon fill={toneMap[tone].fill} points={area} />
         <polyline fill="none" points={line} stroke={toneMap[tone].line} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" />
-        {points.length ? <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} fill={toneMap[tone].line} r="3.2" /> : null}
+        {lastPoint ? <circle cx={lastPoint.x} cy={lastPoint.y} fill={toneMap[tone].line} r="3.2" /> : null}
       </svg>
       <div className="grid grid-cols-6 text-[11px] font-semibold text-muted-foreground/60">
         {months.map((month, index) => (

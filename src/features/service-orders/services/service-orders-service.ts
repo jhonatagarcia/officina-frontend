@@ -11,7 +11,7 @@ import type {
   UpdateServiceOrderPendingPartPayload,
   UpdateServiceOrderItemPayload,
 } from '@/features/service-orders/types';
-import { toNumber } from '@/lib/utils';
+import { formatPlate, toNumber } from '@/lib/utils';
 
 interface ServiceOrderPartApiResponse extends Omit<ServiceOrderPart, 'unitPrice' | 'totalPrice'> {
   unitPrice: number | string;
@@ -48,19 +48,19 @@ interface ServiceOrderApiResponse
     | 'discount'
     | 'total'
   > {
-  partsTotal?: number | string;
-  laborTotal?: number | string;
-  discount?: number | string;
-  total?: number | string;
-  budgetItems?: ServiceOrderBudgetItemApiResponse[];
-  executionItems?: ServiceOrderBudgetItemApiResponse[];
-  client?: ServiceOrder['client'];
-  vehicle?: ServiceOrder['vehicle'];
-  mechanic?: ServiceOrder['mechanic'] | null;
-  parts?: ServiceOrderPartApiResponse[];
-  pendingParts?: ServiceOrderPendingPartApiResponse[];
+  partsTotal?: number | string | undefined;
+  laborTotal?: number | string | undefined;
+  discount?: number | string | undefined;
+  total?: number | string | undefined;
+  budgetItems?: ServiceOrderBudgetItemApiResponse[] | undefined;
+  executionItems?: ServiceOrderBudgetItemApiResponse[] | undefined;
+  client?: ServiceOrder['client'] | undefined;
+  vehicle?: ServiceOrder['vehicle'] | undefined;
+  mechanic?: ServiceOrder['mechanic'] | null | undefined;
+  parts?: ServiceOrderPartApiResponse[] | undefined;
+  pendingParts?: ServiceOrderPendingPartApiResponse[] | undefined;
   budget?: {
-    items?: ServiceOrderBudgetItemApiResponse[];
+    items?: ServiceOrderBudgetItemApiResponse[] | undefined;
   } | null;
 }
 
@@ -96,7 +96,7 @@ function mapServiceOrder(order: ServiceOrderApiResponse): ServiceOrder {
   return {
     ...order,
     clientName: order.client?.name ?? '-',
-    vehicleLabel: order.vehicle ? `${order.vehicle.plate} • ${order.vehicle.brand} ${order.vehicle.model}` : '-',
+    vehicleLabel: order.vehicle ? `${formatPlate(order.vehicle.plate)} • ${order.vehicle.brand} ${order.vehicle.model}` : '-',
     mechanicName: order.mechanic?.name ?? null,
     partsTotal: order.partsTotal !== undefined ? toNumber(order.partsTotal) : undefined,
     laborTotal: order.laborTotal !== undefined ? toNumber(order.laborTotal) : undefined,

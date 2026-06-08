@@ -42,6 +42,7 @@ export function useSortableData<TItem, TAccessors extends Accessors<TItem>>(
 
   const sortedItems = useMemo(() => {
     const accessor = accessors[sortState.column];
+    if (!accessor) return items;
 
     return [...items].sort((left, right) => {
       const result = compareValues(accessor(left), accessor(right));

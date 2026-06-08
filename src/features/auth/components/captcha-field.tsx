@@ -4,8 +4,8 @@ import { cn } from '@/lib/utils';
 interface CaptchaFieldProps {
   value: string;
   onChange: (value: string) => void;
-  error?: string;
-  disabled?: boolean;
+  error?: string | undefined;
+  disabled?: boolean | undefined;
 }
 
 export function CaptchaField({ value, onChange, error, disabled }: CaptchaFieldProps) {

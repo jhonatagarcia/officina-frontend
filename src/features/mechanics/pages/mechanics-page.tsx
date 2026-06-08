@@ -1,5 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { CheckCircle2, Clock, Eye, Pencil, Wrench, XCircle } from 'lucide-react';
+import {
+  CheckCircle2,
+  Clock,
+  Eye,
+  Pencil,
+  Wrench,
+  XCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -15,7 +22,15 @@ import { TableFilterChips } from '@/components/shared/table-filter-chips';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  SortableTableHead,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { mechanicsService } from '@/features/mechanics/services/mechanics-service';
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 import { useListParams } from '@/hooks/use-list-params';
@@ -35,13 +50,19 @@ export function MechanicsPage() {
   };
 
   const query = useQuery({
-    queryKey: ['mecanicos', params.page, DEFAULT_TABLE_PAGE_SIZE, params.search, activeFilter],
+    queryKey: [
+      'mecanicos',
+      params.page,
+      DEFAULT_TABLE_PAGE_SIZE,
+      params.search,
+      activeFilter,
+    ],
     queryFn: () =>
       mechanicsService.list({
         page: params.page,
         pageSize: DEFAULT_TABLE_PAGE_SIZE,
         search: params.search,
-        active: activeFilter === 'ALL' ? undefined : activeFilter === 'ACTIVE',
+        ...(activeFilter !== 'ALL' ? { active: activeFilter === 'ACTIVE' } : {}),
       }),
   });
 
@@ -50,14 +71,16 @@ export function MechanicsPage() {
     initialSort: { column: 'name', direction: 'asc' },
     accessors: {
       name: (item) => item.name,
-      email: (item) => item.email,
       status: (item) => item.isActive,
-      lastLoginAt: (item) => (item.lastLoginAt ? new Date(item.lastLoginAt) : null),
+      lastLoginAt: (item) =>
+        item.lastLoginAt ? new Date(item.lastLoginAt) : null,
     },
   });
   const activeCount = listedItems.filter((item) => item.isActive).length;
   const inactiveCount = listedItems.filter((item) => !item.isActive).length;
-  const withLastLoginCount = listedItems.filter((item) => item.lastLoginAt).length;
+  const withLastLoginCount = listedItems.filter(
+    (item) => item.lastLoginAt,
+  ).length;
   const summaryCards = [
     {
       id: 'total',
@@ -91,13 +114,20 @@ export function MechanicsPage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Mecânicos" description="Cadastro e gestão dos mecânicos da oficina.">
+      <PageHeader
+        title="Mecânicos"
+        description="Cadastro e gestão dos mecânicos da oficina."
+      >
         <IndicatorHeaderActions
           onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
           primaryActionLabel="Novo mecânico"
           onPrimaryAction={() => navigate('/app/mecanicos/novo')}
         >
-          <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por nome ou e-mail" />
+          <SearchInput
+            value={params.search}
+            onChange={params.setSearch}
+            placeholder="Buscar por nome"
+          />
         </IndicatorHeaderActions>
       </PageHeader>
       <CustomizableSummaryCards
@@ -112,28 +142,69 @@ export function MechanicsPage() {
       <Card>
         <CardContent className="p-0">
           {query.isLoading ? <LoadingState /> : null}
-          {query.isError ? <ErrorState onRetry={() => query.refetch()} /> : null}
-          {!query.isLoading && !query.isError && listedItems.length === 0 ? <EmptyState /> : null}
+          {query.isError ? (
+            <ErrorState onRetry={() => query.refetch()} />
+          ) : null}
+          {!query.isLoading && !query.isError && listedItems.length === 0 ? (
+            <EmptyState />
+          ) : null}
           {query.data ? (
             <TableFilterChips
               value={activeFilter}
               options={[
-                { value: 'ALL', label: 'Todos', count: query.data.data.length, icon: Wrench, tone: 'slate' },
-                { value: 'ACTIVE', label: 'Ativos', count: activeCount, icon: CheckCircle2, tone: 'emerald' },
-                { value: 'INACTIVE', label: 'Inativos', count: inactiveCount, icon: XCircle, tone: 'rose' },
+                {
+                  value: 'ALL',
+                  label: 'Todos',
+                  count: query.data.data.length,
+                  icon: Wrench,
+                  tone: 'slate',
+                },
+                {
+                  value: 'ACTIVE',
+                  label: 'Ativos',
+                  count: activeCount,
+                  icon: CheckCircle2,
+                  tone: 'emerald',
+                },
+                {
+                  value: 'INACTIVE',
+                  label: 'Inativos',
+                  count: inactiveCount,
+                  icon: XCircle,
+                  tone: 'rose',
+                },
               ]}
-              onChange={(value) => handleActiveFilterChange(value as ActiveFilter)}
+              onChange={(value) =>
+                handleActiveFilterChange(value as ActiveFilter)
+              }
             />
           ) : null}
           {listedItems.length ? (
             <div className="overflow-x-auto">
-              <Table className="min-w-[900px]">
+              <Table className="min-w-[760px]">
                 <TableHeader>
                   <TableRow>
-                    <SortableTableHead column="name" sortState={sortState} onSort={requestSort}>Nome</SortableTableHead>
-                    <SortableTableHead column="email" sortState={sortState} onSort={requestSort}>E-mail</SortableTableHead>
-                    <SortableTableHead column="status" sortState={sortState} onSort={requestSort}>Status</SortableTableHead>
-                    <SortableTableHead column="lastLoginAt" sortState={sortState} onSort={requestSort}>Último acesso</SortableTableHead>
+                    <SortableTableHead
+                      column="name"
+                      sortState={sortState}
+                      onSort={requestSort}
+                    >
+                      Nome
+                    </SortableTableHead>
+                    <SortableTableHead
+                      column="status"
+                      sortState={sortState}
+                      onSort={requestSort}
+                    >
+                      Status
+                    </SortableTableHead>
+                    <SortableTableHead
+                      column="lastLoginAt"
+                      sortState={sortState}
+                      onSort={requestSort}
+                    >
+                      Último acesso
+                    </SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -141,17 +212,34 @@ export function MechanicsPage() {
                   {sortedItems.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>{item.name}</TableCell>
-                      <TableCell>{item.email}</TableCell>
                       <TableCell>
-                        <Badge variant={item.isActive ? 'success' : 'danger'}>{item.isActive ? 'Ativo' : 'Inativo'}</Badge>
+                        <Badge variant={item.isActive ? 'success' : 'danger'}>
+                          {item.isActive ? 'Ativo' : 'Inativo'}
+                        </Badge>
                       </TableCell>
-                      <TableCell>{item.lastLoginAt ? formatDateOnly(item.lastLoginAt) : '-'}</TableCell>
+                      <TableCell>
+                        {item.lastLoginAt
+                          ? formatDateOnly(item.lastLoginAt)
+                          : '-'}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button size="icon" variant="outline" onClick={() => navigate(`/app/mecanicos/${item.id}`)}>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            onClick={() =>
+                              navigate(`/app/mecanicos/${item.id}`)
+                            }
+                          >
                             <Eye className="size-4" />
                           </Button>
-                          <Button size="icon" variant="outline" onClick={() => navigate(`/app/mecanicos/${item.id}/editar`)}>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            onClick={() =>
+                              navigate(`/app/mecanicos/${item.id}/editar`)
+                            }
+                          >
                             <Pencil className="size-4" />
                           </Button>
                         </div>
@@ -161,7 +249,12 @@ export function MechanicsPage() {
                 </TableBody>
               </Table>
               <div className="p-5">
-                <Pagination page={query.data!.page} total={query.data!.total} pageSize={query.data!.pageSize} onPageChange={params.setPage} />
+                <Pagination
+                  page={query.data!.page}
+                  total={query.data!.total}
+                  pageSize={query.data!.pageSize}
+                  onPageChange={params.setPage}
+                />
               </div>
             </div>
           ) : null}

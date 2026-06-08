@@ -5,7 +5,7 @@ import type { Mechanic } from '@/features/mechanics/types';
 
 interface MechanicPayload {
   name: string;
-  isActive?: boolean;
+  isActive?: boolean | undefined;
 }
 
 function mapMechanic(mechanic: Mechanic): Mechanic {
@@ -13,13 +13,10 @@ function mapMechanic(mechanic: Mechanic): Mechanic {
 }
 
 export const mechanicsService = {
-  async list(params: QueryParams & { active?: boolean }) {
+  async list(params: QueryParams & { active?: boolean | undefined }) {
     const response = await http.get<ApiPaginatedResponse<Mechanic>>('/mechanics', {
       params: {
-        ...buildQueryParams({
-          ...params,
-          active: params.active,
-        }),
+        ...buildQueryParams(params),
       },
     });
 

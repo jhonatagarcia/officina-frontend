@@ -9,8 +9,8 @@ import type { Option } from '@/types/common';
 
 interface FieldWrapperProps {
   label: string;
-  error?: string;
-  htmlFor?: string;
+  error?: string | undefined;
+  htmlFor?: string | undefined;
   children: React.ReactNode;
 }
 
@@ -28,12 +28,12 @@ interface ControlledFieldProps<TFieldValues extends FieldValues> {
   control: Control<TFieldValues>;
   name: FieldPath<TFieldValues>;
   label: string;
-  placeholder?: string;
-  error?: string;
-  type?: React.InputHTMLAttributes<HTMLInputElement>['type'];
-  disabled?: boolean;
-  inputMode?: React.InputHTMLAttributes<HTMLInputElement>['inputMode'];
-  transformValue?: (value: string) => string;
+  placeholder?: string | undefined;
+  error?: string | undefined;
+  type?: React.InputHTMLAttributes<HTMLInputElement>['type'] | undefined;
+  disabled?: boolean | undefined;
+  inputMode?: React.InputHTMLAttributes<HTMLInputElement>['inputMode'] | undefined;
+  transformValue?: ((value: string) => string) | undefined;
 }
 
 function normalizeStringInputValue(value: string) {
@@ -139,7 +139,7 @@ export function SelectField<TFieldValues extends FieldValues>({
       render={({ field }) => (
         <FieldWrapper label={label} error={error}>
           <Select
-            disabled={disabled}
+            disabled={disabled ?? false}
             onOpenChange={(open) => {
               if (!open) setSearch('');
             }}
@@ -150,10 +150,14 @@ export function SelectField<TFieldValues extends FieldValues>({
               <SelectValue placeholder={placeholder ?? 'Selecione'} />
             </SelectTrigger>
             <SelectContent
-              align={searchable ? 'start' : undefined}
-              className={searchable ? 'max-h-[min(var(--radix-select-content-available-height),22rem)] w-[var(--radix-select-trigger-width)]' : undefined}
-              position={searchable ? 'popper' : undefined}
-              sideOffset={searchable ? 6 : undefined}
+              {...(searchable
+                ? {
+                    align: 'start' as const,
+                    className: 'max-h-[min(var(--radix-select-content-available-height),22rem)] w-[var(--radix-select-trigger-width)]',
+                    position: 'popper' as const,
+                    sideOffset: 6,
+                  }
+                : {})}
             >
               {searchable ? (
                 <div className="p-2">

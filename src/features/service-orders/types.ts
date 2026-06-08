@@ -27,24 +27,24 @@ export interface ServiceOrder {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
-  whatsappNotification?: ServiceOrderWhatsAppNotification;
-  partsTotal?: number;
-  laborTotal?: number;
-  discount?: number;
-  total?: number;
-  client?: ServiceOrderClientSummary;
-  vehicle?: ServiceOrderVehicleSummary;
-  mechanic?: ServiceOrderMechanicSummary | null;
-  budgetItems?: ServiceOrderBudgetItem[];
-  executionItems?: ServiceOrderBudgetItem[];
-  executionItemsMaterialized?: boolean;
-  parts?: ServiceOrderPart[];
-  pendingParts?: ServiceOrderPendingPart[];
+  whatsappNotification?: ServiceOrderWhatsAppNotification | undefined;
+  partsTotal?: number | undefined;
+  laborTotal?: number | undefined;
+  discount?: number | undefined;
+  total?: number | undefined;
+  client?: ServiceOrderClientSummary | undefined;
+  vehicle?: ServiceOrderVehicleSummary | undefined;
+  mechanic?: ServiceOrderMechanicSummary | null | undefined;
+  budgetItems?: ServiceOrderBudgetItem[] | undefined;
+  executionItems?: ServiceOrderBudgetItem[] | undefined;
+  executionItemsMaterialized?: boolean | undefined;
+  parts?: ServiceOrderPart[] | undefined;
+  pendingParts?: ServiceOrderPendingPart[] | undefined;
 }
 
 export interface ServiceOrderWhatsAppNotification {
   status: 'SENT' | 'SKIPPED' | 'FAILED';
-  reason?: string;
+  reason?: string | undefined;
 }
 
 export type PendingPartStatus =
@@ -78,21 +78,27 @@ export interface ServiceOrderPendingPart {
 export interface CreateServiceOrderPendingPartPayload {
   inventoryItemId: string;
   quantityRequired: number;
-  note?: string | null;
-  expectedArrivalAt?: string | null;
+  note?: string | null | undefined;
+  expectedArrivalAt?: string | null | undefined;
 }
 
-export type UpdateServiceOrderPendingPartPayload = Partial<CreateServiceOrderPendingPartPayload>;
+export type UpdateServiceOrderPendingPartPayload =
+  Partial<CreateServiceOrderPendingPartPayload>;
 
 export type UpdateServiceOrderItemPayload = Pick<
   ServiceOrderBudgetItem,
-  'type' | 'serviceCatalogItemId' | 'inventoryItemId' | 'description' | 'quantity' | 'unitPrice'
+  | 'type'
+  | 'serviceCatalogItemId'
+  | 'inventoryItemId'
+  | 'description'
+  | 'quantity'
+  | 'unitPrice'
 >;
 
 export interface ServiceOrderBudgetItem {
   id: string;
   type: 'PART' | 'LABOR' | 'LABOR_AND_PART';
-  serviceCatalogItemId?: string | null;
+  serviceCatalogItemId?: string | null | undefined;
   inventoryItemId: string | null;
   serviceCode: string | null;
   description: string;
@@ -124,7 +130,6 @@ export interface ServiceOrderVehicleSummary {
 export interface ServiceOrderMechanicSummary {
   id: string;
   name: string;
-  email: string;
   role: string;
 }
 

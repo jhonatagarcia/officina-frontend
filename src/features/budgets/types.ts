@@ -35,9 +35,9 @@ export interface Budget {
   createdAt: string;
   updatedAt: string;
   items: BudgetItem[];
-  client?: BudgetClientSummary;
-  vehicle?: BudgetVehicleSummary;
-  serviceOrder?: BudgetServiceOrderSummary | null;
+  client?: BudgetClientSummary | undefined;
+  vehicle?: BudgetVehicleSummary | undefined;
+  serviceOrder?: BudgetServiceOrderSummary | null | undefined;
 }
 
 export interface BudgetClientSummary {

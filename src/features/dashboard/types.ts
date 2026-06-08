@@ -10,8 +10,8 @@ export interface DashboardOperationalAlert {
   title: string;
   description: string;
   metric: string;
-  actionLabel?: string;
-  actionTo?: string;
+  actionLabel?: string | undefined;
+  actionTo?: string | undefined;
 }
 
 export interface DashboardOverview {

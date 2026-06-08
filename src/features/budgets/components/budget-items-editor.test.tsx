@@ -136,7 +136,9 @@ describe('BudgetItemsEditor', () => {
     expect(screen.getAllByText(/subtotal:/i)).toHaveLength(2);
 
     const removeButtons = screen.getAllByRole('button', { name: /remover/i });
-    fireEvent.click(removeButtons[0]);
+    const firstRemoveButton = removeButtons[0];
+    if (!firstRemoveButton) throw new Error('Remove button not found');
+    fireEvent.click(firstRemoveButton);
 
     await waitFor(() => {
       expect(screen.getAllByRole('combobox', { name: /tipo/i })).toHaveLength(1);

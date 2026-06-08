@@ -10,12 +10,12 @@ interface PasswordFieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  error?: string;
-  placeholder?: string;
-  disabled?: boolean;
-  autoComplete?: string;
-  inputClassName?: string;
-  labelClassName?: string;
+  error?: string | undefined;
+  placeholder?: string | undefined;
+  disabled?: boolean | undefined;
+  autoComplete?: string | undefined;
+  inputClassName?: string | undefined;
+  labelClassName?: string | undefined;
 }
 
 export function PasswordField({

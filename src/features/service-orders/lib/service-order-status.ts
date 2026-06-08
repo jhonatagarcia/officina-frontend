@@ -48,7 +48,10 @@ export function canShowResumeServiceOrderAction(
 }
 
 export function shouldShowWaitingForPartStep(
-  order: { status: ServiceOrderStatus; pendingParts?: Pick<ServiceOrderPendingPart, 'quantityRequired' | 'quantityAvailable' | 'status'>[] },
+  order: {
+    status: ServiceOrderStatus;
+    pendingParts?: Pick<ServiceOrderPendingPart, 'quantityRequired' | 'quantityAvailable' | 'status'>[] | undefined;
+  },
 ) {
   if (order.status === 'AGUARDANDO_PECA') return true;
 

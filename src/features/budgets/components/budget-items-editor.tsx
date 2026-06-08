@@ -186,7 +186,7 @@ function BudgetItemRow({
                   );
                 }
               }}
-              value={selectedServiceId}
+              value={selectedServiceId ?? ''}
             >
               <SelectTrigger id={serviceFieldId}>
                 <SelectValue placeholder="Selecione um serviço" />
@@ -235,7 +235,7 @@ function BudgetItemRow({
                     });
                     syncCompositeItem(selectedServiceId ?? '', value);
                   }}
-                  value={selectedInventoryItemId}
+                  value={selectedInventoryItemId ?? ''}
                 >
                   <SelectTrigger id={inventoryFieldId}>
                     <SelectValue placeholder="Selecione uma peça ou produto" />
@@ -285,7 +285,7 @@ function BudgetItemRow({
                 });
                 syncPartItem(value);
               }}
-              value={selectedInventoryItemId}
+              value={selectedInventoryItemId ?? ''}
             >
               <SelectTrigger id={inventoryFieldId}>
                 <SelectValue placeholder="Selecione uma peça ou produto" />
@@ -402,20 +402,25 @@ export function BudgetItemsEditor({
         ) : null}
       </div>
 
-      {fieldArray.fields.map((field, index) => (
-        <BudgetItemRow
-          key={field.id}
-          form={form}
-          index={index}
-          item={items[index]}
-          readOnly={readOnly}
-          serviceOptions={serviceOptions}
-          inventoryOptions={inventoryOptions}
-          isLoadingServices={serviceOptionsQuery.isLoading}
-          isLoadingInventory={inventoryOptionsQuery.isLoading}
-          onRemove={() => fieldArray.remove(index)}
-        />
-      ))}
+      {fieldArray.fields.map((field, index) => {
+        const item = items[index];
+        if (!item) return null;
+
+        return (
+          <BudgetItemRow
+            key={field.id}
+            form={form}
+            index={index}
+            item={item}
+            readOnly={readOnly}
+            serviceOptions={serviceOptions}
+            inventoryOptions={inventoryOptions}
+            isLoadingServices={serviceOptionsQuery.isLoading}
+            isLoadingInventory={inventoryOptionsQuery.isLoading}
+            onRemove={() => fieldArray.remove(index)}
+          />
+        );
+      })}
     </div>
   );
 }

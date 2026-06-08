@@ -8,7 +8,7 @@ export interface Client {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  vehicles?: ClientVehicleSummary[];
+  vehicles?: ClientVehicleSummary[] | undefined;
 }
 
 export interface ClientVehicleSummary {
