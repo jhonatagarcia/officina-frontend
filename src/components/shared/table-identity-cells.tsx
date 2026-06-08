@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 import { formatPlate } from '@/lib/utils';
 
 interface VehicleIdentityCellProps {
-  plate?: string | null;
-  description?: string | null;
-  fallback?: string | null;
+  plate?: string | null | undefined;
+  description?: string | null | undefined;
+  fallback?: string | null | undefined;
 }
 
 function splitVehicleFallback(fallback?: string | null) {

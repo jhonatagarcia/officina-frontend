@@ -48,19 +48,19 @@ interface ServiceOrderApiResponse
     | 'discount'
     | 'total'
   > {
-  partsTotal?: number | string;
-  laborTotal?: number | string;
-  discount?: number | string;
-  total?: number | string;
-  budgetItems?: ServiceOrderBudgetItemApiResponse[];
-  executionItems?: ServiceOrderBudgetItemApiResponse[];
-  client?: ServiceOrder['client'];
-  vehicle?: ServiceOrder['vehicle'];
-  mechanic?: ServiceOrder['mechanic'] | null;
-  parts?: ServiceOrderPartApiResponse[];
-  pendingParts?: ServiceOrderPendingPartApiResponse[];
+  partsTotal?: number | string | undefined;
+  laborTotal?: number | string | undefined;
+  discount?: number | string | undefined;
+  total?: number | string | undefined;
+  budgetItems?: ServiceOrderBudgetItemApiResponse[] | undefined;
+  executionItems?: ServiceOrderBudgetItemApiResponse[] | undefined;
+  client?: ServiceOrder['client'] | undefined;
+  vehicle?: ServiceOrder['vehicle'] | undefined;
+  mechanic?: ServiceOrder['mechanic'] | null | undefined;
+  parts?: ServiceOrderPartApiResponse[] | undefined;
+  pendingParts?: ServiceOrderPendingPartApiResponse[] | undefined;
   budget?: {
-    items?: ServiceOrderBudgetItemApiResponse[];
+    items?: ServiceOrderBudgetItemApiResponse[] | undefined;
   } | null;
 }
 

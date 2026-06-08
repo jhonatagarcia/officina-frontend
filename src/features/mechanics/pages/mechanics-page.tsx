@@ -62,7 +62,7 @@ export function MechanicsPage() {
         page: params.page,
         pageSize: DEFAULT_TABLE_PAGE_SIZE,
         search: params.search,
-        active: activeFilter === 'ALL' ? undefined : activeFilter === 'ACTIVE',
+        ...(activeFilter !== 'ALL' ? { active: activeFilter === 'ACTIVE' } : {}),
       }),
   });
 

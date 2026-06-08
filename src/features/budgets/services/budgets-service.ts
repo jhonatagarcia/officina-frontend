@@ -36,21 +36,21 @@ interface BudgetApiResponse {
   createdAt: string;
   updatedAt: string;
   items: BudgetItemApiResponse[];
-  client?: Budget['client'];
-  vehicle?: Budget['vehicle'];
-  serviceOrder?: Budget['serviceOrder'] | null;
+  client?: Budget['client'] | undefined;
+  vehicle?: Budget['vehicle'] | undefined;
+  serviceOrder?: Budget['serviceOrder'] | null | undefined;
 }
 
 export interface SaveBudgetPayload {
   clientId: string;
   vehicleId: string;
   problemDescription: string;
-  notes?: string;
+  notes?: string | undefined;
   discount: number;
   items: Array<{
     type: BudgetItemType;
-    serviceCatalogItemId?: string;
-    inventoryItemId?: string;
+    serviceCatalogItemId?: string | undefined;
+    inventoryItemId?: string | undefined;
     description: string;
     quantity: number;
     unitPrice: number;

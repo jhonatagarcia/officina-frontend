@@ -90,7 +90,9 @@ describe('service-order-details helpers', () => {
       });
 
       expect(items).toHaveLength(1);
-      expect(items[0].description).toBe('Troca de óleo');
+      const firstItem = items[0];
+      if (!firstItem) throw new Error('Expected one labor item');
+      expect(firstItem.description).toBe('Troca de óleo');
     });
 
     it('cria item de serviço a partir de servicesPerformed quando não há budgetItems', () => {

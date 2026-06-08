@@ -58,7 +58,7 @@ export function normalizeApiErrorResponse(
 
   return {
     message: safeBackendMessage ?? defaultApiErrorMessage,
-    statusCode: status,
+    ...(status !== undefined ? { statusCode: status } : {}),
   };
 }
 

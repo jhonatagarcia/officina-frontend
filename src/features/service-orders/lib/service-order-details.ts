@@ -26,7 +26,7 @@ export function validateExpectedDeliveryAtValue(value: string) {
     return 'Informe uma data valida.';
   }
 
-  if (match[1].length !== 4) {
+  if ((match[1] ?? '').length !== 4) {
     return 'O ano da previsao deve ter 4 digitos.';
   }
 

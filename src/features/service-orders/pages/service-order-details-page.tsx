@@ -618,6 +618,7 @@ export function ServiceOrderDetailsPage() {
               >
                 {progressSteps.slice(0, -1).map((step, index) => {
                   const nextStep = progressSteps[index + 1];
+                  if (!nextStep) return null;
                   const isActiveSegment = step.state !== 'pending' && nextStep.state !== 'pending';
                   return (
                     <div

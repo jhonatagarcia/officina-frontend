@@ -62,7 +62,10 @@ describe('InventoryItemForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /^salvar$/i }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
-    expect(onSubmit.mock.calls[0][0]).toEqual({
+    const firstCall = onSubmit.mock.calls[0];
+    if (!firstCall) throw new Error('Submit callback was not called');
+
+    expect(firstCall[0]).toEqual({
         name: 'Filtro De Oleo',
         category: 'Lubrificacao',
         supplier: 'Auto Pecas',

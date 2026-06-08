@@ -27,7 +27,7 @@ export interface RelatedPendingServiceOrderSuggestion {
   quantityRequired: number;
   quantityAvailable: number;
   status: string;
-  serviceOrderStatus?: ServiceOrderStatus;
+  serviceOrderStatus?: ServiceOrderStatus | undefined;
   suggestedAction: 'RESUME_SERVICE_ORDER';
 }
 
@@ -38,7 +38,7 @@ export interface RelatedPendingServiceOrders {
 
 export interface InventoryItemSaveResult {
   item: InventoryItem;
-  relatedPendingServiceOrders?: RelatedPendingServiceOrders;
+  relatedPendingServiceOrders?: RelatedPendingServiceOrders | undefined;
 }
 
 export interface InventoryMovement {

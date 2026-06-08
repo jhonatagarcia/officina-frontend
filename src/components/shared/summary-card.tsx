@@ -5,15 +5,15 @@ import { cn } from '@/lib/utils';
 interface SummaryCardProps {
   title: string;
   value: string;
-  icon?: LucideIcon;
-  imageSrc?: string;
-  imageAlt?: string;
-  mediaClassName?: string;
-  valueClassName?: string;
-  size?: 'default' | 'compact';
-  delta?: number;
-  trendLabel?: string;
-  sparklineValues?: number[];
+  icon?: LucideIcon | undefined;
+  imageSrc?: string | undefined;
+  imageAlt?: string | undefined;
+  mediaClassName?: string | undefined;
+  valueClassName?: string | undefined;
+  size?: 'default' | 'compact' | undefined;
+  delta?: number | undefined;
+  trendLabel?: string | undefined;
+  sparklineValues?: number[] | undefined;
 }
 
 function parseMetricValue(value: string) {
@@ -47,6 +47,8 @@ function SummarySparkline({ values, isCompact }: { values: number[]; isCompact: 
   });
   const line = points.join(' ');
   const area = `0,${height} ${line} ${width},${height}`;
+  const lastPoint = points[points.length - 1];
+  const [lastX = '0', lastY = '0'] = lastPoint?.split(',') ?? [];
 
   return (
     <svg aria-hidden="true" className={cn('mt-3 w-full', isCompact ? 'h-12' : 'h-14')} viewBox={`0 0 ${width} ${height}`}>
@@ -54,8 +56,8 @@ function SummarySparkline({ values, isCompact }: { values: number[]; isCompact: 
       <polyline fill="none" points={line} stroke="#F77139" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" />
       {points.length ? (
         <circle
-          cx={Number(points[points.length - 1].split(',')[0])}
-          cy={Number(points[points.length - 1].split(',')[1])}
+          cx={Number(lastX)}
+          cy={Number(lastY)}
           fill="#F77139"
           r="3"
         />

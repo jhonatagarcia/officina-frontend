@@ -12,7 +12,7 @@ export interface Vehicle {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
-  client?: VehicleClientSummary;
+  client?: VehicleClientSummary | undefined;
 }
 
 export interface VehicleClientSummary {

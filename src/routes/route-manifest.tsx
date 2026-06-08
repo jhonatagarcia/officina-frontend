@@ -1,4 +1,5 @@
-import { lazy, type ComponentType } from 'react';
+import { lazy } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import {
   BadgeDollarSign,
   Boxes,
@@ -84,7 +85,7 @@ export interface AppRouteDefinition {
   roles: Role[];
   element: JSX.Element;
   label?: string;
-  icon?: ComponentType<{ className?: string }>;
+  icon?: LucideIcon | undefined;
   sidebar?: boolean;
   requiresCnpj?: boolean;
 }

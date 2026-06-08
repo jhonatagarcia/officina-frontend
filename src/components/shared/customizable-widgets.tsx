@@ -10,22 +10,22 @@ export interface CustomizableSummaryCardOption {
   id: string;
   title: string;
   value: string;
-  icon?: LucideIcon;
-  imageSrc?: string;
-  imageAlt?: string;
-  mediaClassName?: string;
-  valueClassName?: string;
-  size?: 'default' | 'compact';
-  delta?: number;
-  trendLabel?: string;
-  sparklineValues?: number[];
+  icon?: LucideIcon | undefined;
+  imageSrc?: string | undefined;
+  imageAlt?: string | undefined;
+  mediaClassName?: string | undefined;
+  valueClassName?: string | undefined;
+  size?: 'default' | 'compact' | undefined;
+  delta?: number | undefined;
+  trendLabel?: string | undefined;
+  sparklineValues?: number[] | undefined;
 }
 
 export interface CustomizableWidgetOption {
   id: string;
   title: string;
-  category?: string;
-  className?: string;
+  category?: string | undefined;
+  className?: string | undefined;
   render: () => ReactNode;
 }
 
@@ -33,22 +33,22 @@ interface CustomizableSummaryCardsProps {
   storageKey: string;
   cards: CustomizableSummaryCardOption[];
   defaultVisibleIds: string[];
-  gridClassName?: string;
-  isConfiguring?: boolean;
-  onConfiguringChange?: (isConfiguring: boolean) => void;
-  showHeaderAction?: boolean;
+  gridClassName?: string | undefined;
+  isConfiguring?: boolean | undefined;
+  onConfiguringChange?: ((isConfiguring: boolean) => void) | undefined;
+  showHeaderAction?: boolean | undefined;
 }
 
 interface CustomizableWidgetGridProps {
   storageKey: string;
   widgets: CustomizableWidgetOption[];
   defaultVisibleIds: string[];
-  gridClassName?: string;
-  emptyMessage?: string;
-  isConfiguring?: boolean;
-  onConfiguringChange?: (isConfiguring: boolean) => void;
-  showHeaderAction?: boolean;
-  activeItemsLabel?: string;
+  gridClassName?: string | undefined;
+  emptyMessage?: string | undefined;
+  isConfiguring?: boolean | undefined;
+  onConfiguringChange?: ((isConfiguring: boolean) => void) | undefined;
+  showHeaderAction?: boolean | undefined;
+  activeItemsLabel?: string | undefined;
 }
 
 function readStoredIds(storageKey: string) {
@@ -58,7 +58,7 @@ function readStoredIds(storageKey: string) {
     const storedValue = window.localStorage.getItem(storageKey);
     if (!storedValue) return null;
 
-    const parsedValue = JSON.parse(storedValue);
+    const parsedValue: unknown = JSON.parse(storedValue);
     return Array.isArray(parsedValue) && parsedValue.every((item) => typeof item === 'string')
       ? parsedValue
       : null;
@@ -117,6 +117,7 @@ function useVisibleWidgetIds(storageKey: string, availableIds: string[], default
 
       const nextVisibleIds = [...visibleIds];
       const [draggedItem] = nextVisibleIds.splice(draggedIndex, 1);
+      if (!draggedItem) return;
       nextVisibleIds.splice(targetIndex, 0, draggedItem);
       updateVisibleIds(nextVisibleIds);
     },
@@ -131,7 +132,7 @@ function WidgetControls({
   onRemove,
   onReset,
 }: {
-  availableItems: Array<{ id: string; title: string; category?: string }>;
+  availableItems: Array<{ id: string; title: string; category?: string | undefined }>;
   visibleIds: string[];
   onAdd: (id: string) => void;
   onRemove: (id: string) => void;
