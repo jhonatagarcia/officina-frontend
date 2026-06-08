@@ -40,7 +40,7 @@ import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import { ErrorState } from '@/components/shared/error-state';
 import { LoadingState } from '@/components/shared/loading-state';
-import { PlateChip } from '@/components/shared/table-identity-cells';
+import { VehicleIdentityCell } from '@/components/shared/table-identity-cells';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -546,9 +546,12 @@ export function ServiceOrderDetailsPage() {
             </div>
             <div className="border-border-soft xl:border-r">
               <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Veículo</p>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                {query.data.vehicle?.plate ? <PlateChip>{query.data.vehicle.plate}</PlateChip> : null}
-                <p className="text-lg font-bold">{query.data.vehicle ? `${query.data.vehicle.brand} ${query.data.vehicle.model}` : query.data.vehicleLabel}</p>
+              <div className="mt-2">
+                <VehicleIdentityCell
+                  plate={query.data.vehicle?.plate}
+                  description={query.data.vehicle ? `${query.data.vehicle.brand} ${query.data.vehicle.model}` : null}
+                  fallback={query.data.vehicleLabel}
+                />
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{query.data.vehicle ? `${query.data.vehicle.year}` : null}</p>
             </div>

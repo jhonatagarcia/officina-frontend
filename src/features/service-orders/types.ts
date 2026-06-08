@@ -82,11 +82,17 @@ export interface CreateServiceOrderPendingPartPayload {
   expectedArrivalAt?: string | null;
 }
 
-export type UpdateServiceOrderPendingPartPayload = Partial<CreateServiceOrderPendingPartPayload>;
+export type UpdateServiceOrderPendingPartPayload =
+  Partial<CreateServiceOrderPendingPartPayload>;
 
 export type UpdateServiceOrderItemPayload = Pick<
   ServiceOrderBudgetItem,
-  'type' | 'serviceCatalogItemId' | 'inventoryItemId' | 'description' | 'quantity' | 'unitPrice'
+  | 'type'
+  | 'serviceCatalogItemId'
+  | 'inventoryItemId'
+  | 'description'
+  | 'quantity'
+  | 'unitPrice'
 >;
 
 export interface ServiceOrderBudgetItem {
@@ -124,7 +130,6 @@ export interface ServiceOrderVehicleSummary {
 export interface ServiceOrderMechanicSummary {
   id: string;
   name: string;
-  email: string;
   role: string;
 }
 

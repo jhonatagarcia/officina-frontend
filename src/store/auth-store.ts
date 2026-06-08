@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import axios from 'axios';
+import { env } from '@/lib/env';
 import type { AuthSession, Role } from '@/types/auth';
 
 interface AuthState {
@@ -7,10 +8,20 @@ interface AuthState {
   hydrated: boolean;
   setSession: (session: AuthSession | null) => void;
   setHydrated: (hydrated: boolean) => void;
-  logout: () => void;
+  silentRefresh: () => Promise<boolean>;
+  logout: () => Promise<void>;
 }
 
-const validRoles = new Set<Role>(['ADMIN', 'ATENDENTE', 'MECANICO', 'FINANCEIRO']);
+const validRoles = new Set<Role>([
+  'ADMIN',
+  'ATENDENTE',
+  'MECANICO',
+  'FINANCEIRO',
+]);
+const authHttp = axios.create({
+  baseURL: env.VITE_API_BASE_URL,
+  withCredentials: true,
+});
 
 function normalizeSession(session: AuthSession | null): AuthSession | null {
   if (!session?.accessToken || !validRoles.has(session.user?.role)) {
@@ -24,29 +35,39 @@ function normalizeSession(session: AuthSession | null): AuthSession | null {
       name: session.user.name,
       email: session.user.email,
       role: session.user.role,
-      ...(session.user.workshop !== undefined ? { workshop: session.user.workshop } : {}),
-      ...(session.user.workshopFiscalStatus !== undefined ? { workshopFiscalStatus: session.user.workshopFiscalStatus } : {}),
+      ...(session.user.workshop !== undefined
+        ? { workshop: session.user.workshop }
+        : {}),
+      ...(session.user.workshopFiscalStatus !== undefined
+        ? { workshopFiscalStatus: session.user.workshopFiscalStatus }
+        : {}),
     },
   };
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      session: null,
-      hydrated: false,
-      setSession: (session) => set({ session: normalizeSession(session) }),
-      setHydrated: (hydrated) => set({ hydrated }),
-      logout: () => set({ session: null }),
-    }),
-    {
-      name: 'oficina-auth',
-      storage: createJSONStorage(() => sessionStorage),
-      partialize: (state) => ({ session: state.session }),
-      onRehydrateStorage: () => (state) => {
-        state?.setSession(normalizeSession(state.session));
-        state?.setHydrated(true);
-      },
-    },
-  ),
-);
+export const useAuthStore = create<AuthState>()((set) => ({
+  session: null,
+  hydrated: false,
+  setSession: (session) =>
+    set({ session: normalizeSession(session), hydrated: true }),
+  setHydrated: (hydrated) => set({ hydrated }),
+  silentRefresh: async () => {
+    try {
+      const response = await authHttp.post<AuthSession>('/auth/refresh');
+      set({ session: normalizeSession(response.data), hydrated: true });
+      return true;
+    } catch {
+      set({ session: null, hydrated: true });
+      return false;
+    }
+  },
+  logout: async () => {
+    try {
+      await authHttp.post('/auth/logout');
+    } catch {
+      // A sessao local deve ser encerrada mesmo se o backend estiver indisponivel.
+    } finally {
+      set({ session: null, hydrated: true });
+    }
+  },
+}));

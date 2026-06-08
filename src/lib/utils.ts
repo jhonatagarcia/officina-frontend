@@ -45,8 +45,14 @@ export function onlyDigits(value?: string | null) {
   return value?.replace(/\D/g, '') ?? '';
 }
 
-export function normalizePlate(value: string) {
-  return value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+export function normalizePlate(value?: string | null) {
+  return value?.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7) ?? '';
+}
+
+export function formatPlate(value?: string | null) {
+  const normalized = normalizePlate(value);
+  if (normalized.length <= 3) return normalized;
+  return `${normalized.slice(0, 3)}-${normalized.slice(3)}`;
 }
 
 export function capitalizeFirstLetter(value: string) {

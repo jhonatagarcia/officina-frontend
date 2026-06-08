@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { formatPlate } from '@/lib/utils';
 
 interface VehicleIdentityCellProps {
   plate?: string | null;
@@ -9,10 +10,30 @@ interface VehicleIdentityCellProps {
 function splitVehicleFallback(fallback?: string | null) {
   if (!fallback) return { plate: null, description: null };
 
-  const [plate, ...descriptionParts] = fallback.split(/\s*[•-]\s*/);
+  const trimmedFallback = fallback.trim();
+  const [plate, ...descriptionParts] = trimmedFallback.split(/\s*•\s*/);
+  if (descriptionParts.length > 0) {
+    return {
+      plate: plate?.trim() || null,
+      description: descriptionParts.join(' ').trim() || null,
+    };
+  }
+
+  const plateWithDescription = trimmedFallback.match(/^([A-Z0-9]{3}-?[A-Z0-9]{4})\s+-\s+(.+)$/i);
+  if (plateWithDescription) {
+    return {
+      plate: plateWithDescription[1],
+      description: plateWithDescription[2],
+    };
+  }
+
+  if (/^[A-Z0-9]{3}-?[A-Z0-9]{4}$/i.test(trimmedFallback)) {
+    return { plate: trimmedFallback, description: null };
+  }
+
   return {
-    plate: plate?.trim() || null,
-    description: descriptionParts.join(' ').trim() || fallback,
+    plate: null,
+    description: trimmedFallback,
   };
 }
 
@@ -33,8 +54,8 @@ export function VehicleIdentityCell({ plate, description, fallback }: VehicleIde
 
   return (
     <div className="space-y-1">
-      {resolvedPlate ? <PlateChip>{resolvedPlate}</PlateChip> : null}
       {resolvedDescription ? <p className="text-sm text-muted-foreground">{resolvedDescription}</p> : null}
+      {resolvedPlate ? <PlateChip>{formatPlate(resolvedPlate)}</PlateChip> : null}
     </div>
   );
 }

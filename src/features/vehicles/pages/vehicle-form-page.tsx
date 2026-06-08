@@ -18,7 +18,7 @@ import {
   formPrimaryButtonClassName,
 } from '@/components/shared/form-layout';
 import { Button } from '@/components/ui/button';
-import { capitalizeFirstLetter, normalizePlate } from '@/lib/utils';
+import { capitalizeFirstLetter, formatPlate } from '@/lib/utils';
 
 export function VehicleFormPage({
   mode,
@@ -86,7 +86,7 @@ export function VehicleFormPage({
               name="plate"
               label="Placa"
               error={form.formState.errors.plate?.message}
-              transformValue={normalizePlate}
+              transformValue={formatPlate}
             />
             <TextField
               control={form.control}

@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import { Sidebar } from '@/components/layout/sidebar';
 import { useAuthStore } from '@/store/auth-store';
@@ -65,7 +65,7 @@ describe('Sidebar', () => {
     expect(screen.queryByLabelText('Acesso bloqueado')).not.toBeInTheDocument();
   });
 
-  it('exibe o nome fantasia no rodape e permite sair pelo menu', () => {
+  it('exibe o nome fantasia no rodape e permite sair pelo menu', async () => {
     const user = {
       id: '1',
       name: 'Admin',
@@ -91,6 +91,6 @@ describe('Sidebar', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /sair/i }));
 
-    expect(useAuthStore.getState().session).toBeNull();
+    await waitFor(() => expect(useAuthStore.getState().session).toBeNull());
   });
 });

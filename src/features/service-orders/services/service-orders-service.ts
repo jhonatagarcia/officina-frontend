@@ -11,7 +11,7 @@ import type {
   UpdateServiceOrderPendingPartPayload,
   UpdateServiceOrderItemPayload,
 } from '@/features/service-orders/types';
-import { toNumber } from '@/lib/utils';
+import { formatPlate, toNumber } from '@/lib/utils';
 
 interface ServiceOrderPartApiResponse extends Omit<ServiceOrderPart, 'unitPrice' | 'totalPrice'> {
   unitPrice: number | string;
@@ -96,7 +96,7 @@ function mapServiceOrder(order: ServiceOrderApiResponse): ServiceOrder {
   return {
     ...order,
     clientName: order.client?.name ?? '-',
-    vehicleLabel: order.vehicle ? `${order.vehicle.plate} • ${order.vehicle.brand} ${order.vehicle.model}` : '-',
+    vehicleLabel: order.vehicle ? `${formatPlate(order.vehicle.plate)} • ${order.vehicle.brand} ${order.vehicle.model}` : '-',
     mechanicName: order.mechanic?.name ?? null,
     partsTotal: order.partsTotal !== undefined ? toNumber(order.partsTotal) : undefined,
     laborTotal: order.laborTotal !== undefined ? toNumber(order.laborTotal) : undefined,

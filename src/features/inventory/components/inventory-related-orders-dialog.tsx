@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { formatServiceOrderNumber } from '@/lib/utils';
+import { formatPlate, formatServiceOrderNumber } from '@/lib/utils';
 
 interface InventoryRelatedOrdersDialogProps {
   open: boolean;
@@ -84,7 +84,7 @@ export function InventoryRelatedOrdersDialog({
                   <div>
                     <p className="font-mono text-sm font-bold text-primary">{formatServiceOrderNumber(item.orderNumber)}</p>
                     <p className="mt-1 font-semibold">{item.clientName}</p>
-                    <p className="text-sm text-muted-foreground">Placa {item.vehiclePlate}</p>
+                    <p className="text-sm text-muted-foreground">Placa {formatPlate(item.vehiclePlate)}</p>
                     <p className="mt-2 text-sm text-muted-foreground">
                       Necessário: {item.quantityRequired} · Disponível: {item.quantityAvailable}
                     </p>
