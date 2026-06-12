@@ -1,0 +1,64 @@
+/*
+ * AutoPro System — Design tokens
+ * Shared between landing, admin, and tenant app.
+ * All colors exposed as CSS custom properties; consumed via Tailwind hsl() config
+ * or directly as var(--*) in non-Tailwind surfaces (admin.css, landing.css).
+ *
+ * Light mode is :root default.
+ * Dark mode activated by .dark class on <html> (set by ThemeToggle / main.tsx).
+ */
+
+/* ── Typography scale ── */
+:root {
+  --font-sans: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  --text-xs:   11px;
+  --text-sm:   13px;
+  --text-base: 14px;
+  --text-md:   15px;
+  --text-lg:   18px;
+  --text-xl:   22px;
+  --text-2xl:  28px;
+  --text-3xl:  36px;
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+}
+
+/* ── Spacing scale (4px base) ── */
+:root {
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+}
+
+/* ── Semantic color aliases (resolved against Tailwind tokens) ── */
+/*
+ * The actual HSL values live in globals.css.
+ * These aliases give non-Tailwind code (admin.css, landing.css) a single
+ * source of truth without duplicating the HSL numbers here.
+ */
+:root {
+  --color-brand:        hsl(var(--primary));
+  --color-brand-hover:  hsl(var(--primary-hover));
+  --color-surface:      hsl(var(--card));
+  --color-bg:           hsl(var(--background));
+  --color-text:         hsl(var(--foreground));
+  --color-text-muted:   hsl(var(--muted-foreground));
+  --color-border:       hsl(var(--border));
+  --color-success:      hsl(var(--success));
+  --color-warning:      hsl(var(--warning));
+  --color-danger:       hsl(var(--destructive));
+  --color-info:         hsl(var(--info));
+}

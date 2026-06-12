@@ -13,7 +13,7 @@ export const formPrimaryButtonClassName =
 
 export function FormCard({ children }: PropsWithChildren) {
   return (
-    <Card className="bg-white shadow-xs">
+    <Card className="bg-card shadow-xs">
       <CardContent className="p-7">{children}</CardContent>
     </Card>
   );

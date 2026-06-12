@@ -41,8 +41,8 @@ const labelMap: Record<string, string> = {
 };
 
 const classNameMap: Record<string, string> = {
-  ABERTA: 'border-transparent bg-stone-100 text-stone-700',
-  AGUARDANDO_PECA: 'border-transparent bg-amber-50 text-amber-700',
+  ABERTA: 'border-transparent bg-muted text-stone-400',
+  AGUARDANDO_PECA: 'border-transparent bg-amber-500/10 text-amber-500',
 };
 
 export function StatusBadge({ status }: { status: string }) {

@@ -91,7 +91,15 @@ cp .env.example .env
 
 3. Atualize `VITE_API_BASE_URL` para a URL real da API.
 
-4. Rode a aplicação:
+4. Para expor o Admin Master em `/admin/*`, defina:
+
+```bash
+VITE_ADMIN_PANEL_ENABLED=true
+```
+
+O backend correspondente tambem precisa de `ADMIN_PANEL_ENABLED=true`, `ADMIN_JWT_SECRET`, `ADMIN_EMAIL` e `ADMIN_INITIAL_PASSWORD`.
+
+5. Rode a aplicação:
 
 ```bash
 npm run dev

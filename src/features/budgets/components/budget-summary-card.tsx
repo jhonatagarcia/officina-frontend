@@ -13,7 +13,7 @@ export function BudgetSummaryCard({
   total,
 }: BudgetSummaryCardProps) {
   return (
-    <Card className="bg-white shadow-xs">
+    <Card className="bg-card shadow-xs">
       <CardHeader>
         <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">
           Totais

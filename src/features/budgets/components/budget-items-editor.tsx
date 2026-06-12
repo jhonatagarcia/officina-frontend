@@ -125,7 +125,7 @@ function BudgetItemRow({
   }
 
   return (
-    <div className="grid gap-4 rounded-xl border border-border-soft bg-white p-5 shadow-xs md:grid-cols-4">
+    <div className="grid gap-4 rounded-xl border border-border-soft bg-card p-5 shadow-xs md:grid-cols-4">
       <div>
         <Label htmlFor={typeFieldId}>Tipo</Label>
         <Select
@@ -392,7 +392,7 @@ export function BudgetItemsEditor({
         </hgroup>
         {!readOnly ? (
           <Button
-            className="rounded-xl bg-white font-semibold"
+            className="rounded-xl font-semibold"
             type="button"
             variant="outline"
             onClick={() => fieldArray.append(defaultBudgetItem)}

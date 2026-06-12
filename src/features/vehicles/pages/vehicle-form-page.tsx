@@ -57,7 +57,7 @@ export function VehicleFormPage({
         }
       >
         <Button
-          className="min-h-11 rounded-xl bg-white/90 font-semibold"
+          className="min-h-11 rounded-xl font-semibold"
           variant="outline"
           onClick={() => navigate('/app/veiculos')}
         >

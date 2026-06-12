@@ -149,7 +149,7 @@ function WidgetControls({
             <p className="text-base font-bold leading-tight">Adicionar ou remover</p>
             <p className="mt-1 text-sm text-muted-foreground">A escolha fica salva neste navegador.</p>
           </div>
-          <Button className="rounded-lg bg-white font-semibold" size="sm" variant="outline" type="button" onClick={onReset}>
+          <Button className="rounded-lg font-semibold" size="sm" variant="outline" type="button" onClick={onReset}>
             <RotateCcw className="size-4" strokeWidth={1.75} />
             Restaurar padrão
           </Button>
@@ -194,7 +194,7 @@ function WidgetControls({
             {hiddenItems.map((item) => (
               <div
                 key={item.id}
-                className="flex min-h-16 items-center justify-between gap-3 rounded-lg border bg-white/80 px-3 py-2 shadow-xs transition hover:border-primary/30 hover:bg-white"
+                className="flex min-h-16 items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2 shadow-xs transition hover:border-primary/30 hover:bg-card/80"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-bold leading-tight">{item.title}</p>
@@ -294,7 +294,7 @@ export function CustomizableSummaryCards({
               {isConfiguring ? (
                 <Button
                   aria-label={`Remover ${card.title}`}
-                  className="absolute right-3 top-3 size-8 bg-white/90"
+                  className="absolute right-3 top-3 size-8 bg-card/90"
                   size="icon"
                   type="button"
                   variant="outline"
@@ -433,13 +433,13 @@ export function CustomizableWidgetGrid({
                 <div className="absolute right-3 top-3 flex gap-2">
                   <div
                     aria-hidden="true"
-                    className="inline-flex size-8 items-center justify-center rounded-xl border border-border bg-white/90 text-muted-foreground shadow-sm"
+                    className="inline-flex size-8 items-center justify-center rounded-xl border border-border bg-card/90 text-muted-foreground shadow-sm"
                   >
                     <GripVertical className="size-4" />
                   </div>
                   <Button
                     aria-label={`Remover ${widget.title}`}
-                    className="size-8 bg-white/90"
+                    className="size-8"
                     size="icon"
                     type="button"
                     variant="outline"

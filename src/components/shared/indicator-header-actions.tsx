@@ -18,7 +18,7 @@ export function IndicatorHeaderActions({
     <>
       {children}
       <Button
-        className="min-h-11 rounded-xl border-border bg-white/90 px-4 font-semibold shadow-xs"
+        className="min-h-11 rounded-xl border-border bg-card px-4 font-semibold shadow-xs"
         type="button"
         variant="outline"
         onClick={onAdjustPanel}

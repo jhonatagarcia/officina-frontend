@@ -10,7 +10,7 @@ interface FiscalFeatureBlockedStateProps {
 
 export function FiscalFeatureBlockedState({ featureName }: FiscalFeatureBlockedStateProps) {
   return (
-    <Card className="border-amber-200 bg-white/90">
+    <Card className="border-amber-200 bg-card">
       <CardContent className="flex min-h-[320px] flex-col items-center justify-center px-6 py-12 text-center">
         <div className="flex size-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
           <LockKeyhole className="size-7" aria-hidden="true" />

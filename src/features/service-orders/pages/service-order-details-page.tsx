@@ -81,11 +81,11 @@ function StatusPill({ status }: { status: ServiceOrderStatus }) {
     <span
       className={cn(
         'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold',
-        tone === 'amber' && 'bg-amber-50 text-amber-700',
-        tone === 'stone' && 'bg-stone-100 text-stone-700',
-        tone === 'orange' && 'bg-orange-50 text-orange-700',
-        tone === 'emerald' && 'bg-emerald-50 text-emerald-700',
-        tone === 'sky' && 'bg-sky-50 text-sky-700',
+        tone === 'amber' && 'bg-amber-500/10 text-amber-500',
+        tone === 'stone' && 'bg-muted text-stone-400',
+        tone === 'orange' && 'bg-orange-500/10 text-orange-500',
+        tone === 'emerald' && 'bg-emerald-500/10 text-emerald-500',
+        tone === 'sky' && 'bg-sky-500/10 text-sky-500',
       )}
     >
       <span
@@ -476,19 +476,19 @@ export function ServiceOrderDetailsPage() {
         title={isReadOnly ? 'Visualização da OS' : 'Operação da OS'}
         description={isReadOnly ? 'Consulta da ordem de serviço em modo somente leitura.' : 'Acompanhamento operacional da ordem de serviço.'}
       >
-        <Button className="min-h-11 rounded-xl bg-white/90 font-semibold" variant="outline" onClick={() => navigate('/app/ordens-servico')}>
+        <Button className="min-h-11 rounded-xl font-semibold" variant="outline" onClick={() => navigate('/app/ordens-servico')}>
           <ArrowLeft className="size-4" strokeWidth={1.75} />
           Voltar
         </Button>
         {!isReadOnly ? (
-          <Button className="min-h-11 rounded-xl bg-white/90 font-semibold" variant="outline">
+          <Button className="min-h-11 rounded-xl font-semibold" variant="outline">
           <Share2 className="size-4" strokeWidth={1.75} />
           Compartilhar
           </Button>
         ) : null}
       </PageHeader>
 
-      <Card className="bg-white shadow-xs">
+      <Card className="bg-card shadow-xs">
         <CardContent className="p-6">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
             <div>
@@ -506,16 +506,16 @@ export function ServiceOrderDetailsPage() {
             </div>
             {!isReadOnly ? (
               <div className="flex flex-wrap gap-2">
-              <Button className="rounded-xl bg-white font-semibold" variant="outline" onClick={() => window.print()}>
+              <Button className="rounded-xl font-semibold" variant="outline" onClick={() => window.print()}>
                 <Printer className="size-4" strokeWidth={1.75} />
                 Imprimir
               </Button>
-              <Button className="rounded-xl bg-white font-semibold" disabled={!canGeneratePdf || isGeneratingPdf} variant="outline" onClick={handleGeneratePdf}>
+              <Button className="rounded-xl font-semibold" disabled={!canGeneratePdf || isGeneratingPdf} variant="outline" onClick={handleGeneratePdf}>
                 <FileDown className="size-4" strokeWidth={1.75} />
                 {isGeneratingPdf ? 'Gerando...' : 'Gerar PDF'}
               </Button>
               <Select onValueChange={(value) => setNextStatus(value as ServiceOrderStatus)} value={nextStatus}>
-                <SelectTrigger className="h-10 w-[190px] rounded-xl bg-white">
+                <SelectTrigger className="h-10 w-[190px] rounded-xl">
                   <SelectValue placeholder="Novo status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -570,7 +570,7 @@ export function ServiceOrderDetailsPage() {
                       onValueChange={setSelectedMechanicId}
                       value={selectedMechanicId}
                     >
-                      <SelectTrigger className="h-10 min-w-0 rounded-xl bg-white sm:w-[220px]">
+                      <SelectTrigger className="h-10 min-w-0 rounded-xl sm:w-[220px]">
                         <SelectValue placeholder="Selecionar mecânico" />
                       </SelectTrigger>
                       <SelectContent>
@@ -606,7 +606,7 @@ export function ServiceOrderDetailsPage() {
         </CardContent>
       </Card>
 
-      <Card className="bg-white shadow-xs">
+      <Card className="bg-card shadow-xs">
         <CardContent className="p-7">
           <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">Progresso</p>
           <h3 className="mt-1 text-xl font-bold">Status da ordem</h3>
@@ -633,7 +633,7 @@ export function ServiceOrderDetailsPage() {
                   <div key={step.status} className="min-w-0">
                     <div
                       className={cn(
-                        'mb-5 inline-flex size-12 items-center justify-center rounded-full border-[3px] bg-white',
+                        'mb-5 inline-flex size-12 items-center justify-center rounded-full border-[3px] bg-card',
                         step.state === 'done' && getTimelineToneClasses(step.status).border,
                         step.state === 'done' && getTimelineToneClasses(step.status).bg,
                         step.state === 'done' && 'text-white',
@@ -671,7 +671,7 @@ export function ServiceOrderDetailsPage() {
       />
 
       <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="min-h-80 bg-white shadow-xs">
+        <Card className="min-h-80 bg-card shadow-xs">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">Diagnóstico</p>
@@ -694,7 +694,7 @@ export function ServiceOrderDetailsPage() {
                 />
                 <div className="flex flex-wrap gap-2">
                   <Button
-                    className="rounded-xl bg-white font-semibold"
+                    className="rounded-xl font-semibold"
                     type="button"
                     variant="outline"
                     onClick={() => {
@@ -719,8 +719,8 @@ export function ServiceOrderDetailsPage() {
               <p>{query.data.problemDescription}</p>
             )}
             {query.data.notes ? (
-              <div className="rounded-lg border-l-4 border-sky-400 bg-sky-50 p-4">
-                <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-sky-700">
+              <div className="rounded-lg border-l-4 border-sky-400 bg-sky-500/10 p-4">
+                <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-sky-500">
                   <Info className="size-4" strokeWidth={1.75} />
                   Observações internas
                 </p>
@@ -730,7 +730,7 @@ export function ServiceOrderDetailsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white shadow-xs">
+        <Card className="bg-card shadow-xs">
           <CardHeader>
             <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">Histórico</p>
             <CardTitle className="mt-1 text-xl">Atividade na OS</CardTitle>
@@ -750,7 +750,7 @@ export function ServiceOrderDetailsPage() {
         </Card>
       </div>
 
-      <Card className="bg-white shadow-xs">
+      <Card className="bg-card shadow-xs">
         <CardHeader className="flex flex-row items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">Itens da OS</p>
@@ -758,11 +758,11 @@ export function ServiceOrderDetailsPage() {
           </div>
           {canManageStockParts ? (
             <div className="flex flex-wrap gap-2">
-              <Button className="rounded-xl bg-white font-semibold" variant="outline" onClick={() => setStockPartDialogOpen(true)}>
+              <Button className="rounded-xl font-semibold" variant="outline" onClick={() => setStockPartDialogOpen(true)}>
                 <PackagePlus className="size-4" strokeWidth={1.75} />
                 Aplicar peça do estoque
               </Button>
-              <Button className="rounded-xl bg-white font-semibold" variant="outline" onClick={() => handleOpenPendingPartDialog()}>
+              <Button className="rounded-xl font-semibold" variant="outline" onClick={() => handleOpenPendingPartDialog()}>
                 <Plus className="size-4" strokeWidth={1.75} />
                 Registrar peça em falta
               </Button>
@@ -771,7 +771,7 @@ export function ServiceOrderDetailsPage() {
         </CardHeader>
         <CardContent className="space-y-8">
           <div>
-            <p className="mb-3 flex items-center gap-2 font-bold"><Wrench className="size-4 text-primary" /> Serviços <span className="rounded-full bg-stone-100 px-2 text-sm text-muted-foreground">{budgetLaborItems.length}</span></p>
+            <p className="mb-3 flex items-center gap-2 font-bold"><Wrench className="size-4 text-primary" /> Serviços <span className="rounded-full bg-muted px-2 text-sm text-muted-foreground">{budgetLaborItems.length}</span></p>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -832,7 +832,7 @@ export function ServiceOrderDetailsPage() {
             <div>
               <p className="mb-3 flex items-center gap-2 font-bold">
                 <Package className="size-4 text-primary" /> Peças previstas no orçamento{' '}
-                <span className="rounded-full bg-stone-100 px-2 text-sm text-muted-foreground">{plannedParts.length}</span>
+                <span className="rounded-full bg-muted px-2 text-sm text-muted-foreground">{plannedParts.length}</span>
               </p>
               <Table>
                 <TableHeader>
@@ -890,7 +890,7 @@ export function ServiceOrderDetailsPage() {
           ) : null}
 
           <div>
-            <p className="mb-3 flex items-center gap-2 font-bold"><Package className="size-4 text-primary" /> Peças aplicadas <span className="rounded-full bg-stone-100 px-2 text-sm text-muted-foreground">{appliedParts.length}</span></p>
+            <p className="mb-3 flex items-center gap-2 font-bold"><Package className="size-4 text-primary" /> Peças aplicadas <span className="rounded-full bg-muted px-2 text-sm text-muted-foreground">{appliedParts.length}</span></p>
             <Table>
               <TableHeader>
                 <TableRow>

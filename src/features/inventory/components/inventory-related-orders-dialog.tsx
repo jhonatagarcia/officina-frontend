@@ -88,11 +88,11 @@ export function InventoryRelatedOrdersDialog({
                     <p className="mt-2 text-sm text-muted-foreground">
                       Necessário: {item.quantityRequired} · Disponível: {item.quantityAvailable}
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-emerald-700">{getPendingPartStatusLabel(item.status)}</p>
+                    <p className="mt-1 text-sm font-semibold text-emerald-500">{getPendingPartStatusLabel(item.status)}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button
-                      className="rounded-xl bg-white font-semibold"
+                      className="rounded-xl font-semibold"
                       type="button"
                       variant="outline"
                       onClick={() => navigate(`/app/ordens-servico/${item.serviceOrderId}`)}
