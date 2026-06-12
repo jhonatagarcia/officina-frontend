@@ -118,7 +118,7 @@ function FinancialPageContent() {
     },
     {
       id: 'receivables',
-      title: 'Contas a receber',
+      title: 'Faturamento',
       value: formatCurrency(income),
       icon: TrendingUp,
       valueClassName: 'text-emerald-600',
@@ -164,7 +164,7 @@ function FinancialPageContent() {
 
   return (
     <PageContainer>
-      <PageHeader title="Financeiro" description="Contas a receber, saída de estoque e conciliação.">
+      <PageHeader title="Financeiro" description="Faturamento, saída de estoque e conciliação.">
         <IndicatorHeaderActions onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}>
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por descrição ou origem" />
         </IndicatorHeaderActions>
@@ -216,7 +216,7 @@ function FinancialPageContent() {
                         {entry.serviceOrder ? <PlateChip>{formatServiceOrderNumber(entry.serviceOrder.orderNumber)}</PlateChip> : entry.description}
                       </TableCell>
                       <TableCell><StatusBadge status={entry.status} /></TableCell>
-                      <TableCell className={cn('font-bold [font-variant-numeric:tabular-nums]', entry.status === 'VENCIDO' ? 'text-rose-700' : null)}>
+                      <TableCell className={cn('font-bold [font-variant-numeric:tabular-nums]', entry.status === 'VENCIDO' ? 'text-red-500' : null)}>
                         {formatCurrency(entry.amount)}
                       </TableCell>
                       <TableCell>

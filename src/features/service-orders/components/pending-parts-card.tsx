@@ -38,14 +38,14 @@ export function PendingPartsCard({
   const shouldShowResumeAction = canShowResumeServiceOrderAction(serviceOrderStatus, pendingParts);
 
   return (
-    <Card className="bg-white shadow-xs">
+    <Card className="bg-card shadow-xs">
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary">Peças pendentes</p>
           <CardTitle className="mt-1 text-xl">Aguardando peça</CardTitle>
         </div>
         {!readOnly ? (
-          <Button className="rounded-xl bg-white font-semibold" type="button" variant="outline" onClick={onAdd}>
+          <Button className="rounded-xl font-semibold" type="button" variant="outline" onClick={onAdd}>
             <Plus className="size-4" strokeWidth={1.75} />
             Adicionar peça
           </Button>
@@ -54,9 +54,9 @@ export function PendingPartsCard({
       <CardContent className="space-y-4">
         {isLoading ? <p className="text-sm text-muted-foreground">Carregando peças pendentes...</p> : null}
         {isError ? (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
-            <p className="text-sm font-semibold text-rose-700">Não foi possível carregar as peças pendentes.</p>
-            <Button className="mt-3 rounded-xl bg-white" type="button" variant="outline" onClick={onRetry}>
+          <div className="rounded-xl border border-rose-200 bg-red-500/10 p-4">
+            <p className="text-sm font-semibold text-red-500">Não foi possível carregar as peças pendentes.</p>
+            <Button className="mt-3 rounded-xl" type="button" variant="outline" onClick={onRetry}>
               Tentar novamente
             </Button>
           </div>
@@ -72,7 +72,7 @@ export function PendingPartsCard({
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-bold">{part.inventoryItem.name}</p>
-                  <span className="rounded-md bg-stone-100 px-2 py-1 font-mono text-xs font-bold text-foreground">
+                  <span className="rounded-md bg-muted px-2 py-1 font-mono text-xs font-bold text-foreground">
                     {part.inventoryItem.internalCode}
                   </span>
                 </div>
@@ -97,13 +97,13 @@ export function PendingPartsCard({
                 </Button>
               ) : null}
               {!readOnly ? (
-                <Button className="rounded-xl bg-white font-semibold" type="button" variant="outline" onClick={() => onEdit(part)}>
+                <Button className="rounded-xl font-semibold" type="button" variant="outline" onClick={() => onEdit(part)}>
                   <Edit3 className="size-4" strokeWidth={1.75} />
                   Editar
                 </Button>
               ) : null}
               {!readOnly && part.status !== 'CANCELED' && part.status !== 'RESOLVED' ? (
-                <Button className="rounded-xl bg-white font-semibold" type="button" variant="outline" onClick={() => onCancel(part)}>
+                <Button className="rounded-xl font-semibold" type="button" variant="outline" onClick={() => onCancel(part)}>
                   <XCircle className="size-4" strokeWidth={1.75} />
                   Cancelar pendência
                 </Button>
@@ -112,7 +112,7 @@ export function PendingPartsCard({
           </div>
         ))}
         {!readOnly && shouldShowResumeAction ? (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-500">
             Todas as peças necessárias já estão disponíveis. Confirme em Retomar OS para voltar o serviço para Em andamento.
           </div>
         ) : null}

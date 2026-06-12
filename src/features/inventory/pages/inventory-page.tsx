@@ -25,8 +25,8 @@ import type { InventoryStatus } from '@/features/inventory/types';
 type StockFilter = 'ALL' | 'OK' | 'BAIXO' | 'CRITICO' | 'ESGOTADO';
 
 function getInventoryRowClass(status: InventoryStatus, quantity: number) {
-  if (quantity <= 0 || status === 'CRITICO') return 'border-l-4 border-l-rose-600 hover:bg-stone-50/80';
-  if (status === 'BAIXO') return 'border-l-4 border-l-amber-500 hover:bg-stone-50/80';
+  if (quantity <= 0 || status === 'CRITICO') return 'border-l-4 border-l-rose-600 hover:bg-muted/40';
+  if (status === 'BAIXO') return 'border-l-4 border-l-amber-500 hover:bg-muted/40';
   return undefined;
 }
 
@@ -44,9 +44,9 @@ function StockStatusPill({ status, quantity }: { status: InventoryStatus; quanti
     <span
       className={cn(
         'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold',
-        tone === 'emerald' && 'bg-emerald-50 text-emerald-700',
+        tone === 'emerald' && 'bg-emerald-500/10 text-emerald-500',
         tone === 'amber' && 'bg-amber-50 text-amber-700',
-        tone === 'rose' && 'bg-rose-50 text-rose-700',
+        tone === 'rose' && 'bg-red-500/10 text-red-500',
       )}
     >
       <span className={cn('size-2 rounded-full', tone === 'emerald' && 'bg-emerald-500', tone === 'amber' && 'bg-amber-500', tone === 'rose' && 'bg-rose-600')} />
@@ -63,7 +63,7 @@ function StockLevel({ quantity, minimumQuantity, status }: { quantity: number; m
 
   return (
     <div className="flex min-w-[250px] items-center gap-4">
-      <div className="relative h-2 w-44 overflow-hidden rounded-full bg-stone-100">
+      <div className="relative h-2 w-44 overflow-hidden rounded-full bg-muted">
         <div
           className={cn('h-full rounded-full', tone === 'emerald' && 'bg-emerald-600', tone === 'amber' && 'bg-amber-500', tone === 'rose' && 'bg-rose-600')}
           style={{ width: `${currentPercent}%` }}
@@ -71,7 +71,7 @@ function StockLevel({ quantity, minimumQuantity, status }: { quantity: number; m
         <span className="absolute top-1/2 h-4 w-px -translate-y-1/2 bg-stone-500/60" style={{ left: `${minimumPercent}%` }} />
       </div>
       <div className="whitespace-nowrap text-sm">
-        <span className={cn('font-bold', tone === 'emerald' && 'text-emerald-700', tone === 'amber' && 'text-amber-700', tone === 'rose' && 'text-rose-700')}>
+        <span className={cn('font-bold', tone === 'emerald' && 'text-emerald-500', tone === 'amber' && 'text-amber-500', tone === 'rose' && 'text-red-500')}>
           {quantity}
         </span>
         <span className="mx-1 text-muted-foreground">/</span>
@@ -101,7 +101,7 @@ function StockFilterButton({
       type="button"
       className={cn(
         'inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold shadow-xs transition',
-        active ? 'border-slate-900 bg-slate-900 text-white shadow-md' : 'border-border bg-white text-muted-foreground hover:border-border-strong hover:text-foreground',
+        active ? 'border-slate-900 bg-slate-900 text-white shadow-md' : 'border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground',
       )}
       onClick={onClick}
     >
@@ -110,12 +110,12 @@ function StockFilterButton({
           'size-4',
           !active && tone === 'emerald' && 'text-emerald-600',
           !active && tone === 'amber' && 'text-amber-600',
-          !active && (tone === 'rose' || tone === 'red') && 'text-rose-700',
+          !active && (tone === 'rose' || tone === 'red') && 'text-red-500',
         )}
         strokeWidth={1.75}
       />
       {label}
-      <span className={cn('rounded-full px-2 py-0.5 text-xs', active ? 'bg-white/15 text-white' : 'bg-stone-100 text-muted-foreground')}>{count}</span>
+      <span className={cn('rounded-full px-2 py-0.5 text-xs', active ? 'bg-white/15 text-white' : 'bg-muted text-muted-foreground')}>{count}</span>
     </button>
   );
 }
@@ -281,7 +281,7 @@ export function InventoryPage() {
                             </Button>
                           ) : null}
                           <Button
-                            className="size-9 rounded-lg bg-white"
+                            className="size-9 rounded-lg"
                             size="icon"
                             variant="outline"
                             onClick={() => navigate(`/app/estoque/${item.id}/editar`)}
@@ -290,7 +290,7 @@ export function InventoryPage() {
                             <Eye className="size-4" strokeWidth={1.75} />
                           </Button>
                           <Button
-                            className="size-9 rounded-lg bg-white"
+                            className="size-9 rounded-lg"
                             size="icon"
                             variant="outline"
                             onClick={() => navigate(`/app/estoque/${item.id}/editar`)}

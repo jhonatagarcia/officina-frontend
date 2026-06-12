@@ -84,7 +84,7 @@ export function ServiceFormPage({
         description="Cadastro padronizado para uso em orçamento e ordem de serviço."
       >
         <Button
-          className="min-h-11 rounded-xl bg-white/90 font-semibold"
+          className="min-h-11 rounded-xl font-semibold"
           variant="outline"
           onClick={() => navigate('/app/servicos')}
         >

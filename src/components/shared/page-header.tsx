@@ -10,7 +10,7 @@ interface PageHeaderProps extends PropsWithChildren {
 
 export function PageHeader({ title, description, actionLabel, onAction, children }: PageHeaderProps) {
   return (
-    <div className="relative overflow-hidden rounded-[20px] border border-border bg-[linear-gradient(105deg,#FFFFFF_0%,#FFFFFF_55%,#FFF4EB_88%,#FFE9D8_100%)] px-5 py-5 shadow-xs md:px-6">
+    <div className="relative overflow-hidden rounded-[20px] border border-border bg-[linear-gradient(105deg,#FFFFFF_0%,#FFFFFF_55%,#FFF4EB_88%,#FFE9D8_100%)] px-5 py-5 shadow-xs dark:bg-[linear-gradient(105deg,#1a1a20_0%,#1a1a20_55%,#1e0f07_88%,#231408_100%)] md:px-6">
       <div className="relative flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="max-w-2xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-primary">Workspace</p>

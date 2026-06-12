@@ -38,7 +38,7 @@ function isOverdueOrder(order: ServiceOrder) {
 }
 
 function getServiceOrderRowClass(order: ServiceOrder) {
-  if (isOverdueOrder(order)) return 'border-l-4 border-l-rose-600 hover:bg-stone-50/80';
+  if (isOverdueOrder(order)) return 'border-l-4 border-l-rose-600 hover:bg-muted/40';
   return undefined;
 }
 
@@ -54,9 +54,9 @@ function ServiceOrderStatusPill({ status }: { status: ServiceOrder['status'] }) 
       className={cn(
         'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold',
         tone === 'orange' && 'bg-orange-50 text-orange-700',
-        tone === 'stone' && 'bg-stone-100 text-stone-700',
+        tone === 'stone' && 'bg-muted text-stone-700',
         tone === 'amber' && 'bg-amber-50 text-amber-700',
-        tone === 'emerald' && 'bg-emerald-50 text-emerald-700',
+        tone === 'emerald' && 'bg-emerald-500/10 text-emerald-500',
         tone === 'sky' && 'bg-sky-50 text-sky-700',
       )}
     >
@@ -229,10 +229,10 @@ export function ServiceOrdersPage() {
                       <TableCell><ServiceOrderStatusPill status={item.status} /></TableCell>
                       <TableCell>
                         {item.expectedDeliveryAt ? (
-                          <div className={cn('flex items-center gap-2', isOverdueOrder(item) ? 'font-bold text-rose-700' : 'text-muted-foreground')}>
+                          <div className={cn('flex items-center gap-2', isOverdueOrder(item) ? 'font-bold text-red-500' : 'text-muted-foreground')}>
                             <span>{formatDateOnly(item.expectedDeliveryAt)}</span>
                             {isOverdueOrder(item) ? (
-                              <span className="rounded bg-rose-50 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-rose-700">Atrasada</span>
+                              <span className="rounded bg-red-500/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-red-500">Atrasada</span>
                             ) : null}
                           </div>
                         ) : '-'}
@@ -244,7 +244,7 @@ export function ServiceOrdersPage() {
                         <div className="flex justify-end gap-2">
                           <Button
                             aria-label={`Visualizar ${formatServiceOrderNumber(item.orderNumber)}`}
-                            className="size-9 rounded-lg bg-white"
+                            className="size-9 rounded-lg"
                             size="icon"
                             title="Visualizar OS"
                             variant="outline"
@@ -255,7 +255,7 @@ export function ServiceOrdersPage() {
                           {!isReadOnlyServiceOrderStatus(item.status) ? (
                             <Button
                               aria-label={`Operar ${formatServiceOrderNumber(item.orderNumber)}`}
-                              className="size-9 rounded-lg bg-white"
+                              className="size-9 rounded-lg"
                               size="icon"
                               title="Operar OS"
                               variant="outline"
@@ -266,7 +266,7 @@ export function ServiceOrdersPage() {
                           ) : null}
                           <Button
                             aria-label={`Imprimir ${formatServiceOrderNumber(item.orderNumber)}`}
-                            className="size-9 rounded-lg bg-white"
+                            className="size-9 rounded-lg"
                             size="icon"
                             title="Imprimir OS"
                             variant="outline"

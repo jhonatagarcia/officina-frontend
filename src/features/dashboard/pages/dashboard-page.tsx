@@ -22,6 +22,7 @@ import type { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { dashboardService } from '@/features/dashboard/services/dashboard-service';
 import { useSortableData } from '@/hooks/use-sortable-data';
+import { useAnimatedNumber } from '@/hooks/use-animated-number';
 import { ErrorState } from '@/components/shared/error-state';
 import { EmptyState } from '@/components/shared/empty-state';
 import { LoadingState } from '@/components/shared/loading-state';
@@ -66,39 +67,39 @@ const toneMap: Record<MetricTone, { text: string; soft: string; line: string; fi
     bar: 'bg-primary',
   },
   green: {
-    text: 'text-emerald-600',
-    soft: 'bg-emerald-50',
+    text: 'text-emerald-500',
+    soft: 'bg-emerald-500/10',
     line: '#16A34A',
     fill: 'rgba(22,163,74,0.10)',
     bar: 'bg-emerald-500',
   },
   red: {
-    text: 'text-red-600',
-    soft: 'bg-red-50',
+    text: 'text-red-500',
+    soft: 'bg-red-500/10',
     line: '#DC2626',
     fill: 'rgba(220,38,38,0.10)',
     bar: 'bg-red-500',
   },
   blue: {
-    text: 'text-sky-600',
-    soft: 'bg-sky-50',
+    text: 'text-sky-500',
+    soft: 'bg-sky-500/10',
     line: '#0EA5E9',
     fill: 'rgba(14,165,233,0.10)',
     bar: 'bg-sky-500',
   },
   amber: {
-    text: 'text-amber-600',
-    soft: 'bg-amber-50',
+    text: 'text-amber-500',
+    soft: 'bg-amber-500/10',
     line: '#F59E0B',
     fill: 'rgba(245,158,11,0.12)',
     bar: 'bg-amber-500',
   },
   slate: {
-    text: 'text-slate-600',
-    soft: 'bg-slate-100',
+    text: 'text-slate-400',
+    soft: 'bg-slate-500/10',
     line: '#94A3B8',
     fill: 'rgba(148,163,184,0.14)',
-    bar: 'bg-slate-300',
+    bar: 'bg-slate-500',
   },
 };
 
@@ -115,9 +116,9 @@ const alertLabelMap: Record<DashboardOperationalAlert['severity'], string> = {
 };
 
 const alertContainerMap: Record<DashboardOperationalAlert['severity'], string> = {
-  danger: 'border-rose-200 bg-rose-50/70',
-  warning: 'border-amber-200 bg-amber-50/70',
-  info: 'border-sky-200 bg-sky-50/70',
+  danger: 'border-rose-500/20 bg-rose-500/10',
+  warning: 'border-amber-500/20 bg-amber-500/10',
+  info: 'border-sky-500/20 bg-sky-500/10',
 };
 
 function formatPercent(value: number) {
@@ -129,14 +130,41 @@ function getDeltaTone(value: number) {
   return value >= 0 ? 'green' : 'red';
 }
 
+function formatInteger(value: number) {
+  return Math.round(value).toLocaleString('pt-BR');
+}
+
+function formatWithSuffix(suffix: string) {
+  return (value: number) => `${formatInteger(value)} ${suffix}`;
+}
+
+function AnimatedValue({
+  value,
+  formatter = formatInteger,
+}: {
+  value: number;
+  formatter?: (value: number) => string;
+}) {
+  const animated = useAnimatedNumber(value);
+  return <>{formatter(animated)}</>;
+}
+
 function MiniSparkline({ values, tone = 'orange' }: { values: number[]; tone?: MetricTone }) {
-  const maxValue = Math.max(...values, 1);
-  const minValue = Math.min(...values, 0);
+  const animatedValues = [
+    useAnimatedNumber(values[0] ?? 0),
+    useAnimatedNumber(values[1] ?? 0),
+    useAnimatedNumber(values[2] ?? 0),
+    useAnimatedNumber(values[3] ?? 0),
+    useAnimatedNumber(values[4] ?? 0),
+    useAnimatedNumber(values[5] ?? 0),
+  ];
+  const maxValue = Math.max(...animatedValues, 1);
+  const minValue = Math.min(...animatedValues, 0);
   const range = Math.max(maxValue - minValue, 1);
   const width = 220;
   const height = 72;
-  const points = values.map((value, index) => {
-    const x = (index / Math.max(values.length - 1, 1)) * width;
+  const points = animatedValues.map((value, index) => {
+    const x = (index / Math.max(animatedValues.length - 1, 1)) * width;
     const y = height - ((value - minValue) / range) * (height - 12) - 6;
     return { x, y };
   });
@@ -166,6 +194,7 @@ function MiniSparkline({ values, tone = 'orange' }: { values: number[]; tone?: M
 function MetricCard({
   title,
   value,
+  formatter = formatInteger,
   delta,
   subtitle = 'vs mês anterior',
   tone = 'orange',
@@ -173,7 +202,8 @@ function MetricCard({
   sparkline,
 }: {
   title: string;
-  value: string;
+  value: number;
+  formatter?: (value: number) => string;
   delta?: number;
   subtitle?: string;
   tone?: MetricTone;
@@ -183,7 +213,7 @@ function MetricCard({
   const deltaTone = getDeltaTone(delta ?? 0);
 
   return (
-    <Card className="h-full overflow-hidden bg-white shadow-xs">
+    <Card className="h-full overflow-hidden bg-card shadow-xs">
       <CardContent className="relative flex h-full min-h-44 flex-col p-5">
         <div className={cn('absolute right-6 top-6 rounded-xl p-2', toneMap[tone].soft, toneMap[tone].text)}>
           <Icon className="size-4" strokeWidth={1.75} />
@@ -191,7 +221,7 @@ function MetricCard({
         <p className="pr-12 text-sm font-semibold text-muted-foreground">{title}</p>
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <p className="font-bold leading-none tracking-tight text-foreground text-[clamp(1.65rem,2.2vw,2.35rem)] [font-variant-numeric:tabular-nums]">
-            {value}
+            <AnimatedValue value={value} formatter={formatter} />
           </p>
           {typeof delta === 'number' ? (
             <span className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold', toneMap[deltaTone].soft, toneMap[deltaTone].text)}>
@@ -207,27 +237,36 @@ function MetricCard({
   );
 }
 
-function BarMetricCard({ title, value, values }: { title: string; value: string; values: number[] }) {
-  const maxValue = Math.max(...values, 1);
+function BarMetricCard({ title, value, values }: { title: string; value: number; values: number[] }) {
+  const animatedValue = useAnimatedNumber(value);
+  const animatedValues = [
+    useAnimatedNumber(values[0] ?? 0),
+    useAnimatedNumber(values[1] ?? 0),
+    useAnimatedNumber(values[2] ?? 0),
+    useAnimatedNumber(values[3] ?? 0),
+    useAnimatedNumber(values[4] ?? 0),
+    useAnimatedNumber(values[5] ?? 0),
+  ];
+  const maxValue = Math.max(...animatedValues, 1);
   const months = ['dez', 'jan', 'fev', 'mar', 'abr', 'mai'];
 
   return (
-    <Card className="h-full bg-white shadow-xs">
+    <Card className="h-full bg-card shadow-xs">
       <CardContent className="p-5">
         <p className="text-sm font-semibold text-muted-foreground">{title}</p>
         <div className="mt-8 flex items-center gap-3">
-          <p className="text-3xl font-bold leading-none [font-variant-numeric:tabular-nums]">{value}</p>
-          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+          <p className="text-3xl font-bold leading-none [font-variant-numeric:tabular-nums]">{formatInteger(animatedValue)}</p>
+          <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-bold text-emerald-500">
             <TrendingUp className="mr-1 inline size-3.5" strokeWidth={1.75} />
             +8.1%
           </span>
           <span className="text-xs font-medium text-muted-foreground">vs abr</span>
         </div>
         <div className="mt-8 grid h-56 grid-cols-6 items-end gap-7 border-b border-border-soft px-6">
-          {values.map((item, index) => (
-            <div key={`${item}-${index}`} className="flex h-full flex-col justify-end gap-3">
+          {animatedValues.map((item, index) => (
+            <div key={index} className="flex h-full flex-col justify-end gap-3">
               <p className={cn('text-center text-xl font-bold', index === values.length - 1 ? 'text-foreground' : 'text-muted-foreground')}>
-                {item}
+                {formatInteger(item)}
               </p>
               <div
                 className={cn('rounded-t-lg', index === values.length - 1 ? toneMap.orange.bar : 'bg-slate-300')}
@@ -248,6 +287,66 @@ function BarMetricCard({ title, value, values }: { title: string; value: string;
   );
 }
 
+function StatusDonutCard({
+  openOrdersCount,
+  inProgressOrdersCount,
+  readyOrdersCount,
+  pendingBudgetsCount,
+}: {
+  openOrdersCount: number;
+  inProgressOrdersCount: number;
+  readyOrdersCount: number;
+  pendingBudgetsCount: number;
+}) {
+  const total = Math.max(openOrdersCount + inProgressOrdersCount + readyOrdersCount + pendingBudgetsCount, 1);
+  const animatedTotal = useAnimatedNumber(total);
+  const animatedReady = useAnimatedNumber(readyOrdersCount);
+  const animatedInProgress = useAnimatedNumber(inProgressOrdersCount);
+  const animatedPending = useAnimatedNumber(pendingBudgetsCount);
+  const animatedOpen = useAnimatedNumber(openOrdersCount);
+  const animatedSafeTotal = Math.max(animatedTotal, 1);
+  const readyEnd = (animatedReady / animatedSafeTotal) * 100;
+  const inProgressEnd = readyEnd + (animatedInProgress / animatedSafeTotal) * 100;
+  const pendingEnd = inProgressEnd + (animatedPending / animatedSafeTotal) * 100;
+
+  return (
+    <Card className="h-full bg-card shadow-xs">
+      <CardContent className="p-5">
+        <p className="text-sm font-semibold text-muted-foreground">OS por status</p>
+        <div className="mt-7 grid gap-6 md:grid-cols-[190px_1fr] md:items-center">
+          <div
+            className="relative mx-auto size-44 rounded-full"
+            style={{
+              background: `conic-gradient(#16A34A 0 ${readyEnd}%, #F59E0B ${readyEnd}% ${inProgressEnd}%, #0EA5E9 ${inProgressEnd}% ${pendingEnd}%, #A6A29A ${pendingEnd}% 100%)`,
+            }}
+          >
+            <div className="absolute inset-10 flex flex-col items-center justify-center rounded-full bg-card">
+              <span className="text-3xl font-bold [font-variant-numeric:tabular-nums]">{formatInteger(animatedTotal)}</span>
+              <span className="text-sm text-muted-foreground">total</span>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {[
+              ['Prontas', animatedReady, 'bg-emerald-500'],
+              ['Em andamento', animatedInProgress, 'bg-amber-500'],
+              ['Orçamento', animatedPending, 'bg-sky-500'],
+              ['Abertas', animatedOpen, 'bg-stone-400'],
+            ].map(([label, value, color]) => (
+              <div key={String(label)} className="grid grid-cols-[1fr_auto] items-center gap-3">
+                <div className="flex items-center gap-3">
+                  <span className={cn('size-3 rounded', color)} />
+                  <span className="text-sm text-muted-foreground">{label}</span>
+                </div>
+                <span className="text-sm font-bold [font-variant-numeric:tabular-nums]">{formatInteger(Number(value))}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function RankingCard({
   title,
   items,
@@ -256,7 +355,7 @@ function RankingCard({
   items: Array<{ label: string; detail: string; value: string }>;
 }) {
   return (
-    <Card className="h-full bg-white shadow-xs">
+    <Card className="h-full bg-card shadow-xs">
       <CardContent className="p-5">
         <p className="text-sm font-semibold text-muted-foreground">{title}</p>
         <div className="mt-8 space-y-0">
@@ -279,11 +378,11 @@ function RankingCard({
 function DotStatusPill({ label, tone = 'amber' }: { label: string; tone?: MetricTone }) {
   const colorMap: Record<MetricTone, string> = {
     orange: 'bg-primary text-primary',
-    green: 'bg-emerald-500 text-emerald-700',
-    red: 'bg-red-500 text-red-700',
-    blue: 'bg-sky-500 text-sky-700',
-    amber: 'bg-amber-500 text-amber-700',
-    slate: 'bg-stone-400 text-stone-700',
+    green: 'bg-emerald-500 text-emerald-500',
+    red: 'bg-red-500 text-red-500',
+    blue: 'bg-sky-500 text-sky-500',
+    amber: 'bg-amber-500 text-amber-500',
+    slate: 'bg-slate-400 text-slate-400',
   };
 
   return (
@@ -302,7 +401,7 @@ function DashboardPeriodFilter({
   onChange: (value: DashboardPeriod) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2 rounded-xl border border-border-soft bg-white p-4 shadow-xs">
+    <div className="flex flex-wrap gap-2 rounded-xl border border-border-soft bg-card p-4 shadow-xs">
       {dashboardPeriodOptions.map((option) => {
         const isActive = value === option.value;
 
@@ -313,8 +412,8 @@ function DashboardPeriodFilter({
             className={cn(
               'inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold shadow-xs transition',
               isActive
-                ? 'border-slate-900 bg-slate-900 text-white shadow-md'
-                : 'border-border bg-white text-muted-foreground hover:border-border-strong hover:text-foreground',
+                ? 'border-primary bg-primary text-white shadow-md'
+                : 'border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground',
             )}
             onClick={() => onChange(option.value)}
           >
@@ -343,13 +442,13 @@ function DashboardTableCard({
   children: ReactNode;
 }) {
   return (
-    <Card id={id} className="scroll-mt-6 h-full overflow-hidden bg-white shadow-xs">
+    <Card id={id} className="scroll-mt-6 h-full overflow-hidden bg-card shadow-xs">
       <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-border-soft p-5">
         <div>
           <CardTitle className="text-lg">{title}</CardTitle>
           {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
         </div>
-        <Button className="rounded-lg bg-white font-semibold" size="sm" variant="outline" onClick={onAction}>
+        <Button className="rounded-lg bg-card font-semibold" size="sm" variant="outline" onClick={onAction}>
           {actionLabel}
         </Button>
       </CardHeader>
@@ -445,7 +544,6 @@ export function DashboardPage() {
     return [0.62, 0.74, 0.69, 0.83, 0.94, 1].map((factor) => Math.round(base * factor));
   };
   const orderMonthSeries = [0.66, 0.76, 0.8, 0.84, 0.93, 1].map((factor) => Math.max(1, Math.round(activeOrderTotal * factor)));
-  const statusTotal = Math.max(activeOrderTotal + pendingBudgetsCount, 1);
   const clientGroups = [...activeServiceOrders, ...pendingBudgets].reduce<Record<string, { count: number; total: number }>>((groups, item) => {
     const clientName = 'clientName' in item ? item.clientName : item.client?.name ?? 'Cliente sem nome';
     const total = 'total' in item ? item.total ?? 0 : 0;
@@ -541,7 +639,8 @@ export function DashboardPage() {
       render: () => (
         <MetricCard
           title="Faturamento"
-          value={formatCurrency(financial.monthRevenue)}
+          value={financial.monthRevenue}
+          formatter={formatCurrency}
           delta={12.3}
           subtitle={periodSubtitle}
           tone="orange"
@@ -558,7 +657,8 @@ export function DashboardPage() {
       render: () => (
         <MetricCard
           title="Despesas"
-          value={formatCurrency(financial.stockOutValue)}
+          value={financial.stockOutValue}
+          formatter={formatCurrency}
           delta={6.4}
           subtitle={periodSubtitle}
           tone="red"
@@ -575,7 +675,8 @@ export function DashboardPage() {
       render: () => (
         <MetricCard
           title="Lucro líquido"
-          value={formatCurrency(projectedBalance)}
+          value={projectedBalance}
+          formatter={formatCurrency}
           delta={21.3}
           subtitle={periodSubtitle}
           tone={projectedBalance >= 0 ? 'green' : 'red'}
@@ -588,43 +689,43 @@ export function DashboardPage() {
       id: 'average-ticket',
       title: 'Ticket médio',
       category: 'Financeiro',
-      render: () => <MetricCard title="Ticket médio" value={formatCurrency(averageTicket)} delta={12.4} subtitle={periodSubtitle} tone="orange" icon={Gauge} />,
+      render: () => <MetricCard title="Ticket médio" value={averageTicket} formatter={formatCurrency} delta={12.4} subtitle={periodSubtitle} tone="orange" icon={Gauge} />,
     },
     {
       id: 'accounts-receivable',
-      title: 'Contas a receber',
+      title: 'Faturamento',
       category: 'Financeiro',
-      render: () => <MetricCard title="Contas a receber" value={formatCurrency(pendingBudgetTotal)} delta={19.8} tone="green" icon={Receipt} />,
+      render: () => <MetricCard title="Faturamento" value={pendingBudgetTotal} formatter={formatCurrency} delta={19.8} tone="green" icon={Receipt} />,
     },
     {
       id: 'accounts-payable',
       title: 'Contas a pagar',
       category: 'Financeiro',
-      render: () => <MetricCard title="Contas a pagar" value={formatCurrency(financial.stockOutValue)} delta={10.5} tone="red" icon={TrendingDown} />,
+      render: () => <MetricCard title="Contas a pagar" value={financial.stockOutValue} formatter={formatCurrency} delta={10.5} tone="red" icon={TrendingDown} />,
     },
     {
       id: 'os-ready',
       title: 'OS finalizadas',
       category: 'Ordens de Serviço',
-      render: () => <MetricCard title="OS finalizadas" value={String(readyOrdersCount)} delta={8.1} tone="orange" icon={ClipboardList} sparkline={sparklineFromValue(readyOrdersCount)} />,
+      render: () => <MetricCard title="OS finalizadas" value={readyOrdersCount} delta={8.1} tone="orange" icon={ClipboardList} sparkline={sparklineFromValue(readyOrdersCount)} />,
     },
     {
       id: 'os-progress',
       title: 'OS em andamento',
       category: 'Ordens de Serviço',
-      render: () => <MetricCard title="OS em andamento" value={String(inProgressOrdersCount)} delta={17.2} tone="orange" icon={Wrench} />,
+      render: () => <MetricCard title="OS em andamento" value={inProgressOrdersCount} delta={17.2} tone="orange" icon={Wrench} />,
     },
     {
       id: 'budget-pending',
       title: 'Orçamentos abertos',
       category: 'Ordens de Serviço',
-      render: () => <MetricCard title="Orçamentos abertos" value={String(pendingBudgetsCount)} delta={36.8} tone="orange" icon={Receipt} />,
+      render: () => <MetricCard title="Orçamentos abertos" value={pendingBudgetsCount} delta={36.8} tone="orange" icon={Receipt} />,
     },
     {
       id: 'execution-time',
       title: 'Tempo médio de execução',
       category: 'Ordens de Serviço',
-      render: () => <MetricCard title="Tempo médio de execução" value={`${Math.max(1, Math.round(activeOrderTotal / 2))} dias`} delta={-7.4} tone="green" icon={Gauge} />,
+      render: () => <MetricCard title="Tempo médio de execução" value={Math.max(1, Math.round(activeOrderTotal / 2))} formatter={formatWithSuffix('dias')} delta={-7.4} tone="green" icon={Gauge} />,
     },
     {
       id: 'os-status',
@@ -632,35 +733,12 @@ export function DashboardPage() {
       category: 'Ordens de Serviço',
       className: 'md:col-span-2',
       render: () => (
-        <Card className="h-full bg-white shadow-xs">
-          <CardContent className="p-5">
-            <p className="text-sm font-semibold text-muted-foreground">OS por status</p>
-            <div className="mt-7 grid gap-6 md:grid-cols-[190px_1fr] md:items-center">
-              <div className="relative mx-auto size-44 rounded-full bg-[conic-gradient(#16A34A_0_50%,#F59E0B_50%_72%,#0EA5E9_72%_90%,#A6A29A_90%_100%)]">
-                <div className="absolute inset-10 flex flex-col items-center justify-center rounded-full bg-white">
-                  <span className="text-3xl font-bold">{statusTotal}</span>
-                  <span className="text-sm text-muted-foreground">total</span>
-                </div>
-              </div>
-              <div className="space-y-4">
-                {[
-                  ['Prontas', readyOrdersCount, 'bg-emerald-500'],
-                  ['Em andamento', inProgressOrdersCount, 'bg-amber-500'],
-                  ['Orçamento', pendingBudgetsCount, 'bg-sky-500'],
-                  ['Abertas', openOrdersCount, 'bg-stone-400'],
-                ].map(([label, value, color]) => (
-                  <div key={String(label)} className="grid grid-cols-[1fr_auto] items-center gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className={cn('size-3 rounded', color)} />
-                      <span className="text-sm text-muted-foreground">{label}</span>
-                    </div>
-                    <span className="text-sm font-bold">{value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatusDonutCard
+          openOrdersCount={openOrdersCount}
+          inProgressOrdersCount={inProgressOrdersCount}
+          readyOrdersCount={readyOrdersCount}
+          pendingBudgetsCount={pendingBudgetsCount}
+        />
       ),
     },
     {
@@ -668,49 +746,49 @@ export function DashboardPage() {
       title: 'OS por mês',
       category: 'Ordens de Serviço',
       className: 'md:col-span-2 lg:col-span-4',
-      render: () => <BarMetricCard title="OS por mês" value={String(activeOrderTotal)} values={orderMonthSeries} />,
+      render: () => <BarMetricCard title="OS por mês" value={activeOrderTotal} values={orderMonthSeries} />,
     },
     {
       id: 'clients-new',
       title: 'Clientes novos',
       category: 'Clientes',
-      render: () => <MetricCard title="Clientes novos" value={String(Object.keys(clientGroups).length)} delta={20.8} tone="orange" icon={Users} sparkline={sparklineFromValue(Object.keys(clientGroups).length)} />,
+      render: () => <MetricCard title="Clientes novos" value={Object.keys(clientGroups).length} delta={20.8} tone="orange" icon={Users} sparkline={sparklineFromValue(Object.keys(clientGroups).length)} />,
     },
     {
       id: 'clients-total',
       title: 'Total de clientes',
       category: 'Clientes',
-      render: () => <MetricCard title="Total de clientes" value={String(Object.keys(clientGroups).length)} delta={3.1} tone="slate" icon={Users} />,
+      render: () => <MetricCard title="Total de clientes" value={Object.keys(clientGroups).length} delta={3.1} tone="slate" icon={Users} />,
     },
     {
       id: 'return-rate',
       title: 'Taxa de retorno',
       category: 'Clientes',
-      render: () => <MetricCard title="Taxa de retorno" value={`${Math.min(100, Math.round((activeOrderTotal / Math.max(Object.keys(clientGroups).length, 1)) * 18))}%`} delta={4.3} tone="green" icon={TrendingUp} />,
+      render: () => <MetricCard title="Taxa de retorno" value={Math.min(100, Math.round((activeOrderTotal / Math.max(Object.keys(clientGroups).length, 1)) * 18))} formatter={(value) => `${formatInteger(value)}%`} delta={4.3} tone="green" icon={TrendingUp} />,
     },
     {
       id: 'inventory-low',
       title: 'Estoque crítico',
       category: 'Estoque',
-      render: () => <MetricCard title="Estoque crítico" value={`${inventoryData.lowStockCount} itens`} delta={20} tone="amber" icon={AlertTriangle} />,
+      render: () => <MetricCard title="Estoque crítico" value={inventoryData.lowStockCount} formatter={formatWithSuffix('itens')} delta={20} tone="amber" icon={AlertTriangle} />,
     },
     {
       id: 'inventory-out',
       title: 'Saídas de estoque',
       category: 'Estoque',
-      render: () => <MetricCard title="Saídas de estoque" value={`${stockUnitsAtRisk} un`} delta={16.7} tone="orange" icon={PackageSearch} sparkline={sparklineFromValue(stockUnitsAtRisk)} />,
+      render: () => <MetricCard title="Saídas de estoque" value={stockUnitsAtRisk} formatter={formatWithSuffix('un')} delta={16.7} tone="orange" icon={PackageSearch} sparkline={sparklineFromValue(stockUnitsAtRisk)} />,
     },
     {
       id: 'inventory-in',
       title: 'Entradas de estoque',
       category: 'Estoque',
-      render: () => <MetricCard title="Entradas de estoque" value={`${Math.max(stockUnitsAtRisk + inventoryData.lowStockCount, inventoryData.lowStockCount)} un`} delta={13.8} tone="orange" icon={PackageCheck} sparkline={sparklineFromValue(stockUnitsAtRisk + inventoryData.lowStockCount)} />,
+      render: () => <MetricCard title="Entradas de estoque" value={Math.max(stockUnitsAtRisk + inventoryData.lowStockCount, inventoryData.lowStockCount)} formatter={formatWithSuffix('un')} delta={13.8} tone="orange" icon={PackageCheck} sparkline={sparklineFromValue(stockUnitsAtRisk + inventoryData.lowStockCount)} />,
     },
     {
       id: 'mechanics-active',
       title: 'Mecânicos ativos',
       category: 'Equipe',
-      render: () => <MetricCard title="Mecânicos ativos" value={String(activeMechanicsCount)} delta={14.3} tone="orange" icon={HardHat} />,
+      render: () => <MetricCard title="Mecânicos ativos" value={activeMechanicsCount} delta={14.3} tone="orange" icon={HardHat} />,
     },
     {
       id: 'top-clients',
@@ -766,7 +844,7 @@ export function DashboardPage() {
                   </TableHeader>
                   <TableBody>
                     {paginatedActiveServiceOrders.map((order) => (
-                      <TableRow key={order.id} className="hover:bg-stone-50/80">
+                      <TableRow key={order.id} className="hover:bg-muted/40">
                         <DashboardTableCell><PlateChip>{formatServiceOrderNumber(order.orderNumber)}</PlateChip></DashboardTableCell>
                         <DashboardTableCell>{order.clientName}</DashboardTableCell>
                         <DashboardTableCell>
@@ -830,7 +908,7 @@ export function DashboardPage() {
                   </TableHeader>
                   <TableBody>
                     {paginatedPendingBudgets.map((budget) => (
-                      <TableRow key={budget.id} className="hover:bg-stone-50/80">
+                      <TableRow key={budget.id} className="hover:bg-muted/40">
                         <DashboardTableCell><PlateChip>{budget.code}</PlateChip></DashboardTableCell>
                         <DashboardTableCell>{budget.client?.name ?? '-'}</DashboardTableCell>
                         <DashboardTableCell>
@@ -890,7 +968,7 @@ export function DashboardPage() {
                   </TableHeader>
                   <TableBody>
                     {paginatedLowStockItems.map((item) => (
-                      <TableRow key={item.id} className="hover:bg-stone-50/80">
+                      <TableRow key={item.id} className="hover:bg-muted/40">
                         <DashboardTableCell><PlateChip>{item.internalCode}</PlateChip></DashboardTableCell>
                         <DashboardTableCell className="font-medium">{item.name}</DashboardTableCell>
                         <DashboardTableCell className="font-bold [font-variant-numeric:tabular-nums]">{item.quantity}</DashboardTableCell>
@@ -947,7 +1025,7 @@ export function DashboardPage() {
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                       <p className="text-xs font-medium uppercase tracking-wide text-foreground/80">{alert.metric}</p>
                       {alertAction ? (
-                        <Button className="rounded-lg bg-white/80 font-semibold" size="sm" variant="outline" onClick={alertAction.onClick}>
+                        <Button className="rounded-lg bg-card font-semibold" size="sm" variant="outline" onClick={alertAction.onClick}>
                           {alertAction.label}
                         </Button>
                       ) : null}
@@ -956,7 +1034,7 @@ export function DashboardPage() {
                 );
               })
             ) : (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
                 <div className="flex items-start gap-3">
                   <BellRing className="mt-0.5 size-4 text-emerald-600" />
                   <div>
@@ -976,7 +1054,7 @@ export function DashboardPage() {
     <PageContainer>
       <PageHeader title="Dashboard" description="Visão operacional da oficina em tempo real.">
         <Button
-          className="min-h-11 rounded-xl border-border bg-white/90 px-4 font-semibold shadow-xs"
+          className="min-h-11 rounded-xl border-border bg-card px-4 font-semibold shadow-xs"
           type="button"
           variant="outline"
           onClick={() => setIsConfiguringPanel((current) => !current)}

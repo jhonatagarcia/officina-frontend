@@ -39,7 +39,7 @@ function splitVehicleFallback(fallback?: string | null) {
 
 export function PlateChip({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex rounded-md bg-stone-100 px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-[0.08em] text-foreground">
+    <span className="inline-flex rounded-md bg-muted px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-[0.08em] text-foreground">
       {children}
     </span>
   );

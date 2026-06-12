@@ -38,11 +38,10 @@ export function Sidebar() {
               <Wrench className="size-7" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-300">ERP Oficina</p>
               <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white">{env.VITE_APP_NAME}</h1>
             </div>
           </div>
-          <p className="mt-2 text-sm text-slate-300">Produtividade operacional para oficina mecânica.</p>
+          <p className="mt-2 text-sm text-slate-300">Produtividade operacional para oficinas mecânicas, funilárias e auto elétricas</p>
         </div>
         <nav className="space-y-2">
           {menuItems.map((item) => {

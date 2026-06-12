@@ -112,7 +112,7 @@ export function WorkshopProfilePage() {
         description="Mantenha os dados fiscais da oficina atualizados para liberar recursos financeiros e fiscais."
       >
         <Button
-          className="min-h-11 rounded-xl bg-white/90 font-semibold"
+          className="min-h-11 rounded-xl font-semibold"
           variant="outline"
           onClick={() => navigate('/app/dashboard')}
         >
@@ -175,25 +175,25 @@ export function WorkshopProfilePage() {
         <Card
           className={
             fiscalStatus.isIncomplete
-              ? 'border-amber-200 bg-amber-50/60'
-              : 'border-emerald-200 bg-emerald-50/60'
+              ? 'border-amber-500/20 bg-amber-500/10'
+              : 'border-emerald-500/20 bg-emerald-500/10'
           }
         >
           <CardContent className="p-5">
             <div className="flex items-start gap-3">
               {fiscalStatus.isIncomplete ? (
                 <AlertCircle
-                  className="mt-0.5 size-5 text-amber-600"
+                  className="mt-0.5 size-5 text-amber-500"
                   aria-hidden="true"
                 />
               ) : (
                 <CheckCircle2
-                  className="mt-0.5 size-5 text-emerald-600"
+                  className="mt-0.5 size-5 text-emerald-500"
                   aria-hidden="true"
                 />
               )}
               <div>
-                <p className="font-semibold">
+                <p className="font-semibold text-foreground">
                   {fiscalStatus.isIncomplete
                     ? 'Cadastro fiscal incompleto'
                     : 'Cadastro fiscal liberado'}

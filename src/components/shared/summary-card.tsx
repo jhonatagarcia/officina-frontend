@@ -86,7 +86,7 @@ export function SummaryCard({
   const resolvedSparklineValues = buildSparkline(value, sparklineValues);
 
   return (
-    <Card className="h-full overflow-hidden bg-white shadow-xs">
+    <Card className="h-full overflow-hidden bg-card shadow-xs">
       <CardContent className={cn('relative flex h-full flex-col', isCompact ? 'min-h-44 p-4' : 'min-h-52 p-6')}>
         <div className={cn('absolute right-5 top-5 border border-primary/10 bg-primary-soft text-primary', isCompact ? 'rounded-xl p-2' : 'rounded-2xl p-3', mediaClassName)}>
           {imageSrc ? (
@@ -110,7 +110,7 @@ export function SummaryCard({
             <span
               className={cn(
                 'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold',
-                isPositiveDelta ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700',
+                isPositiveDelta ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500',
               )}
             >
               <TrendIcon className="size-3.5" strokeWidth={1.75} />

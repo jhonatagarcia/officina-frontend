@@ -23,7 +23,7 @@ import { cn, formatCpfCnpj, formatPhone, formatDateOnly } from '@/lib/utils';
 
 function InfoChip({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex rounded-md bg-stone-100 px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-[0.08em] text-foreground">
+    <span className="inline-flex rounded-md bg-muted px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-[0.08em] text-foreground">
       {children}
     </span>
   );
@@ -34,7 +34,7 @@ function ClientStatusPill({ isActive }: { isActive: boolean }) {
     <span
       className={cn(
         'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold',
-        isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-stone-100 text-stone-700',
+        isActive ? 'bg-emerald-500/10 text-emerald-500' : 'bg-muted text-stone-400',
       )}
     >
       <span className={cn('size-2 rounded-full', isActive ? 'bg-emerald-500' : 'bg-stone-400')} />
@@ -158,7 +158,7 @@ export function ClientsPage() {
             <CardTitle className="text-lg">Clientes cadastrados</CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">Lista de clientes com contato, documento e vínculo de veículos.</p>
           </div>
-          <Button className="rounded-lg bg-white font-semibold" size="sm" variant="outline" onClick={() => navigate('/app/clientes/novo')}>
+          <Button className="rounded-lg font-semibold" size="sm" variant="outline" onClick={() => navigate('/app/clientes/novo')}>
             Novo cliente
           </Button>
         </CardHeader>
@@ -221,7 +221,7 @@ export function ClientsPage() {
                 </TableHeader>
                 <TableBody>
                   {sortedItems.map((client) => (
-                    <TableRow key={client.id} className="hover:bg-stone-50/80">
+                    <TableRow key={client.id} className="hover:bg-muted/40">
                       <ClientsTableCell>
                         <div className="space-y-1">
                           <p className="font-bold text-foreground">{client.name}</p>
@@ -240,10 +240,10 @@ export function ClientsPage() {
                       <ClientsTableCell className="text-muted-foreground">{formatDateOnly(client.updatedAt)}</ClientsTableCell>
                       <ClientsTableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button className="rounded-lg bg-white" size="icon-sm" variant="outline" onClick={() => navigate(`/app/clientes/${client.id}`)}>
+                          <Button className="rounded-lg" size="icon-sm" variant="outline" onClick={() => navigate(`/app/clientes/${client.id}`)}>
                             <Eye className="size-4" strokeWidth={1.75} />
                           </Button>
-                          <Button className="rounded-lg bg-white" size="icon-sm" variant="outline" onClick={() => navigate(`/app/clientes/${client.id}/editar`)}>
+                          <Button className="rounded-lg" size="icon-sm" variant="outline" onClick={() => navigate(`/app/clientes/${client.id}/editar`)}>
                             <Pencil className="size-4" strokeWidth={1.75} />
                           </Button>
                         </div>

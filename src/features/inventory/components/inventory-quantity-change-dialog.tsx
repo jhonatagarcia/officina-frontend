@@ -25,7 +25,7 @@ export function InventoryQuantityChangeDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
-      <div className="w-full max-w-2xl rounded-2xl border border-border bg-white p-6 shadow-panel">
+      <div className="w-full max-w-2xl rounded-2xl border border-border bg-card p-6 shadow-panel">
         <div className="space-y-2">
           <h2 className="text-xl font-bold">Confirmar alteração manual de estoque</h2>
           <p className="text-sm text-muted-foreground">

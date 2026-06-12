@@ -23,7 +23,7 @@ export function FiscalSetupBanner() {
             </p>
           </div>
         </div>
-        <Button asChild size="sm" variant="outline" className="shrink-0 border-amber-300 bg-white/70 text-amber-950 hover:bg-white">
+        <Button asChild size="sm" variant="outline" className="shrink-0 border-amber-300 bg-card text-amber-950 hover:bg-card/80">
           <Link to={fiscalStatus.ctaPath}>
             Cadastrar CNPJ
             <ArrowRight className="size-4" aria-hidden="true" />
