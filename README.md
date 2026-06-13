@@ -105,6 +105,27 @@ O backend correspondente tambem precisa de `ADMIN_PANEL_ENABLED=true`, `ADMIN_JW
 npm run dev
 ```
 
+## Deploy na Vercel
+
+O projeto esta configurado para deploy na Vercel pelo arquivo `vercel.json`:
+
+- Framework Preset: `vite`
+- Install Command: `npm install`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Rewrites: todas as rotas apontam para `/index.html`, necessario para refresh e deep links em SPA.
+
+Cadastre no painel da Vercel, em Project Settings > Environment Variables, as mesmas chaves do `.env.example`:
+
+```bash
+VITE_API_BASE_URL=https://api.autoprosystem.com.br/api/v1
+VITE_APP_NAME=AutoPro System
+VITE_GOOGLE_CLIENT_ID=
+VITE_ADMIN_PANEL_ENABLED=false
+```
+
+Use valores diferentes para Preview e Production se a API tiver ambientes separados. O arquivo `.env` local nao deve ser commitado.
+
 ## Scripts
 
 - `npm run dev`
