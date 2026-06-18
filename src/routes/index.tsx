@@ -5,12 +5,12 @@ import { LoadingState } from '@/components/shared/loading-state';
 import { GuestRoute, ProtectedRoute, RoleGuard } from '@/routes/route-guards';
 import { LoginPage } from '@/features/auth/pages/login-page';
 import { ResetPasswordPage } from '@/features/auth/pages/reset-password-page';
+import { LandingPage } from '@/features/landing/pages/landing-page';
 import { appRoutes } from '@/routes/route-manifest';
 import { env } from '@/lib/env';
-import AdminApp from '@/admin/AdminApp';
 
-const LandingPage = lazy(() =>
-  import('@/features/landing/pages/landing-page').then((m) => ({ default: m.LandingPage }))
+const AdminApp = lazy(() =>
+  import('@/admin/AdminApp').then((module) => ({ default: module.default })),
 );
 
 export function AppRouter() {

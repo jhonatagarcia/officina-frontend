@@ -21,6 +21,7 @@ const validRoles = new Set<Role>([
 const authHttp = axios.create({
   baseURL: env.VITE_API_BASE_URL,
   withCredentials: true,
+  timeout: 5_000,
 });
 
 function normalizeSession(session: AuthSession | null): AuthSession | null {

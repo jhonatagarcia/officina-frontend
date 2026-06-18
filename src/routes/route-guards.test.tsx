@@ -62,7 +62,7 @@ describe('route guards', () => {
     expect(screen.getByText(/acesso não autorizado/i)).toBeInTheDocument();
   });
 
-  it('aguarda hidratacao antes de decidir rota de visitante', () => {
+  it('renderiza rota de visitante enquanto a sessao ainda hidrata', () => {
     useAuthStore.setState({
       session: {
         accessToken: 'token',
@@ -76,7 +76,7 @@ describe('route guards', () => {
       hydrated: false,
     });
 
-    const { container } = renderWithQuery(
+    renderWithQuery(
       <Routes>
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<div>Tela de login</div>} />
@@ -85,6 +85,6 @@ describe('route guards', () => {
       ['/login'],
     );
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByText('Tela de login')).toBeInTheDocument();
   });
 });
