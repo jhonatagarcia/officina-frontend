@@ -26,9 +26,7 @@ export function ProtectedRoute() {
 export function GuestRoute() {
   const { isAuthenticated, hydrated } = useAuthState();
 
-  if (!hydrated) return null;
-
-  if (isAuthenticated) {
+  if (hydrated && isAuthenticated) {
     return <Navigate to="/app/dashboard" replace />;
   }
 

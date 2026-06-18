@@ -36,7 +36,8 @@ export function AppProviders({ children }: PropsWithChildren) {
       >
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
-            <AuthBootstrap>{children}</AuthBootstrap>
+            <AuthBootstrap />
+            {children}
             <AuthEffects />
             <Toaster richColors position="top-right" />
           </BrowserRouter>
