@@ -19,6 +19,10 @@ export const http = axios.create({
 const defaultApiErrorMessage = 'Não foi possível processar a solicitação.';
 const safeBackendMessageStatuses = new Set([400, 404, 409, 422]);
 
+function isAdminRoute() {
+  return typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+}
+
 function normalizeMessageValue(message: unknown) {
   const value = Array.isArray(message) ? message[0] : message;
   if (typeof value !== 'string') return null;
@@ -80,7 +84,8 @@ http.interceptors.response.use(
       status === 401 &&
       original &&
       !original._retried &&
-      !original._skipRefreshRetry
+      !original._skipRefreshRetry &&
+      !isAdminRoute()
     ) {
       original._retried = true;
       const refreshed = await useAuthStore.getState().silentRefresh();
@@ -107,7 +112,7 @@ http.interceptors.response.use(
     const payload = error.response?.data as ApiErrorResponse | undefined;
     const normalizedError = normalizeApiErrorResponse(status, payload);
 
-    if (status === 401) {
+    if (status === 401 && !isAdminRoute()) {
       useAuthStore.getState().setSession(null);
       emitAuthEvent({ type: 'SESSION_EXPIRED' });
     } else if (status === 403) {

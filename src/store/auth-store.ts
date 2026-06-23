@@ -24,6 +24,10 @@ const authHttp = axios.create({
   timeout: 5_000,
 });
 
+function isAdminRoute() {
+  return typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+}
+
 function normalizeSession(session: AuthSession | null): AuthSession | null {
   if (!session?.accessToken || !validRoles.has(session.user?.role)) {
     return null;
@@ -53,6 +57,11 @@ export const useAuthStore = create<AuthState>()((set) => ({
     set({ session: normalizeSession(session), hydrated: true }),
   setHydrated: (hydrated) => set({ hydrated }),
   silentRefresh: async () => {
+    if (isAdminRoute()) {
+      set({ hydrated: true });
+      return false;
+    }
+
     try {
       const response = await authHttp.post<AuthSession>('/auth/refresh');
       set({ session: normalizeSession(response.data), hydrated: true });

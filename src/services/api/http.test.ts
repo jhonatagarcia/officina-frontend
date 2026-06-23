@@ -69,6 +69,39 @@ describe('normalizeApiErrorResponse', () => {
     unsubscribe();
   });
 
+  it('nao tenta refresh tenant nem emite expiracao em rotas admin', async () => {
+    window.history.pushState({}, '', '/admin/dashboard');
+    const events: string[] = [];
+    const unsubscribe = subscribeAuthEvent((event) => events.push(event.type));
+    const state = useAuthStore.getState();
+    const silentRefreshSpy = vi.spyOn(state, 'silentRefresh');
+    state.setSession({
+      accessToken: 'token',
+      user: {
+        id: 'user-1',
+        name: 'Ana',
+        email: 'ana@oficina.com',
+        role: 'ADMIN',
+      },
+    });
+
+    await expect(
+      http.get('/rota-protegida', {
+        adapter: rejectWithStatus(401, 'jwt expired with internal detail'),
+      }),
+    ).rejects.toEqual({
+      message: 'Sua sessão expirou. Faça login novamente.',
+      statusCode: 401,
+    });
+
+    expect(silentRefreshSpy).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().session?.accessToken).toBe('token');
+    expect(events).toEqual([]);
+
+    silentRefreshSpy.mockRestore();
+    unsubscribe();
+  });
+
   it('emite evento de acesso negado sem limpar sessao quando a API retorna 403', async () => {
     const events: string[] = [];
     const unsubscribe = subscribeAuthEvent((event) => events.push(event.type));
