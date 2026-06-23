@@ -8,7 +8,9 @@ const { setHydratedMock, silentRefreshMock, useAuthStoreMock } = vi.hoisted(() =
     setHydrated: vi.fn(),
     silentRefresh: vi.fn(),
   };
-  const useAuthStore = vi.fn((selector: (value: typeof state) => unknown) => selector(state));
+  const useAuthStore = vi.fn((selector: (value: typeof state) => unknown) => selector(state)) as
+    & ReturnType<typeof vi.fn>
+    & { setState: ReturnType<typeof vi.fn> };
   useAuthStore.setState = vi.fn();
 
   return {
