@@ -2,7 +2,8 @@ import { FormEvent, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { adminApi } from '../api/admin-api';
+import type { AuthSession } from '@/types/auth';
+import { adminAuthApi } from '../api/admin-api';
 import { useAdminAuth } from './useAdminAuth';
 import '../admin.css';
 
@@ -13,9 +14,15 @@ export default function AdminLoginPage() {
   const navigate = useNavigate();
   const mutation = useMutation({
     mutationFn: () =>
-      adminApi
-        .post<{ accessToken: string }>('/auth/login', { email, password })
-        .then((response) => response.data),
+      adminAuthApi
+        .post<AuthSession>('/auth/login', { email, password })
+        .then((response) => {
+          if (response.data.user.role !== 'ADMIN') {
+            throw new Error('Usuário sem acesso ao painel admin');
+          }
+
+          return response.data;
+        }),
     onSuccess: ({ accessToken }) => {
       login(accessToken);
       navigate('/admin/dashboard', { replace: true });
