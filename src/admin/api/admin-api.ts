@@ -9,11 +9,6 @@ export const adminApi = axios.create({
   timeout: 10_000,
 });
 
-export const adminAuthApi = axios.create({
-  baseURL: env.VITE_API_BASE_URL,
-  timeout: 10_000,
-});
-
 adminApi.interceptors.request.use((config) => {
   const token = useAdminAuth.getState().token;
   if (token) {
