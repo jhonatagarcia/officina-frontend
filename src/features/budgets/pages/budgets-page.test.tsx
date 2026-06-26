@@ -101,6 +101,6 @@ describe('BudgetsPage', () => {
 
     fireEvent.click(editButton);
 
-    expect(navigateMock).toHaveBeenCalledWith('/app/orcamentos/budget-1/editar');
+    expect(navigateMock).toHaveBeenCalledWith('/inicio/orcamentos/budget-1/editar');
   });
 });

@@ -41,7 +41,7 @@ describe('FiscalSetupBanner', () => {
 
     expect(screen.getByText('Cadastro fiscal incompleto')).toBeInTheDocument();
     expect(screen.getByText(/Complete o CNPJ da oficina/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /cadastrar cnpj/i })).toHaveAttribute('href', '/app/oficina');
+    expect(screen.getByRole('link', { name: /cadastrar cnpj/i })).toHaveAttribute('href', '/inicio/oficina');
   });
 
   it('nao exibe aviso quando a oficina tem CNPJ', () => {

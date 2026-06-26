@@ -2,7 +2,7 @@ import { FormEvent, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { http } from '@/services/api/http';
+import { adminApi } from '@/admin/api/admin-api';
 import type { AuthSession } from '@/types/auth';
 import { useAdminAuth } from './useAdminAuth';
 import '../admin.css';
@@ -14,7 +14,7 @@ export default function AdminLoginPage() {
   const navigate = useNavigate();
   const mutation = useMutation({
     mutationFn: () =>
-      http
+      adminApi
         .post<AuthSession>('/auth/login', { email, password })
         .then((response) => response.data),
     onSuccess: ({ accessToken, user }) => {

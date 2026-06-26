@@ -95,7 +95,7 @@ export function InventoryRelatedOrdersDialog({
                       className="rounded-xl font-semibold"
                       type="button"
                       variant="outline"
-                      onClick={() => navigate(`/app/ordens-servico/${item.serviceOrderId}`)}
+                      onClick={() => navigate(`/inicio/ordens-servico/${item.serviceOrderId}`)}
                     >
                       Ver OS
                     </Button>

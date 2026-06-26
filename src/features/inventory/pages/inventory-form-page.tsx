@@ -26,7 +26,7 @@ export function InventoryFormPage({ mode }: { mode: 'create' | 'edit' }) {
       return;
     }
 
-    navigate('/app/estoque');
+    navigate('/inicio/estoque');
   });
   const [pendingValues, setPendingValues] =
     useState<InventoryItemSchema | null>(null);
@@ -72,7 +72,7 @@ export function InventoryFormPage({ mode }: { mode: 'create' | 'edit' }) {
         <Button
           className="min-h-11 rounded-xl font-semibold"
           variant="outline"
-          onClick={() => navigate('/app/estoque')}
+          onClick={() => navigate('/inicio/estoque')}
         >
           <ArrowLeft className="size-4" strokeWidth={1.75} />
           Voltar
@@ -105,7 +105,7 @@ export function InventoryFormPage({ mode }: { mode: 'create' | 'edit' }) {
         }}
         onCloseWithoutAction={() => {
           setRelatedPendingOrders(null);
-          navigate('/app/estoque');
+          navigate('/inicio/estoque');
         }}
       />
     </PageContainer>

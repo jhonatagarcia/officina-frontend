@@ -30,7 +30,7 @@ export function VehicleFormPage({
   const isReadOnly = mode === 'view';
   const clientOptionsQuery = useClientOptions();
   const { query, form, mutation } = useVehicleForm(mode, id, () =>
-    navigate('/app/veiculos'),
+    navigate('/inicio/veiculos'),
   );
 
   if (query.isLoading || clientOptionsQuery.isLoading) return <LoadingState />;
@@ -59,7 +59,7 @@ export function VehicleFormPage({
         <Button
           className="min-h-11 rounded-xl font-semibold"
           variant="outline"
-          onClick={() => navigate('/app/veiculos')}
+          onClick={() => navigate('/inicio/veiculos')}
         >
           <ArrowLeft className="size-4" strokeWidth={1.75} />
           Voltar

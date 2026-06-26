@@ -476,7 +476,7 @@ export function ServiceOrderDetailsPage() {
         title={isReadOnly ? 'Visualização da OS' : 'Operação da OS'}
         description={isReadOnly ? 'Consulta da ordem de serviço em modo somente leitura.' : 'Acompanhamento operacional da ordem de serviço.'}
       >
-        <Button className="min-h-11 rounded-xl font-semibold" variant="outline" onClick={() => navigate('/app/ordens-servico')}>
+        <Button className="min-h-11 rounded-xl font-semibold" variant="outline" onClick={() => navigate('/inicio/ordens-servico')}>
           <ArrowLeft className="size-4" strokeWidth={1.75} />
           Voltar
         </Button>

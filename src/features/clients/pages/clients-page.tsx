@@ -133,7 +133,7 @@ export function ClientsPage() {
         <IndicatorHeaderActions
           onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
           primaryActionLabel="Novo cliente"
-          onPrimaryAction={() => navigate('/app/clientes/novo')}
+          onPrimaryAction={() => navigate('/inicio/clientes/novo')}
         >
           <SearchInput
             className="xl:min-w-[260px]"
@@ -158,7 +158,7 @@ export function ClientsPage() {
             <CardTitle className="text-lg">Clientes cadastrados</CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">Lista de clientes com contato, documento e vínculo de veículos.</p>
           </div>
-          <Button className="rounded-lg font-semibold" size="sm" variant="outline" onClick={() => navigate('/app/clientes/novo')}>
+          <Button className="rounded-lg font-semibold" size="sm" variant="outline" onClick={() => navigate('/inicio/clientes/novo')}>
             Novo cliente
           </Button>
         </CardHeader>
@@ -240,10 +240,10 @@ export function ClientsPage() {
                       <ClientsTableCell className="text-muted-foreground">{formatDateOnly(client.updatedAt)}</ClientsTableCell>
                       <ClientsTableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button className="rounded-lg" size="icon-sm" variant="outline" onClick={() => navigate(`/app/clientes/${client.id}`)}>
+                          <Button className="rounded-lg" size="icon-sm" variant="outline" onClick={() => navigate(`/inicio/clientes/${client.id}`)}>
                             <Eye className="size-4" strokeWidth={1.75} />
                           </Button>
-                          <Button className="rounded-lg" size="icon-sm" variant="outline" onClick={() => navigate(`/app/clientes/${client.id}/editar`)}>
+                          <Button className="rounded-lg" size="icon-sm" variant="outline" onClick={() => navigate(`/inicio/clientes/${client.id}/editar`)}>
                             <Pencil className="size-4" strokeWidth={1.75} />
                           </Button>
                         </div>

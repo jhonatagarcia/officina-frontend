@@ -27,7 +27,7 @@ export function GuestRoute() {
   const { isAuthenticated, hydrated } = useAuthState();
 
   if (hydrated && isAuthenticated) {
-    return <Navigate to="/app/dashboard" replace />;
+    return <Navigate to="/inicio/dashboard" replace />;
   }
 
   return <Outlet />;

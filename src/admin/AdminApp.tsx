@@ -16,7 +16,7 @@ function RequireAdminAuth({ children }: { children: ReactNode }) {
 
   // Tenant logado sem token admin → redireciona para área correta silenciosamente
   if (!adminToken && tenantSession?.accessToken) {
-    return <Navigate to="/app/dashboard" replace />;
+    return <Navigate to="/inicio/dashboard" replace />;
   }
 
   if (!adminToken) {

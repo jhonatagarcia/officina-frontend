@@ -9,6 +9,6 @@ describe('FiscalFeatureBlockedState', () => {
 
     expect(screen.getByText('Financeiro bloqueado temporariamente')).toBeInTheDocument();
     expect(screen.getByText(/Esta funcionalidade exige o CNPJ da oficina cadastrado/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /cadastrar cnpj/i })).toHaveAttribute('href', '/app/oficina');
+    expect(screen.getByRole('link', { name: /cadastrar cnpj/i })).toHaveAttribute('href', '/inicio/oficina');
   });
 });

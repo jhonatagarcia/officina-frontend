@@ -208,7 +208,7 @@ export function InventoryPage() {
         <IndicatorHeaderActions
           onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
           primaryActionLabel="Nova peça"
-          onPrimaryAction={() => navigate('/app/estoque/novo')}
+          onPrimaryAction={() => navigate('/inicio/estoque/novo')}
         >
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por ID, nome ou fornecedor" />
         </IndicatorHeaderActions>
@@ -274,7 +274,7 @@ export function InventoryPage() {
                               className="h-9 rounded-lg border-primary/20 bg-primary-soft px-3 text-primary hover:bg-primary/10 hover:text-primary"
                               size="sm"
                               variant="outline"
-                              onClick={() => navigate(`/app/estoque/${item.id}/editar`)}
+                              onClick={() => navigate(`/inicio/estoque/${item.id}/editar`)}
                             >
                               <PackagePlus className="size-4" strokeWidth={1.75} />
                               Repor
@@ -284,7 +284,7 @@ export function InventoryPage() {
                             className="size-9 rounded-lg"
                             size="icon"
                             variant="outline"
-                            onClick={() => navigate(`/app/estoque/${item.id}/editar`)}
+                            onClick={() => navigate(`/inicio/estoque/${item.id}/editar`)}
                             aria-label={`Ver item ${item.internalCode}`}
                           >
                             <Eye className="size-4" strokeWidth={1.75} />
@@ -293,7 +293,7 @@ export function InventoryPage() {
                             className="size-9 rounded-lg"
                             size="icon"
                             variant="outline"
-                            onClick={() => navigate(`/app/estoque/${item.id}/editar`)}
+                            onClick={() => navigate(`/inicio/estoque/${item.id}/editar`)}
                             aria-label={`Editar item ${item.internalCode}`}
                           >
                             <Pencil className="size-4" strokeWidth={1.75} />

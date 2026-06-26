@@ -58,7 +58,7 @@ describe('AuthBootstrap', () => {
 
   it('dispara refresh de sessao tenant nas rotas protegidas', async () => {
     render(
-      <MemoryRouter initialEntries={['/app/dashboard']}>
+      <MemoryRouter initialEntries={['/inicio/dashboard']}>
         <AuthBootstrap />
       </MemoryRouter>,
     );

@@ -82,12 +82,12 @@ export function BudgetsPage() {
       }
 
       if (serviceOrderId) {
-        navigate(`/app/ordens-servico/${serviceOrderId}`);
+        navigate(`/inicio/ordens-servico/${serviceOrderId}`);
         return;
       }
 
       toast.warning('OS criada, mas não foi possível abrir o detalhe automaticamente.');
-      navigate('/app/ordens-servico');
+      navigate('/inicio/ordens-servico');
     },
     onError: (error: { message?: string | string[] }) => {
       const message = Array.isArray(error.message) ? error.message[0] : error.message;
@@ -173,7 +173,7 @@ export function BudgetsPage() {
         <IndicatorHeaderActions
           onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
           primaryActionLabel="Novo orçamento"
-          onPrimaryAction={() => navigate('/app/orcamentos/novo')}
+          onPrimaryAction={() => navigate('/inicio/orcamentos/novo')}
         >
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por cliente, veículo ou problema" />
         </IndicatorHeaderActions>
@@ -229,7 +229,7 @@ export function BudgetsPage() {
                       <TableCell className="font-bold [font-variant-numeric:tabular-nums]">{formatCurrency(budget.total)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button aria-label={`Visualizar orçamento ${budget.code}`} size="icon" variant="outline" onClick={() => navigate(`/app/orcamentos/${budget.id}`)}>
+                          <Button aria-label={`Visualizar orçamento ${budget.code}`} size="icon" variant="outline" onClick={() => navigate(`/inicio/orcamentos/${budget.id}`)}>
                             <Eye className="size-4" />
                           </Button>
                           {canEditBudget(budget) ? (
@@ -237,7 +237,7 @@ export function BudgetsPage() {
                               aria-label={`Editar orçamento ${budget.code}`}
                               size="icon"
                               variant="outline"
-                              onClick={() => navigate(`/app/orcamentos/${budget.id}/editar`)}
+                              onClick={() => navigate(`/inicio/orcamentos/${budget.id}/editar`)}
                             >
                               <Pencil className="size-4" />
                             </Button>

@@ -248,7 +248,7 @@ export function ServiceOrdersPage() {
                             size="icon"
                             title="Visualizar OS"
                             variant="outline"
-                            onClick={() => navigate(`/app/ordens-servico/${item.id}?mode=view`)}
+                            onClick={() => navigate(`/inicio/ordens-servico/${item.id}?mode=view`)}
                           >
                             <Eye className="size-4" strokeWidth={1.75} />
                           </Button>
@@ -259,7 +259,7 @@ export function ServiceOrdersPage() {
                               size="icon"
                               title="Operar OS"
                               variant="outline"
-                              onClick={() => navigate(`/app/ordens-servico/${item.id}?mode=operate`)}
+                              onClick={() => navigate(`/inicio/ordens-servico/${item.id}?mode=operate`)}
                             >
                               <Settings2 className="size-4" strokeWidth={1.75} />
                             </Button>
@@ -270,7 +270,7 @@ export function ServiceOrdersPage() {
                             size="icon"
                             title="Imprimir OS"
                             variant="outline"
-                            onClick={() => navigate(`/app/ordens-servico/${item.id}?mode=print`)}
+                            onClick={() => navigate(`/inicio/ordens-servico/${item.id}?mode=print`)}
                           >
                             <Printer className="size-4" strokeWidth={1.75} />
                           </Button>

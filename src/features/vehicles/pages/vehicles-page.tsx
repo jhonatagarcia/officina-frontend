@@ -85,7 +85,7 @@ export function VehiclesPage() {
         <IndicatorHeaderActions
           onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
           primaryActionLabel="Novo veículo"
-          onPrimaryAction={() => navigate('/app/veiculos/novo')}
+          onPrimaryAction={() => navigate('/inicio/veiculos/novo')}
         >
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por placa, marca, modelo ou cliente" />
         </IndicatorHeaderActions>
@@ -125,10 +125,10 @@ export function VehiclesPage() {
                       <TableCell>{vehicle.year}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button size="icon" variant="outline" onClick={() => navigate(`/app/veiculos/${vehicle.id}`)}>
+                          <Button size="icon" variant="outline" onClick={() => navigate(`/inicio/veiculos/${vehicle.id}`)}>
                             <Eye className="size-4" />
                           </Button>
-                          <Button size="icon" variant="outline" onClick={() => navigate(`/app/veiculos/${vehicle.id}/editar`)}>
+                          <Button size="icon" variant="outline" onClick={() => navigate(`/inicio/veiculos/${vehicle.id}/editar`)}>
                             <Pencil className="size-4" />
                           </Button>
                         </div>

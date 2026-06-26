@@ -15,7 +15,7 @@ interface LoginFormProps {
   redirectTo?: string;
 }
 
-export function LoginForm({ onSuccess, redirectTo = '/app/dashboard' }: LoginFormProps) {
+export function LoginForm({ onSuccess, redirectTo = '/inicio/dashboard' }: LoginFormProps) {
   const { login, isLoggingIn } = useLogin();
   const navigate = useNavigate();
 

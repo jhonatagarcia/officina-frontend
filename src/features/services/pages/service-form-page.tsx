@@ -51,7 +51,7 @@ export function ServiceFormPage({
   const { id = '' } = useParams();
   const isReadOnly = mode === 'view';
   const { query, form, mutation } = useServiceForm(mode, id, () =>
-    navigate('/app/servicos'),
+    navigate('/inicio/servicos'),
   );
 
   const laborPrice = form.watch('laborPrice') || 0;
@@ -86,7 +86,7 @@ export function ServiceFormPage({
         <Button
           className="min-h-11 rounded-xl font-semibold"
           variant="outline"
-          onClick={() => navigate('/app/servicos')}
+          onClick={() => navigate('/inicio/servicos')}
         >
           <ArrowLeft className="size-4" strokeWidth={1.75} />
           Voltar

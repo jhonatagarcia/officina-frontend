@@ -33,7 +33,7 @@ export function MechanicFormPage({
   const { id = '' } = useParams();
   const isReadOnly = mode === 'view';
   const { query, form, mutation } = useMechanicForm(mode, id, () =>
-    navigate('/app/mecanicos'),
+    navigate('/inicio/mecanicos'),
   );
   const handleSubmit = form.handleSubmit((values) => mutation.mutate(values));
 
@@ -54,7 +54,7 @@ export function MechanicFormPage({
         <Button
           className="min-h-11 rounded-xl font-semibold"
           variant="outline"
-          onClick={() => navigate('/app/mecanicos')}
+          onClick={() => navigate('/inicio/mecanicos')}
         >
           <ArrowLeft className="size-4" strokeWidth={1.75} />
           Voltar

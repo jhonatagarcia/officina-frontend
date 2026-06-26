@@ -20,7 +20,7 @@ export function ClientFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
   const { id = '' } = useParams();
   const isReadOnly = mode === 'view';
   const { query, form, mutation } = useClientForm(mode, id, () =>
-    navigate('/app/clientes'),
+    navigate('/inicio/clientes'),
   );
 
   if (query.isLoading) return <LoadingState />;
@@ -41,7 +41,7 @@ export function ClientFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
         <Button
           className="min-h-11 rounded-xl font-semibold"
           variant="outline"
-          onClick={() => navigate('/app/clientes')}
+          onClick={() => navigate('/inicio/clientes')}
         >
           <ArrowLeft className="size-4" strokeWidth={1.75} />
           Voltar

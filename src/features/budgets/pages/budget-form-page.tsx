@@ -37,7 +37,7 @@ export function BudgetFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
   const clientOptionsQuery = useClientOptions();
   const vehicleOptionsQuery = useVehicleOptions();
   const { budgetQuery, form, fieldArray, mutation, items, discount, total } =
-    useBudgetForm(mode, id, () => navigate('/app/orcamentos'));
+    useBudgetForm(mode, id, () => navigate('/inicio/orcamentos'));
   const isReadOnly =
     mode === 'view' ||
     (mode === 'edit' &&
@@ -101,7 +101,7 @@ export function BudgetFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
         <Button
           className="min-h-11 rounded-xl font-semibold"
           variant="outline"
-          onClick={() => navigate('/app/orcamentos')}
+          onClick={() => navigate('/inicio/orcamentos')}
         >
           <ArrowLeft className="size-4" strokeWidth={1.75} />
           Voltar

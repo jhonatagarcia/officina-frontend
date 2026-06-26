@@ -159,7 +159,7 @@ function buildOperationalAlerts(params: {
       metric: `${pendingBudgets.length} pendente(s)`,
       description: describeOldestBudget(oldestPendingBudget) || 'Existem orçamentos aguardando aprovação do cliente.',
       actionLabel: oldestPendingBudget ? 'Ver pendência' : undefined,
-      actionTo: oldestPendingBudget ? '/app/orcamentos?status=PENDENTE' : undefined,
+      actionTo: oldestPendingBudget ? '/inicio/orcamentos?status=PENDENTE' : undefined,
     });
   }
 
@@ -172,7 +172,7 @@ function buildOperationalAlerts(params: {
       metric: `${activeFlow} veículo(s) em fluxo`,
       description: `${params.summary.serviceOrders.open} OS abertas, ${params.summary.serviceOrders.inProgress} em execução e ${params.summary.serviceOrders.readyForDelivery} prontas para entrega.`,
       actionLabel: 'Ver ordens de serviço',
-      actionTo: '/app/ordens-servico',
+      actionTo: '/inicio/ordens-servico',
     });
   }
 

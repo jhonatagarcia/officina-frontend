@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/app-layout';
 import { LoadingState } from '@/components/shared/loading-state';
 import { GuestRoute, ProtectedRoute, RoleGuard } from '@/routes/route-guards';
@@ -12,6 +12,13 @@ import { env } from '@/lib/env';
 const AdminApp = lazy(() =>
   import('@/admin/AdminApp').then((module) => ({ default: module.default })),
 );
+
+function LegacyAppRedirect() {
+  const location = useLocation();
+  const nextPath = location.pathname.replace(/^\/app\b/, '/inicio');
+
+  return <Navigate to={`${nextPath}${location.search}${location.hash}`} replace />;
+}
 
 export function AppRouter() {
   return (
@@ -32,9 +39,10 @@ export function AppRouter() {
         </Route>
 
         {/* ── TENANT APP ── */}
+        <Route path="/app/*" element={<LegacyAppRedirect />} />
         <Route element={<ProtectedRoute />}>
-          <Route path="/app" element={<AppLayout />}>
-            <Route index element={<Navigate to="/app/dashboard" replace />} />
+          <Route path="/inicio" element={<AppLayout />}>
+            <Route index element={<Navigate to="/inicio/dashboard" replace />} />
             {appRoutes.map((route) => (
               <Route key={route.key} element={<RoleGuard roles={route.roles} />}>
                 <Route path={route.path} element={route.element} />

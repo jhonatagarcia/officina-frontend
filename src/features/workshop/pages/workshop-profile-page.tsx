@@ -114,7 +114,7 @@ export function WorkshopProfilePage() {
         <Button
           className="min-h-11 rounded-xl font-semibold"
           variant="outline"
-          onClick={() => navigate('/app/dashboard')}
+          onClick={() => navigate('/inicio/dashboard')}
         >
           <ArrowLeft className="size-4" strokeWidth={1.75} />
           Voltar

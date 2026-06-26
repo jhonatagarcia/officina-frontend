@@ -51,7 +51,7 @@ describe('auth store', () => {
   });
 
   it('hidrata sem chamar endpoint de refresh quando backend nao tem refresh token', async () => {
-    window.history.pushState({}, '', '/app/dashboard');
+    window.history.pushState({}, '', '/inicio/dashboard');
     useAuthStore.setState({ session: null, hydrated: false });
 
     await expect(useAuthStore.getState().silentRefresh()).resolves.toBe(false);

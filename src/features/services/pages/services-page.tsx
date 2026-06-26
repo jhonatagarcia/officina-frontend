@@ -132,7 +132,7 @@ export function ServicesPage() {
         <IndicatorHeaderActions
           onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
           primaryActionLabel="Novo serviço"
-          onPrimaryAction={() => navigate('/app/servicos/novo')}
+          onPrimaryAction={() => navigate('/inicio/servicos/novo')}
         >
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por nome ou código" />
         </IndicatorHeaderActions>
@@ -199,10 +199,10 @@ export function ServicesPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button size="icon" variant="outline" onClick={() => navigate(`/app/servicos/${item.id}`)}>
+                          <Button size="icon" variant="outline" onClick={() => navigate(`/inicio/servicos/${item.id}`)}>
                             <Eye className="size-4" />
                           </Button>
-                          <Button size="icon" variant="outline" onClick={() => navigate(`/app/servicos/${item.id}/editar`)}>
+                          <Button size="icon" variant="outline" onClick={() => navigate(`/inicio/servicos/${item.id}/editar`)}>
                             <Pencil className="size-4" />
                           </Button>
                           <Button

@@ -26,11 +26,11 @@ describe('route guards', () => {
     renderWithQuery(
       <Routes>
         <Route element={<ProtectedRoute />}>
-          <Route path="/app/dashboard" element={<div>Dashboard</div>} />
+          <Route path="/inicio/dashboard" element={<div>Dashboard</div>} />
         </Route>
         <Route path="/login" element={<div>Tela de login</div>} />
       </Routes>,
-      ['/app/dashboard'],
+      ['/inicio/dashboard'],
     );
 
     expect(screen.getByText('Tela de login')).toBeInTheDocument();

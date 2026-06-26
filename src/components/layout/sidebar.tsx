@@ -50,7 +50,7 @@ export function Sidebar() {
             return (
               <NavLink
                 key={item.key}
-                to={`/app/${item.path}`}
+                to={`/inicio/${item.path}`}
                 aria-disabled={isLocked}
                 title={isLocked ? 'Acesso restrito ao perfil administrador' : undefined}
                 onClick={(event) => {

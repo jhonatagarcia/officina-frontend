@@ -121,7 +121,7 @@ export function MechanicsPage() {
         <IndicatorHeaderActions
           onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
           primaryActionLabel="Novo mecânico"
-          onPrimaryAction={() => navigate('/app/mecanicos/novo')}
+          onPrimaryAction={() => navigate('/inicio/mecanicos/novo')}
         >
           <SearchInput
             value={params.search}
@@ -228,7 +228,7 @@ export function MechanicsPage() {
                             size="icon"
                             variant="outline"
                             onClick={() =>
-                              navigate(`/app/mecanicos/${item.id}`)
+                              navigate(`/inicio/mecanicos/${item.id}`)
                             }
                           >
                             <Eye className="size-4" />
@@ -237,7 +237,7 @@ export function MechanicsPage() {
                             size="icon"
                             variant="outline"
                             onClick={() =>
-                              navigate(`/app/mecanicos/${item.id}/editar`)
+                              navigate(`/inicio/mecanicos/${item.id}/editar`)
                             }
                           >
                             <Pencil className="size-4" />

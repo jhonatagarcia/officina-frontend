@@ -163,7 +163,7 @@ describe('LoginPage', () => {
       <MemoryRouter initialEntries={['/login']}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/app/dashboard" element={<div>Dashboard seguro</div>} />
+          <Route path="/inicio/dashboard" element={<div>Dashboard seguro</div>} />
         </Routes>
       </MemoryRouter>,
     );
@@ -237,8 +237,8 @@ describe('LoginPage', () => {
       <MemoryRouter initialEntries={['/login']}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/app/oficina" element={<div>Cadastro da oficina</div>} />
-          <Route path="/app/dashboard" element={<div>Dashboard seguro</div>} />
+          <Route path="/inicio/oficina" element={<div>Cadastro da oficina</div>} />
+          <Route path="/inicio/dashboard" element={<div>Dashboard seguro</div>} />
         </Routes>
       </MemoryRouter>,
     );
@@ -318,7 +318,7 @@ describe('LoginPage', () => {
     expect(forgotPasswordMock).not.toHaveBeenCalled();
   });
 
-  it('redireciona para dashboard quando o destino salvo nao pertence a /app', async () => {
+  it('redireciona para dashboard quando o destino salvo nao pertence a /inicio', async () => {
     loginMock.mockResolvedValueOnce(undefined);
 
     renderWithCustomRouter(
@@ -336,7 +336,7 @@ describe('LoginPage', () => {
       >
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/app/dashboard" element={<div>Dashboard seguro</div>} />
+          <Route path="/inicio/dashboard" element={<div>Dashboard seguro</div>} />
           <Route path="/admin" element={<div>Destino externo</div>} />
         </Routes>
       </MemoryRouter>,

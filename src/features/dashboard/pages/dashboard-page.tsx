@@ -605,21 +605,21 @@ export function DashboardPage() {
     if (alert.id === 'critical-stock' || alert.id === 'low-stock') {
       return {
         label: 'Ver itens em estoque baixo',
-        onClick: () => scrollToDashboardTable('dashboard-low-stock-table', '/app/estoque'),
+        onClick: () => scrollToDashboardTable('dashboard-low-stock-table', '/inicio/estoque'),
       };
     }
 
     if (alert.id === 'pending-budgets') {
       return {
         label: 'Ver orçamentos pendentes',
-        onClick: () => scrollToDashboardTable('dashboard-pending-budgets-table', '/app/orcamentos?status=PENDENTE'),
+        onClick: () => scrollToDashboardTable('dashboard-pending-budgets-table', '/inicio/orcamentos?status=PENDENTE'),
       };
     }
 
     if (alert.id === 'overdue-service-orders' || alert.id === 'workshop-flow') {
       return {
         label: 'Ver ordens em execução',
-        onClick: () => scrollToDashboardTable('dashboard-active-orders-table', '/app/ordens-servico'),
+        onClick: () => scrollToDashboardTable('dashboard-active-orders-table', '/inicio/ordens-servico'),
       };
     }
 
@@ -827,7 +827,7 @@ export function DashboardPage() {
           title="Ordens em execução"
           description="Últimas ordens de serviço abertas ou atualizadas"
           actionLabel="Ver todas"
-          onAction={() => navigate('/app/ordens-servico')}
+          onAction={() => navigate('/inicio/ordens-servico')}
         >
             {activeServiceOrders.length ? (
               <div className="space-y-4">
@@ -891,7 +891,7 @@ export function DashboardPage() {
           title="Orçamentos pendentes"
           description="Orçamentos aguardando aprovação do cliente"
           actionLabel="Ver todos"
-          onAction={() => navigate('/app/orcamentos?status=PENDENTE')}
+          onAction={() => navigate('/inicio/orcamentos?status=PENDENTE')}
         >
             {pendingBudgets.length ? (
               <div className="space-y-4">
@@ -952,7 +952,7 @@ export function DashboardPage() {
           title="Itens com estoque baixo"
           description="Peças abaixo do estoque mínimo operacional"
           actionLabel="Ver estoque"
-          onAction={() => navigate('/app/estoque')}
+          onAction={() => navigate('/inicio/estoque')}
         >
             {sortedItems.length ? (
               <div className="space-y-4">
@@ -1065,7 +1065,7 @@ export function DashboardPage() {
         <Button
           className="min-h-11 rounded-xl bg-[linear-gradient(135deg,#F77139_0%,#E04618_100%)] px-5 font-semibold text-white shadow-[0_12px_24px_rgba(224,70,24,0.22)] hover:brightness-105"
           type="button"
-          onClick={() => navigate('/app/ordens-servico')}
+          onClick={() => navigate('/inicio/ordens-servico')}
         >
           <Plus className="size-4" strokeWidth={1.75} />
           Nova OS

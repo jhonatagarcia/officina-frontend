@@ -22,12 +22,12 @@ import type { AuthSession } from '@/types/auth';
 
 function getSafePostLoginPath(state: unknown, session?: AuthSession) {
   if (session?.user.role === 'ADMIN' && session.user.workshopFiscalStatus === 'INCOMPLETE') {
-    return '/app/oficina';
+    return '/inicio/oficina';
   }
 
   const pathname = (state as { from?: { pathname?: unknown } } | null)?.from?.pathname;
 
-  return typeof pathname === 'string' && pathname.startsWith('/app/') ? pathname : '/app/dashboard';
+  return typeof pathname === 'string' && pathname.startsWith('/inicio/') ? pathname : '/inicio/dashboard';
 }
 
 function getGoogleLoginErrorMessage(error: unknown) {

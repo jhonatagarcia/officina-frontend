@@ -3,7 +3,7 @@ import { useAuthState } from '@/features/auth/hooks/use-auth-state';
 import { resolveWorkshopFiscalState } from '@/features/workshop/lib/workshop-fiscal-status';
 import { useWorkshopProfile } from '@/features/workshop/hooks/use-workshop-profile';
 
-export const WORKSHOP_PROFILE_PATH = '/app/oficina';
+export const WORKSHOP_PROFILE_PATH = '/inicio/oficina';
 
 export function useWorkshopFiscalStatus() {
   const { user: sessionUser } = useAuthState();

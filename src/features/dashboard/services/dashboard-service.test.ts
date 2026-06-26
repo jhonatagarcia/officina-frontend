@@ -256,7 +256,7 @@ describe('dashboardService', () => {
         expect.objectContaining({
           id: 'workshop-flow',
           actionLabel: 'Ver ordens de serviço',
-          actionTo: '/app/ordens-servico',
+          actionTo: '/inicio/ordens-servico',
         }),
       ]),
     );
@@ -315,7 +315,7 @@ describe('dashboardService', () => {
         metric: '1 pendente(s)',
         description: 'Jhonta aguarda aprovação há 25 dias.',
         actionLabel: 'Ver pendência',
-        actionTo: '/app/orcamentos?status=PENDENTE',
+        actionTo: '/inicio/orcamentos?status=PENDENTE',
       }),
     );
   });
