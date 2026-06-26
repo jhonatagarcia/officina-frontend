@@ -14,8 +14,9 @@ const envSchema = z.object({
 
 const viteEnv = typeof import.meta !== 'undefined' ? import.meta.env : undefined;
 const defaultApiBaseUrl = viteEnv?.PROD
-  ? 'https://officina-backend-production-d640.up.railway.app/api/v1'
+  ? 'https://autoprosystem.com.br/api/v1'
   : 'http://localhost:3000/api/v1';
+const defaultAdminPanelEnabled = viteEnv?.PROD ? 'false' : 'true';
 
 function readEnv(key: string): string | undefined {
   const value = viteEnv?.[key];
@@ -26,5 +27,5 @@ export const env = envSchema.parse({
   VITE_API_BASE_URL: readEnv('VITE_API_BASE_URL') ?? defaultApiBaseUrl,
   VITE_APP_NAME: readEnv('VITE_APP_NAME') ?? 'AutoPro System',
   VITE_GOOGLE_CLIENT_ID: readEnv('VITE_GOOGLE_CLIENT_ID') ?? '',
-  VITE_ADMIN_PANEL_ENABLED: readEnv('VITE_ADMIN_PANEL_ENABLED') ?? 'false',
+  VITE_ADMIN_PANEL_ENABLED: readEnv('VITE_ADMIN_PANEL_ENABLED') ?? defaultAdminPanelEnabled,
 });

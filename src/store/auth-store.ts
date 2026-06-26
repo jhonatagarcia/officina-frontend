@@ -1,6 +1,4 @@
 import { create } from 'zustand';
-import axios from 'axios';
-import { env } from '@/lib/env';
 import type { AuthSession, Role } from '@/types/auth';
 
 interface AuthState {
@@ -18,12 +16,6 @@ const validRoles = new Set<Role>([
   'MECANICO',
   'FINANCEIRO',
 ]);
-const authHttp = axios.create({
-  baseURL: env.VITE_API_BASE_URL,
-  withCredentials: true,
-  timeout: 5_000,
-});
-
 function isAdminRoute() {
   return typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
 }
@@ -62,22 +54,10 @@ export const useAuthStore = create<AuthState>()((set) => ({
       return false;
     }
 
-    try {
-      const response = await authHttp.post<AuthSession>('/auth/refresh');
-      set({ session: normalizeSession(response.data), hydrated: true });
-      return true;
-    } catch {
-      set({ session: null, hydrated: true });
-      return false;
-    }
+    set({ hydrated: true });
+    return false;
   },
   logout: async () => {
-    try {
-      await authHttp.post('/auth/logout');
-    } catch {
-      // A sessao local deve ser encerrada mesmo se o backend estiver indisponivel.
-    } finally {
-      set({ session: null, hydrated: true });
-    }
+    set({ session: null, hydrated: true });
   },
 }));

@@ -1,19 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import axios from 'axios';
+import { describe, expect, it } from 'vitest';
 import { useAuthStore } from '@/store/auth-store';
-
-vi.mock('axios', async () => {
-  const actual = await vi.importActual<typeof import('axios')>('axios');
-  return {
-    ...actual,
-    default: {
-      ...actual.default,
-      create: vi.fn(() => ({
-        post: vi.fn(),
-      })),
-    },
-  };
-});
 
 describe('auth store', () => {
   it('normaliza a sessao persistida mantendo apenas dados necessarios do usuario', () => {
@@ -58,11 +44,19 @@ describe('auth store', () => {
 
   it('nao chama refresh tenant em rotas admin', async () => {
     window.history.pushState({}, '', '/admin/login');
-    const authHttp = vi.mocked(axios.create).mock.results[0]!.value;
 
     await expect(useAuthStore.getState().silentRefresh()).resolves.toBe(false);
 
-    expect(authHttp.post).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().hydrated).toBe(true);
+  });
+
+  it('hidrata sem chamar endpoint de refresh quando backend nao tem refresh token', async () => {
+    window.history.pushState({}, '', '/app/dashboard');
+    useAuthStore.setState({ session: null, hydrated: false });
+
+    await expect(useAuthStore.getState().silentRefresh()).resolves.toBe(false);
+
+    expect(useAuthStore.getState().session).toBeNull();
     expect(useAuthStore.getState().hydrated).toBe(true);
   });
 });

@@ -43,9 +43,22 @@ describe('AuthBootstrap', () => {
     expect(silentRefreshMock).not.toHaveBeenCalled();
   });
 
-  it('dispara refresh de sessao tenant nas demais rotas', async () => {
+  it('nao dispara refresh de sessao tenant na landing page publica', async () => {
     render(
-      <MemoryRouter initialEntries={['/login']}>
+      <MemoryRouter initialEntries={['/']}>
+        <AuthBootstrap />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(setHydratedMock).toHaveBeenCalledWith(true);
+    });
+    expect(silentRefreshMock).not.toHaveBeenCalled();
+  });
+
+  it('dispara refresh de sessao tenant nas rotas protegidas', async () => {
+    render(
+      <MemoryRouter initialEntries={['/app/dashboard']}>
         <AuthBootstrap />
       </MemoryRouter>,
     );

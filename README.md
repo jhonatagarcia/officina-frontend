@@ -83,23 +83,29 @@ Se o backend usar nomes diferentes, ajuste os arquivos em `src/features/**/servi
 npm install
 ```
 
-2. Configure o ambiente:
+2. Configure o ambiente local:
 
 ```bash
-cp .env.example .env
+npm run dev
 ```
 
-3. Atualize `VITE_API_BASE_URL` para a URL real da API.
-
-4. Para expor o Admin Master em `/admin/*`, defina:
+O Vite carrega `.env.development` automaticamente em desenvolvimento:
 
 ```bash
+VITE_API_BASE_URL=http://localhost:3000/api/v1
 VITE_ADMIN_PANEL_ENABLED=true
 ```
 
-O backend correspondente tambem precisa de `ADMIN_PANEL_ENABLED=true`, `ADMIN_JWT_SECRET`, `ADMIN_EMAIL` e `ADMIN_INITIAL_PASSWORD`.
+Use `.env.local` apenas para overrides privados da sua máquina. Não coloque segredos em variáveis `VITE_*`: tudo que começa com `VITE_` é público e vai para o bundle do navegador.
 
-5. Rode a aplicação:
+3. Para produção, o build usa `.env.production`:
+
+```bash
+VITE_API_BASE_URL=https://autoprosystem.com.br/api/v1
+VITE_ADMIN_PANEL_ENABLED=false
+```
+
+4. Rode a aplicação:
 
 ```bash
 npm run dev
@@ -115,16 +121,16 @@ O projeto esta configurado para deploy na Vercel pelo arquivo `vercel.json`:
 - Output Directory: `dist`
 - Rewrites: todas as rotas apontam para `/index.html`, necessario para refresh e deep links em SPA.
 
-Cadastre no painel da Vercel, em Project Settings > Environment Variables, as mesmas chaves do `.env.example`:
+Cadastre no painel da Vercel, em Project Settings > Environment Variables, somente overrides públicos quando necessário:
 
 ```bash
-VITE_API_BASE_URL=https://api.autoprosystem.com.br/api/v1
+VITE_API_BASE_URL=https://autoprosystem.com.br/api/v1
 VITE_APP_NAME=AutoPro System
 VITE_GOOGLE_CLIENT_ID=
 VITE_ADMIN_PANEL_ENABLED=false
 ```
 
-Use valores diferentes para Preview e Production se a API tiver ambientes separados. O arquivo `.env` local nao deve ser commitado.
+Use valores diferentes para Preview e Production se a API tiver ambientes separados. Arquivos `.env.local` e `.env` locais nao devem ser commitados.
 
 ## Scripts
 
