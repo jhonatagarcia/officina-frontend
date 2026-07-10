@@ -1,9 +1,13 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Wrench } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { LoginForm } from '@/features/auth/components/login-form';
 import { GoogleSignInButton } from '@/features/auth/components/google-sign-in-button';
+import { useGoogleLogin } from '@/features/auth/hooks/use-google-login';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { env } from '@/lib/env';
+import type { AuthSession } from '@/types/auth';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -11,7 +15,32 @@ interface LoginModalProps {
   onRegisterClick: () => void;
 }
 
+function getSafePostLoginPath(session?: AuthSession) {
+  if (session?.user.role === 'ADMIN' && session.user.workshopFiscalStatus === 'INCOMPLETE') {
+    return '/inicio/oficina';
+  }
+
+  return '/inicio/dashboard';
+}
+
+function getGoogleLoginErrorMessage(error: unknown) {
+  const statusCode = (error as { statusCode?: unknown } | null)?.statusCode;
+
+  if (statusCode === 400 || statusCode === 401) {
+    return 'A autenticação do Google não foi validada. Tente novamente.';
+  }
+
+  if (statusCode === 409) {
+    return 'Esta conta Google não pôde ser vinculada automaticamente. Entre com e-mail e senha.';
+  }
+
+  return 'Não foi possível entrar com Google. Tente novamente ou use e-mail e senha.';
+}
+
 export function LoginModal({ isOpen, onClose, onRegisterClick }: LoginModalProps) {
+  const navigate = useNavigate();
+  const { loginWithGoogle, isGoogleLoggingIn } = useGoogleLogin();
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -27,6 +56,25 @@ export function LoginModal({ isOpen, onClose, onRegisterClick }: LoginModalProps
       document.body.style.overflow = '';
     };
   }, [isOpen, onClose]);
+
+  const onGoogleCredential = useCallback(async (credential: string) => {
+    try {
+      const session = await loginWithGoogle({ credential });
+      toast.success(
+        session.user.workshopFiscalStatus === 'INCOMPLETE'
+          ? 'Acesso com Google realizado. Complete os dados do negócio para liberar todos os recursos.'
+          : 'Acesso com Google realizado com sucesso.',
+      );
+      onClose();
+      navigate(getSafePostLoginPath(session), { replace: true });
+    } catch (error) {
+      toast.error(getGoogleLoginErrorMessage(error));
+    }
+  }, [loginWithGoogle, navigate, onClose]);
+
+  const onGoogleError = useCallback(() => {
+    toast.error('Não foi possível iniciar o login com Google. Tente novamente ou use e-mail e senha.');
+  }, []);
 
   if (!isOpen) return null;
 
@@ -77,10 +125,9 @@ export function LoginModal({ isOpen, onClose, onRegisterClick }: LoginModalProps
               <div className="mt-4">
                 <GoogleSignInButton
                   clientId={env.VITE_GOOGLE_CLIENT_ID}
-                  disabled={true}
-                  isSubmitting={false}
-                  onCredential={() => {}}
-                  onGoogleError={() => {}}
+                  isSubmitting={isGoogleLoggingIn}
+                  onCredential={onGoogleCredential}
+                  onGoogleError={onGoogleError}
                 />
               </div>
 

@@ -270,7 +270,7 @@ function BarMetricCard({ title, value, values }: { title: string; value: number;
               </p>
               <div
                 className={cn('rounded-t-lg', index === values.length - 1 ? toneMap.orange.bar : 'bg-slate-300')}
-                style={{ height: `${Math.max(18, (item / maxValue) * 78)}%` }}
+                style={{ height: item > 0 ? `${Math.max(18, (item / maxValue) * 78)}%` : 0 }}
               />
             </div>
           ))}
@@ -298,7 +298,7 @@ function StatusDonutCard({
   readyOrdersCount: number;
   pendingBudgetsCount: number;
 }) {
-  const total = Math.max(openOrdersCount + inProgressOrdersCount + readyOrdersCount + pendingBudgetsCount, 1);
+  const total = openOrdersCount + inProgressOrdersCount + readyOrdersCount + pendingBudgetsCount;
   const animatedTotal = useAnimatedNumber(total);
   const animatedReady = useAnimatedNumber(readyOrdersCount);
   const animatedInProgress = useAnimatedNumber(inProgressOrdersCount);
@@ -542,7 +542,7 @@ export function DashboardPage() {
     const base = Math.max(value, 1);
     return [0.62, 0.74, 0.69, 0.83, 0.94, 1].map((factor) => Math.round(base * factor));
   };
-  const orderMonthSeries = [0.66, 0.76, 0.8, 0.84, 0.93, 1].map((factor) => Math.max(1, Math.round(activeOrderTotal * factor)));
+  const orderMonthSeries = [0.66, 0.76, 0.8, 0.84, 0.93, 1].map((factor) => Math.round(activeOrderTotal * factor));
   const clientGroups = [...activeServiceOrders, ...pendingBudgets].reduce<Record<string, { count: number; total: number }>>((groups, item) => {
     const clientName = 'clientName' in item ? item.clientName : item.client?.name ?? 'Cliente sem nome';
     const total = 'total' in item ? item.total ?? 0 : 0;

@@ -226,7 +226,7 @@ export function LoginPage() {
                 </div>
                 <GoogleSignInButton
                   clientId={env.VITE_GOOGLE_CLIENT_ID}
-                  disabled={true}
+                  disabled={isAuthenticating}
                   isSubmitting={isGoogleLoggingIn}
                   onCredential={onGoogleCredential}
                   onGoogleError={onGoogleError}

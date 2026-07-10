@@ -10,6 +10,7 @@ import '../admin.css';
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
   const login = useAdminAuth((state) => state.login);
   const navigate = useNavigate();
   const mutation = useMutation({
@@ -26,12 +27,27 @@ export default function AdminLoginPage() {
       login(accessToken);
       navigate('/admin/dashboard', { replace: true });
     },
-    onError: () => toast.error('Credenciais invalidas'),
+    onError: () => {
+      setFormError('Credenciais inválidas. Verifique o e-mail e a senha.');
+    },
   });
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (mutation.isPending) return;
+
+    setFormError(null);
     mutation.mutate();
+  }
+
+  function updateEmail(value: string) {
+    setEmail(value);
+    setFormError(null);
+  }
+
+  function updatePassword(value: string) {
+    setPassword(value);
+    setFormError(null);
   }
 
   return (
@@ -52,7 +68,7 @@ export default function AdminLoginPage() {
                 className="admin-input"
                 type="email"
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => updateEmail(event.target.value)}
                 required
               />
             </div>
@@ -63,11 +79,16 @@ export default function AdminLoginPage() {
                 className="admin-input"
                 type="password"
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={(event) => updatePassword(event.target.value)}
                 minLength={8}
                 required
               />
             </div>
+            {formError ? (
+              <div className="admin-login-error" role="alert">
+                {formError}
+              </div>
+            ) : null}
           </div>
           <div className="admin-modal-footer">
             <button className="admin-button" type="submit" disabled={mutation.isPending}>

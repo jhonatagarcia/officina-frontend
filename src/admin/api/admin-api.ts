@@ -21,9 +21,15 @@ adminApi.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     const status = error.response?.status as number | undefined;
+    const requestUrl = error.config?.url ?? '';
+    const isAdminAuthRequest = requestUrl.includes('/auth/');
+
     if (status === 401) {
       useAdminAuth.getState().logout();
-      window.location.replace('/admin/login');
+
+      if (!isAdminAuthRequest) {
+        window.location.replace('/admin/login');
+      }
     }
 
     return Promise.reject(
