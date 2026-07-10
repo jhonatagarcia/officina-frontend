@@ -5,7 +5,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 export function Header() {
   const { session } = useAuthState();
   const workshopQuery = useWorkshopProfile();
-  const workshopName = workshopQuery.data?.tradeName ?? session?.user.workshop?.tradeName ?? session?.user.workshop?.name ?? 'Mini SaaS Oficina';
+  const workshopName = workshopQuery.data?.tradeName ?? session?.user.workshop?.tradeName ?? session?.user.workshop?.name ?? 'AutoPro System';
 
   return (
     <header className="sticky top-0 z-30 px-4 pt-4 md:px-6 md:pt-5">

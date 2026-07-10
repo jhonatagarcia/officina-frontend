@@ -25,7 +25,7 @@ export function Sidebar() {
           <LayoutDashboard size={16} /> Painel
         </NavLink>
         <NavLink to="/admin/tenants">
-          <Home size={16} /> Oficinas
+          <Home size={16} /> Negócios
         </NavLink>
         <div className="admin-nav-label">Suporte</div>
         <NavLink to="/admin/support">

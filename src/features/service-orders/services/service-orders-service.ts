@@ -3,6 +3,7 @@ import { buildQueryParams, mapPaginatedResponse } from '@/services/api/query-str
 import type { ApiPaginatedResponse, QueryParams } from '@/types/common';
 import type {
   CreateServiceOrderPendingPartPayload,
+  AddServiceOrderServicePayload,
   ServiceOrder,
   ServiceOrderBudgetItem,
   ServiceOrderPart,
@@ -19,9 +20,10 @@ interface ServiceOrderPartApiResponse extends Omit<ServiceOrderPart, 'unitPrice'
 }
 
 interface ServiceOrderBudgetItemApiResponse
-  extends Omit<ServiceOrderBudgetItem, 'unitPrice' | 'totalPrice'> {
+  extends Omit<ServiceOrderBudgetItem, 'unitPrice' | 'totalPrice' | 'inventoryItem'> {
   unitPrice: number | string;
   totalPrice: number | string;
+  inventoryItem?: ServiceOrderBudgetItem['inventoryItem'] | undefined;
 }
 
 interface ServiceOrderPendingPartApiResponse
@@ -77,6 +79,7 @@ function mapServiceOrderBudgetItem(item: ServiceOrderBudgetItemApiResponse): Ser
     ...item,
     unitPrice: toNumber(item.unitPrice),
     totalPrice: toNumber(item.totalPrice),
+    inventoryItem: item.inventoryItem ?? null,
   };
 }
 
@@ -164,6 +167,10 @@ export const serviceOrdersService = {
   async addPart(id: string, payload: { inventoryItemId: string; quantity: number; unitPrice: number }) {
     const response = await http.post<ServiceOrderPartApiResponse>(`/service-orders/${id}/parts`, payload);
     return mapServiceOrderPart(response.data);
+  },
+  async addService(id: string, payload: AddServiceOrderServicePayload) {
+    const response = await http.post<ServiceOrderBudgetItemApiResponse>(`/service-orders/${id}/services`, payload);
+    return mapServiceOrderBudgetItem(response.data);
   },
   async removePart(id: string, partId: string) {
     const response = await http.delete<ServiceOrderPartApiResponse>(`/service-orders/${id}/parts/${partId}`);

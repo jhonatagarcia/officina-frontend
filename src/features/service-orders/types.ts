@@ -95,6 +95,14 @@ export type UpdateServiceOrderItemPayload = Pick<
   | 'unitPrice'
 >;
 
+export interface AddServiceOrderServicePayload {
+  serviceCatalogItemId: string;
+  inventoryItemId?: string | null | undefined;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
 export interface ServiceOrderBudgetItem {
   id: string;
   type: 'PART' | 'LABOR' | 'LABOR_AND_PART';

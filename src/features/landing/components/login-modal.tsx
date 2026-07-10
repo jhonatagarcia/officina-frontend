@@ -8,9 +8,10 @@ import { env } from '@/lib/env';
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onRegisterClick: () => void;
 }
 
-export function LoginModal({ isOpen, onClose }: LoginModalProps) {
+export function LoginModal({ isOpen, onClose, onRegisterClick }: LoginModalProps) {
   useEffect(() => {
     if (!isOpen) return;
 
@@ -32,7 +33,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
   return (
     /* backdrop */
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 px-4 py-8"
       role="dialog"
       aria-modal="true"
       aria-label="Login"
@@ -59,10 +60,10 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
           </div>
 
           {/* login card */}
-          <Card className="w-full border-white/10 bg-slate-900/80 text-slate-100 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+          <Card className="w-full border-white/10 bg-slate-900 text-slate-100 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <CardHeader className="space-y-1 px-6 pb-4 pt-6 text-center">
               <CardTitle className="text-xl font-extrabold text-white">Entrar na sua conta</CardTitle>
-              <p className="text-sm text-slate-400">Acesse o sistema de gestão da oficina.</p>
+              <p className="text-sm text-slate-400">Acesse o sistema de gestão do negócio.</p>
             </CardHeader>
             <CardContent className="px-6 pb-6">
               <LoginForm onSuccess={onClose} redirectTo="/inicio/dashboard" />
@@ -99,9 +100,9 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
           <p className="mt-6 text-center text-sm text-slate-400">
             Ainda não tem uma conta?{' '}
             <button
-              className="cursor-not-allowed font-semibold text-orange-300 opacity-40"
-              disabled
+              className="font-semibold text-orange-300 transition-colors hover:text-orange-200"
               type="button"
+              onClick={onRegisterClick}
             >
               Cadastre-se
             </button>

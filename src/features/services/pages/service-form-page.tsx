@@ -36,7 +36,7 @@ const billingTypeOptions = [
 ];
 
 const materialSourceOptions = [
-  { label: 'Materiais da oficina', value: 'SHOP_SUPPLIES' },
+  { label: 'Materiais do negócio', value: 'SHOP_SUPPLIES' },
   { label: 'Materiais do cliente', value: 'CUSTOMER_SUPPLIES' },
   { label: 'Sem peças necessárias', value: 'NO_PARTS_REQUIRED' },
   { label: 'Flexível', value: 'FLEXIBLE' },

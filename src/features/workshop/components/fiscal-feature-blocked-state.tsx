@@ -18,7 +18,7 @@ export function FiscalFeatureBlockedState({ featureName }: FiscalFeatureBlockedS
         <div className="mt-5 max-w-xl">
           <p className="text-lg font-semibold text-foreground">{featureName} bloqueado temporariamente</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Esta funcionalidade exige o CNPJ da oficina cadastrado. Cadastre o CNPJ para continuar usando recursos fiscais.
+            Esta funcionalidade exige o CNPJ do negócio cadastrado. Cadastre o CNPJ para continuar usando recursos fiscais.
           </p>
         </div>
         <Button asChild className="mt-6">

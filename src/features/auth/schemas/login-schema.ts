@@ -37,7 +37,7 @@ export type LoginSchema = z.infer<typeof loginSchema>;
 
 export const registerSchema = z
   .object({
-    tradeName: z.string().trim().min(2, 'Informe o nome fantasia da oficina'),
+    tradeName: z.string().trim().min(2, 'Informe o nome fantasia do negócio'),
     cnpj: z
       .string()
       .trim()

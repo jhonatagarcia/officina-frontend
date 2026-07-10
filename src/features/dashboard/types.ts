@@ -23,9 +23,15 @@ export interface DashboardOverview {
   budgets: {
     pending: number;
   };
+  clients: {
+    total: number;
+    new: number;
+    returnRate: number;
+  };
   financial: {
     monthRevenue: number;
     stockOutValue: number;
+    receivablesValue: number;
     averageTicket: number;
   };
   inventory: {
@@ -37,6 +43,9 @@ export interface DashboardOverview {
       minimumQuantity: number;
       internalCode: string;
     }[];
+  };
+  operational: {
+    averageExecutionDays: number;
   };
   activeServiceOrders: ServiceOrder[];
   pendingBudgets: Budget[];

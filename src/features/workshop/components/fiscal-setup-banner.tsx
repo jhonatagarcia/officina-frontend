@@ -19,11 +19,16 @@ export function FiscalSetupBanner() {
           <div>
             <p className="text-sm font-semibold">Cadastro fiscal incompleto</p>
             <p className="text-sm text-amber-900/80">
-              Complete o CNPJ da oficina para liberar funcionalidades fiscais. O restante do sistema continua disponível.
+              Complete o CNPJ do negócio para liberar funcionalidades fiscais. O restante do sistema continua disponível.
             </p>
           </div>
         </div>
-        <Button asChild size="sm" variant="outline" className="shrink-0 border-amber-300 bg-card text-amber-950 hover:bg-card/80">
+        <Button
+          asChild
+          size="sm"
+          variant="outline"
+          className="shrink-0 border-amber-300 bg-card text-amber-950 hover:bg-card/80 dark:border-amber-400/70 dark:bg-amber-400 dark:text-slate-950 dark:hover:bg-amber-300"
+        >
           <Link to={fiscalStatus.ctaPath}>
             Cadastrar CNPJ
             <ArrowRight className="size-4" aria-hidden="true" />

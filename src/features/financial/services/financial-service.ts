@@ -21,8 +21,8 @@ const financialStatusMap: Record<string, FinancialStatus> = {
   OVERDUE: 'VENCIDO',
   PAID: 'PAGO',
   PAGO: 'PAGO',
-  PENDENTE: 'PENDENTE',
-  PENDING: 'PENDENTE',
+  PENDENTE: 'VENCIDO',
+  PENDING: 'VENCIDO',
   VENCIDO: 'VENCIDO',
 };
 
@@ -31,7 +31,7 @@ function normalizeFinancialType(type: string): FinancialType {
 }
 
 function normalizeFinancialStatus(status: string): FinancialStatus {
-  return financialStatusMap[status.toUpperCase()] ?? 'PENDENTE';
+  return financialStatusMap[status.toUpperCase()] ?? 'VENCIDO';
 }
 
 function mapFinancialEntry(entry: FinancialEntryApiResponse): FinancialEntry {

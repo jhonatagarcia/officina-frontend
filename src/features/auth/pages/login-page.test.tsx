@@ -1,11 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import type { ReactElement } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { LoginPage } from '@/features/auth/pages/login-page';
 import { renderWithProviders } from '@/test/render-with-providers';
+import { useAuthStore } from '@/store/auth-store';
 
 const { loginMock, googleLoginMock, registerWorkshopMock, forgotPasswordMock, toastErrorMock, toastSuccessMock, loginState, googleLoginState } = vi.hoisted(() => ({
   loginMock: vi.fn(),
@@ -106,6 +107,7 @@ describe('LoginPage', () => {
     toastSuccessMock.mockReset();
     loginState.isLoggingIn = false;
     googleLoginState.isGoogleLoggingIn = false;
+    useAuthStore.getState().setSession(null);
     installGoogleIdentityMock();
   });
 
@@ -246,20 +248,70 @@ describe('LoginPage', () => {
     await user.click(await screen.findByRole('button', { name: /entrar com google/i }));
 
     await waitFor(() =>
-      expect(toastSuccessMock).toHaveBeenCalledWith('Acesso com Google realizado. Complete os dados da oficina para liberar todos os recursos.'),
+      expect(toastSuccessMock).toHaveBeenCalledWith('Acesso com Google realizado. Complete os dados do negócio para liberar todos os recursos.'),
     );
     expect(await screen.findByText('Cadastro da oficina')).toBeInTheDocument();
     expect(screen.queryByText('Dashboard seguro')).not.toBeInTheDocument();
   });
 
-  it('mantem o cadastro de oficina bloqueado temporariamente', async () => {
+  it('abre o modal de cadastro pelo link Cadastre-se', async () => {
     renderWithProviders(<LoginPage />);
 
     const registerButton = await screen.findByRole('button', { name: /cadastre-se/i });
-    expect(registerButton).toBeDisabled();
     fireEvent.click(registerButton);
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /cadastrar negócio/i })).toBeInTheDocument();
+  });
+
+  it('faz login automaticamente apos cadastro realizado com sucesso', async () => {
+    const user = userEvent.setup();
+    registerWorkshopMock.mockResolvedValueOnce({
+      accessToken: 'signup-token',
+      user: {
+        id: 'user-1',
+        name: 'Auto teste localhost',
+        email: 'autoteste@local.com.br',
+        role: 'ADMIN',
+        workshopFiscalStatus: 'COMPLETE',
+        workshop: {
+          id: 'workshop-1',
+          tradeName: 'Auto teste localhost',
+          cnpj: '11222333000181',
+        },
+      },
+    });
+
+    renderWithCustomRouter(
+      <MemoryRouter initialEntries={['/login']}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/inicio/dashboard" element={<div>Dashboard seguro</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.click(await screen.findByRole('button', { name: /cadastre-se/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByLabelText(/nome fantasia do negócio/i), 'Auto teste localhost');
+    await user.type(within(dialog).getByLabelText(/^cnpj$/i), '11222333000181');
+    await user.type(within(dialog).getByLabelText(/^e-mail$/i), 'autoteste@local.com.br');
+    await user.type(within(dialog).getByLabelText(/^senha$/i), 'Senha123');
+    await user.type(within(dialog).getByLabelText(/confirmar senha/i), 'Senha123');
+    await user.click(within(dialog).getByRole('checkbox', { name: /não sou um robô/i }));
+    await user.click(within(dialog).getByRole('button', { name: /criar cadastro/i }));
+
+    await waitFor(() => expect(registerWorkshopMock).toHaveBeenCalled());
+    expect(registerWorkshopMock.mock.calls[0]?.[0]).toEqual({
+      tradeName: 'Auto teste localhost',
+      cnpj: '11222333000181',
+      email: 'autoteste@local.com.br',
+      password: 'Senha123',
+      confirmPassword: 'Senha123',
+      captchaToken: 'local-captcha-ok',
+    });
+    expect(useAuthStore.getState().session?.accessToken).toBe('signup-token');
+    expect(await screen.findByText('Dashboard seguro')).toBeInTheDocument();
   });
 
   it('permite mostrar e ocultar a senha', () => {
@@ -293,7 +345,7 @@ describe('LoginPage', () => {
     expect(screen.getByRole('button', { name: /entrando/i })).toBeDisabled();
   });
 
-  it('usa mensagem generica quando o login falha', async () => {
+  it('mostra erro em tela quando o usuario nao foi cadastrado', async () => {
     loginMock.mockRejectedValueOnce(new Error('stack trace ou detalhe interno'));
 
     renderWithProviders(<LoginPage />);
@@ -303,7 +355,8 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: /não sou um robô/i }));
     fireEvent.click(screen.getByRole('button', { name: /^entrar$/i }));
 
-    await waitFor(() => expect(toastErrorMock).toHaveBeenCalledWith('Não foi possível entrar. Verifique os dados e tente novamente.'));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Usuário não cadastrado ou senha inválida.');
+    expect(toastErrorMock).toHaveBeenCalledWith('Usuário não cadastrado ou senha inválida.');
     expect(toastErrorMock).not.toHaveBeenCalledWith('stack trace ou detalhe interno');
   });
 

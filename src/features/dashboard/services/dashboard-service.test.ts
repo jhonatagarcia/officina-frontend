@@ -41,14 +41,23 @@ const emptySummary = {
   budgets: {
     pending: 0,
   },
+  clients: {
+    total: 0,
+    new: 0,
+    returnRate: 0,
+  },
   financial: {
     monthRevenue: '0',
     stockOutValue: '0',
+    receivablesValue: '0',
     averageTicket: '0',
   },
   inventory: {
     lowStockCount: 0,
     lowStockItems: [],
+  },
+  operational: {
+    averageExecutionDays: '0',
   },
 };
 
@@ -182,14 +191,23 @@ describe('dashboardService', () => {
       budgets: {
         pending: 2,
       },
+      clients: {
+        total: 15,
+        new: 4,
+        returnRate: 27,
+      },
       financial: {
         monthRevenue: '12345.67',
         stockOutValue: '890.25',
+        receivablesValue: '3500.50',
         averageTicket: '4115.22',
       },
       inventory: {
         lowStockCount: 3,
         lowStockItems: [],
+      },
+      operational: {
+        averageExecutionDays: '2.5',
       },
     });
     mockLists({
@@ -215,7 +233,12 @@ describe('dashboardService', () => {
 
     expect(overview.financial.monthRevenue).toBe(12345.67);
     expect(overview.financial.stockOutValue).toBe(890.25);
+    expect(overview.financial.receivablesValue).toBe(3500.5);
     expect(overview.financial.averageTicket).toBe(4115.22);
+    expect(overview.clients.total).toBe(15);
+    expect(overview.clients.new).toBe(4);
+    expect(overview.clients.returnRate).toBe(27);
+    expect(overview.operational.averageExecutionDays).toBe(2.5);
     expect(http.get).toHaveBeenCalledWith('/dashboard/summary', {
       params: { period: 'YEAR' },
     });

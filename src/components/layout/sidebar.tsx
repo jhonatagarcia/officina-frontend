@@ -20,7 +20,7 @@ export function Sidebar() {
   const workshopQuery = useWorkshopProfile();
   const queryClient = useQueryClient();
   const menuItems = getSidebarMenuRoutes();
-  const workshopName = workshopQuery.data?.tradeName ?? session?.user.workshop?.tradeName ?? session?.user.workshop?.name ?? 'Mini SaaS Oficina';
+  const workshopName = workshopQuery.data?.tradeName ?? session?.user.workshop?.tradeName ?? session?.user.workshop?.name ?? 'AutoPro System';
   const profileName = role === 'ADMIN' ? workshopName : session?.user.name;
 
   function handleLogout() {
@@ -41,7 +41,7 @@ export function Sidebar() {
               <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white">{env.VITE_APP_NAME}</h1>
             </div>
           </div>
-          <p className="mt-2 text-sm text-slate-300">Produtividade operacional para oficinas mecânicas, funilárias e auto elétricas</p>
+          <p className="mt-2 text-sm text-slate-300">Produtividade operacional para negócios automotivos, Oficina Mecanica, Funilarias e Auto Elétricas</p>
         </div>
         <nav className="space-y-2">
           {menuItems.map((item) => {

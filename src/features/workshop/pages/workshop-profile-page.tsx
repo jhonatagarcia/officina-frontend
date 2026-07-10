@@ -87,7 +87,7 @@ export function WorkshopProfilePage() {
         });
       }
       queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
-      toast.success('Cadastro da oficina atualizado.');
+      toast.success('Cadastro do negócio atualizado.');
     },
     onError: () => {
       toast.error('Não foi possível atualizar o cadastro agora.');
@@ -108,8 +108,8 @@ export function WorkshopProfilePage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Cadastro da oficina"
-        description="Mantenha os dados fiscais da oficina atualizados para liberar recursos financeiros e fiscais."
+        title="Cadastro do negócio"
+        description="Mantenha os dados fiscais do negócio atualizados para liberar recursos financeiros e fiscais."
       >
         <Button
           className="min-h-11 rounded-xl font-semibold"
@@ -133,18 +133,18 @@ export function WorkshopProfilePage() {
               });
             }}
           >
-            <FormSectionHeader eyebrow="Oficina" title="Dados fiscais" />
+            <FormSectionHeader eyebrow="Meu Negócio" title="Dados fiscais" />
             <div className="space-y-2">
               <Label htmlFor="workshop-trade-name">Nome fantasia</Label>
               <Input
                 id="workshop-trade-name"
-                placeholder="Ex.: Oficina Avenida"
+                placeholder="Ex.: Meu Negócio Avenida"
                 value={tradeName}
                 onChange={(event) => setTradeName(event.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="workshop-cnpj">CNPJ da oficina</Label>
+              <Label htmlFor="workshop-cnpj">CNPJ do negócio</Label>
               <Input
                 id="workshop-cnpj"
                 inputMode="numeric"

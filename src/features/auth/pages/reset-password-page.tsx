@@ -61,7 +61,7 @@ export function ResetPasswordPage() {
           <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-[0_18px_44px_rgba(234,88,12,0.22)]">
             <Wrench className="size-8" />
           </div>
-          <p className="mt-5 text-xs font-semibold uppercase tracking-[0.24em] text-orange-300">ERP Oficina</p>
+          <p className="mt-5 text-xs font-semibold uppercase tracking-[0.24em] text-orange-300">ERP Automotivo</p>
           <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{env.VITE_APP_NAME}</h1>
         </div>
         <Card className="w-full max-w-[480px] border-white/10 bg-slate-900/78 text-slate-100 shadow-[0_28px_80px_rgba(0,0,0,0.34)] backdrop-blur-xl">

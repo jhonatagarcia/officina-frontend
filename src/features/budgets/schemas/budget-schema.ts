@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const budgetItemSchema = z.object({
+  id: z.string().optional(),
   type: z.enum(['PART', 'LABOR', 'LABOR_AND_PART']),
   serviceCatalogItemId: z.string().optional().or(z.literal('')),
   inventoryItemId: z.string().optional().or(z.literal('')),

@@ -69,6 +69,41 @@ describe('normalizeApiErrorResponse', () => {
     unsubscribe();
   });
 
+  it('nao recarrega a tela nem emite expiracao quando login retorna 401', async () => {
+    window.history.pushState({}, '', '/login');
+    const events: string[] = [];
+    const unsubscribe = subscribeAuthEvent((event) => events.push(event.type));
+    const state = useAuthStore.getState();
+    const silentRefreshSpy = vi.spyOn(state, 'silentRefresh');
+    state.setSession({
+      accessToken: 'token-antigo',
+      user: {
+        id: 'user-1',
+        name: 'Ana',
+        email: 'ana@oficina.com',
+        role: 'ADMIN',
+      },
+    });
+
+    await expect(
+      http.post(
+        '/auth/login',
+        { email: 'naoexiste@local.com', password: 'Senha123' },
+        { adapter: rejectWithStatus(401, 'Credenciais invalidas') },
+      ),
+    ).rejects.toEqual({
+      message: 'Sua sessão expirou. Faça login novamente.',
+      statusCode: 401,
+    });
+
+    expect(silentRefreshSpy).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().session?.accessToken).toBe('token-antigo');
+    expect(events).toEqual([]);
+
+    silentRefreshSpy.mockRestore();
+    unsubscribe();
+  });
+
   it('nao tenta refresh tenant nem emite expiracao em rotas admin', async () => {
     window.history.pushState({}, '', '/admin/dashboard');
     const events: string[] = [];

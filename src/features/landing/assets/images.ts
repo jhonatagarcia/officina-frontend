@@ -75,10 +75,10 @@ export const landingImages = {
   },
 
   /* Seções de detalhe por segmento */
-  detailOficinas: {
-    id: 'detailOficinas',
+  detailNegocios: {
+    id: 'detailNegocios',
     src: '/screenshots/ordem-servico.png',
-    alt: 'Ordem de serviço de oficina mecânica no AutoPro System',
+    alt: 'Ordem de serviço de negócio automotivo no AutoPro System',
   },
   detailFunilarias: {
     id: 'detailFunilarias',

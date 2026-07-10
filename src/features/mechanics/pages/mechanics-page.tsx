@@ -116,7 +116,7 @@ export function MechanicsPage() {
     <PageContainer>
       <PageHeader
         title="Mecânicos"
-        description="Cadastro e gestão dos mecânicos da oficina."
+        description="Cadastro e gestão dos mecânicos do negócio."
       >
         <IndicatorHeaderActions
           onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}

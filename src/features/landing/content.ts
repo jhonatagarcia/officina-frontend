@@ -16,27 +16,27 @@ import { landingImages, type LandingImageAsset } from './assets/images';
 
 export const brand = {
   name: 'AutoPro System',
-  tagline: 'Gestão completa para oficinas mecânicas, funilarias e auto elétricas. Feito para o Brasil.',
+  tagline: 'Gestão completa para negócios automotivos, funilarias e auto elétricas. Feito para o Brasil.',
   contactEmail: 'contato@autoprosystem.com.br',
   demoHref: 'mailto:contato@autoprosystem.com.br?subject=Quero receber uma proposta do AutoPro System',
   siteUrl: 'https://autoprosystem.com.br',
 };
 
 export const seo = {
-  title: 'AutoPro System — Gestão para oficinas, funilarias e auto elétricas',
+  title: 'AutoPro System — Gestão para negócios automotivos',
   description:
-    'O ERP do negócio automotivo: ordens de serviço, orçamentos, clientes, estoque, financeiro e WhatsApp em uma plataforma feita para oficinas mecânicas, funilarias e auto elétricas.',
+    'O ERP do negócio automotivo: ordens de serviço, orçamentos, clientes, estoque, financeiro e WhatsApp em uma plataforma feita para negócios automotivos, funilarias e auto elétricas.',
 };
 
 /* ── Hero ─────────────────────────────────────────── */
 
 export const hero = {
-  badge: 'Oficinas · Funilarias · Auto elétricas',
+  badge: 'Oficina Mecânica · Funilarias · Auto elétricas',
   titleLead: 'O ERP que seu',
   titleHighlight: 'negócio automotivo',
   titleTail: 'sempre precisou',
   subtitle:
-    'Oficinas mecânicas, funilarias e auto elétricas: do orçamento à ordem de serviço, do estoque ao financeiro — gestão completa em uma plataforma feita para o Brasil.',
+    'Negócios automotivos, oficina mecânica, funilarias e auto elétricas: do orçamento à ordem de serviço, do estoque ao financeiro — gestão completa em uma plataforma feita para o Brasil.',
   primaryCta: { label: 'Começar gratuitamente', href: '#planos' },
   secondaryCta: { label: 'Ver o sistema', href: '#produto' },
   notification: { app: 'AutoPro System · WhatsApp', message: 'Seu Civic está pronto! 🎉' },
@@ -177,8 +177,8 @@ export interface SegmentDetail {
 
 export const segmentDetails: SegmentDetail[] = [
   {
-    id: 'oficinas',
-    tag: 'Oficinas mecânicas',
+    id: 'negocios',
+    tag: 'Negócios automotivos',
     title: 'Gestão completa do processo mecânico',
     description:
       'Do diagnóstico à entrega, cada etapa documentada. Menos papel, mais agilidade no atendimento.',
@@ -188,7 +188,7 @@ export const segmentDetails: SegmentDetail[] = [
       'Aprovação de orçamento por link via WhatsApp',
       'Histórico completo de manutenções por veículo',
     ],
-    image: landingImages.detailOficinas,
+    image: landingImages.detailNegocios,
     reverse: false,
     alt: false,
   },
@@ -313,7 +313,7 @@ export const testimonials: Testimonial[] = [
       'Antes usávamos caderno e planilha. Com o AutoPro System, abrimos OS em segundos e o cliente aprova o orçamento pelo WhatsApp. Mudou tudo na nossa rotina.',
     initials: 'RC',
     name: 'Ricardo Caldas',
-    role: 'Oficina Mecânica Caldas, SP',
+    role: 'Meu Negócio Mecânica Caldas, SP',
   },
   {
     quote:
@@ -365,7 +365,7 @@ export const footerColumns: FooterColumn[] = [
   {
     title: 'Segmentos',
     links: [
-      { label: 'Oficinas mecânicas', href: '#oficinas' },
+      { label: 'Negócios automotivos', href: '#negocios' },
       { label: 'Funilarias', href: '#funilarias' },
       { label: 'Auto elétricas', href: '#auto-eletricas' },
     ],

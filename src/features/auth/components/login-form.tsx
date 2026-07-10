@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+const loginFailureMessage = 'Usuário não cadastrado ou senha inválida.';
+
 interface LoginFormProps {
   onSuccess?: () => void;
   redirectTo?: string;
@@ -26,12 +28,14 @@ export function LoginForm({ onSuccess, redirectTo = '/inicio/dashboard' }: Login
 
   async function onSubmit(values: LoginSchema) {
     try {
+      form.clearErrors('root');
       await login(values);
       toast.success('Acesso realizado com sucesso.');
       onSuccess?.();
       navigate(redirectTo, { replace: true });
     } catch {
-      toast.error('Não foi possível entrar. Verifique os dados e tente novamente.');
+      form.setError('root', { message: loginFailureMessage });
+      toast.error(loginFailureMessage);
     }
   }
 
@@ -45,7 +49,7 @@ export function LoginForm({ onSuccess, redirectTo = '/inicio/dashboard' }: Login
           className="border-white/10 bg-slate-800/80 text-white placeholder:text-slate-500"
           disabled={isLoggingIn}
           invalid={Boolean(form.formState.errors.email)}
-          placeholder="seuemail@oficina.com"
+          placeholder="seuemail@empresa.com"
           type="email"
           {...form.register('email')}
         />
@@ -83,6 +87,11 @@ export function LoginForm({ onSuccess, redirectTo = '/inicio/dashboard' }: Login
       <Button className="h-11 w-full" disabled={isLoggingIn} type="submit">
         {isLoggingIn ? 'Entrando...' : 'Entrar'}
       </Button>
+      {form.formState.errors.root?.message ? (
+        <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+          {form.formState.errors.root.message}
+        </p>
+      ) : null}
     </form>
   );
 }

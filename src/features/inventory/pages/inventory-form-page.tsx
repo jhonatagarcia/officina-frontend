@@ -65,7 +65,7 @@ export function InventoryFormPage({ mode }: { mode: 'create' | 'edit' }) {
         title={mode === 'create' ? 'Nova peça' : 'Editar peça / Produto'}
         description={
           mode === 'create'
-            ? 'Cadastre itens de estoque para alimentar a base da oficina.'
+            ? 'Cadastre itens de estoque para alimentar a base do negócio.'
             : 'Atualize os dados do item de estoque.'
         }
       >

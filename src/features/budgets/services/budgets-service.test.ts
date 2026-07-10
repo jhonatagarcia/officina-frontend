@@ -4,6 +4,7 @@ import { http } from '@/services/api/http';
 
 vi.mock('@/services/api/http', () => ({
   http: {
+    delete: vi.fn(),
     patch: vi.fn(),
   },
 }));

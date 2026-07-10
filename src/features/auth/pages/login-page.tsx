@@ -20,6 +20,8 @@ import { Label } from '@/components/ui/label';
 import { env } from '@/lib/env';
 import type { AuthSession } from '@/types/auth';
 
+const loginFailureMessage = 'Usuário não cadastrado ou senha inválida.';
+
 function getSafePostLoginPath(state: unknown, session?: AuthSession) {
   if (session?.user.role === 'ADMIN' && session.user.workshopFiscalStatus === 'INCOMPLETE') {
     return '/inicio/oficina';
@@ -80,11 +82,13 @@ export function LoginPage() {
 
   async function onLoginSubmit(values: LoginSchema) {
     try {
+      loginForm.clearErrors('root');
       const session = await login(values);
       toast.success('Acesso realizado com sucesso.');
       navigate(getSafePostLoginPath(location.state, session), { replace: true });
     } catch {
-      toast.error('Não foi possível entrar. Verifique os dados e tente novamente.');
+      loginForm.setError('root', { message: loginFailureMessage });
+      toast.error(loginFailureMessage);
     }
   }
 
@@ -97,7 +101,7 @@ export function LoginPage() {
       const session = await loginWithGoogle({ credential });
       toast.success(
         session.user.workshopFiscalStatus === 'INCOMPLETE'
-          ? 'Acesso com Google realizado. Complete os dados da oficina para liberar todos os recursos.'
+          ? 'Acesso com Google realizado. Complete os dados do negócio para liberar todos os recursos.'
           : 'Acesso com Google realizado com sucesso.',
       );
       navigate(getSafePostLoginPath(location.state, session), { replace: true });
@@ -137,7 +141,7 @@ export function LoginPage() {
             ) : null}
             <CardTitle className="text-2xl font-extrabold text-white">{isForgotMode ? 'Recuperar senha' : 'Entrar na sua conta'}</CardTitle>
             <p className="text-sm text-slate-400">
-              {isForgotMode ? 'Informe seu e-mail e enviaremos as instruções se houver uma conta vinculada.' : 'Acesse o sistema de gestão da oficina.'}
+              {isForgotMode ? 'Informe seu e-mail e enviaremos as instruções se houver uma conta vinculada.' : 'Acesse o sistema de gestão do negócio.'}
             </p>
           </CardHeader>
           <CardContent className="px-6 pb-7 sm:px-12">
@@ -151,7 +155,7 @@ export function LoginPage() {
                     className="border-white/10 bg-slate-800/80 text-white placeholder:text-slate-500"
                     disabled={forgotMutation.isPending}
                     invalid={Boolean(forgotForm.formState.errors.email)}
-                    placeholder="seuemail@oficina.com"
+                    placeholder="seuemail@empresa.com"
                     type="email"
                     {...forgotForm.register('email')}
                   />
@@ -177,7 +181,7 @@ export function LoginPage() {
                     className="border-white/10 bg-slate-800/80 text-white placeholder:text-slate-500"
                     disabled={isAuthenticating}
                     invalid={Boolean(loginForm.formState.errors.email)}
-                    placeholder="seuemail@oficina.com"
+                    placeholder="seuemail@empresa.com"
                     type="email"
                     {...loginForm.register('email')}
                   />
@@ -210,6 +214,11 @@ export function LoginPage() {
                 <Button className="h-11 w-full" disabled={isAuthenticating} type="submit">
                   {isLoggingIn ? 'Entrando...' : 'Entrar'}
                 </Button>
+                {loginForm.formState.errors.root?.message ? (
+                  <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+                    {loginForm.formState.errors.root.message}
+                  </p>
+                ) : null}
                 <div className="flex items-center gap-3" aria-hidden="true">
                   <span className="h-px flex-1 bg-white/10" />
                   <span className="text-xs font-medium uppercase tracking-wide text-slate-500">ou continue com</span>
@@ -242,7 +251,6 @@ export function LoginPage() {
             Ainda não tem uma conta?{' '}
             <button
               className="font-semibold text-orange-300 transition-colors hover:text-orange-200"
-              disabled={true}
               type="button"
               onClick={() => setRegisterOpen(true)}
             >
@@ -254,11 +262,6 @@ export function LoginPage() {
       <RegisterWorkshopDialog
         open={registerOpen}
         onOpenChange={setRegisterOpen}
-        onRegistered={(email) => {
-          loginForm.setValue('email', email);
-          loginForm.setValue('password', '');
-          loginForm.setValue('captchaToken', '');
-        }}
       />
     </div>
   );

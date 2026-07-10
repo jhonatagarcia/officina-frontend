@@ -1,11 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Check, Edit3, FileDown, Info, Package, PackagePlus, Play, Plus, Printer, Save, Share2, Trash2, Wrench } from 'lucide-react';
+import { ArrowLeft, Check, Edit3, FileDown, Info, Package, Play, Plus, Save, Share2, Trash2, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { mechanicsService } from '@/features/mechanics/services/mechanics-service';
 import { PendingPartDialog } from '@/features/service-orders/components/pending-part-dialog';
-import { PendingPartOfferDialog } from '@/features/service-orders/components/pending-part-offer-dialog';
 import { PendingPartsCard } from '@/features/service-orders/components/pending-parts-card';
 import { RegressiveStatusChangeDialog } from '@/features/service-orders/components/regressive-status-change-dialog';
 import { RemoveServiceOrderPartDialog } from '@/features/service-orders/components/remove-service-order-part-dialog';
@@ -16,6 +15,7 @@ import { ServiceOrderItemDialog } from '@/features/service-orders/components/ser
 import { serviceOrdersService } from '@/features/service-orders/services/service-orders-service';
 import type {
   CreateServiceOrderPendingPartPayload,
+  AddServiceOrderServicePayload,
   ServiceOrder,
   ServiceOrderPart,
   ServiceOrderPendingPart,
@@ -143,7 +143,6 @@ export function ServiceOrderDetailsPage() {
   const [nextStatus, setNextStatus] = useState<ServiceOrderStatus | ''>('');
   const [selectedMechanicId, setSelectedMechanicId] = useState('NONE');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const [pendingPartOfferOpen, setPendingPartOfferOpen] = useState(false);
   const [pendingPartDialogOpen, setPendingPartDialogOpen] = useState(false);
   const [stockPartDialogOpen, setStockPartDialogOpen] = useState(false);
   const [stockPartToRemove, setStockPartToRemove] = useState<ServiceOrderPart | null>(null);
@@ -186,10 +185,6 @@ export function ServiceOrderDetailsPage() {
       }
 
       query.refetch();
-      if (updatedOrder.status === 'AGUARDANDO_PECA') {
-        setPendingPartToEdit(null);
-        setPendingPartOfferOpen(true);
-      }
     },
     onError: (error: { message?: string | string[] }) => {
       const message = Array.isArray(error.message) ? error.message[0] : error.message;
@@ -235,20 +230,26 @@ export function ServiceOrderDetailsPage() {
       toast.error(message || 'Não foi possível cancelar a pendência.');
     },
   });
-  const addStockPartMutation = useMutation({
-    mutationFn: (payload: { inventoryItemId: string; quantity: number; unitPrice: number }) =>
-      serviceOrdersService.addPart(id, payload),
+  const addServiceMutation = useMutation({
+    mutationFn: (payload: AddServiceOrderServicePayload) =>
+      serviceOrdersService.addService(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
       queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
+      queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+      if (query.data?.budgetId) {
+        queryClient.invalidateQueries({ queryKey: ['orcamento', query.data.budgetId] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['reference', 'estoque', 'options'] });
+      queryClient.invalidateQueries({ queryKey: ['estoque'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setStockPartDialogOpen(false);
-      toast.success('Peça adicionada à OS.');
+      toast.success('Serviço adicionado à OS e ao orçamento.');
       query.refetch();
     },
     onError: (error: { message?: string | string[] }) => {
       const message = Array.isArray(error.message) ? error.message[0] : error.message;
-      toast.error(message || 'Não foi possível adicionar a peça à OS.');
+      toast.error(message || 'Não foi possível adicionar o serviço à OS.');
     },
   });
   const removeStockPartMutation = useMutation({
@@ -419,6 +420,12 @@ export function ServiceOrderDetailsPage() {
       return;
     }
 
+    if (nextStatus === 'AGUARDANDO_PECA') {
+      setPendingPartToEdit(null);
+      setPendingPartDialogOpen(true);
+      return;
+    }
+
     if (isRegressiveServiceOrderStatusChange(query.data.status, nextStatus)) {
       setRegressiveStatusToConfirm(nextStatus);
       return;
@@ -453,6 +460,7 @@ export function ServiceOrderDetailsPage() {
     }
 
     createPendingPartMutation.mutate(payload);
+    setNextStatus('');
   };
 
   const handleSaveProblem = () => {
@@ -506,10 +514,6 @@ export function ServiceOrderDetailsPage() {
             </div>
             {!isReadOnly ? (
               <div className="flex flex-wrap gap-2">
-              <Button className="rounded-xl font-semibold" variant="outline" onClick={() => window.print()}>
-                <Printer className="size-4" strokeWidth={1.75} />
-                Imprimir
-              </Button>
               <Button className="rounded-xl font-semibold" disabled={!canGeneratePdf || isGeneratingPdf} variant="outline" onClick={handleGeneratePdf}>
                 <FileDown className="size-4" strokeWidth={1.75} />
                 {isGeneratingPdf ? 'Gerando...' : 'Gerar PDF'}
@@ -759,8 +763,8 @@ export function ServiceOrderDetailsPage() {
           {canManageStockParts ? (
             <div className="flex flex-wrap gap-2">
               <Button className="rounded-xl font-semibold" variant="outline" onClick={() => setStockPartDialogOpen(true)}>
-                <PackagePlus className="size-4" strokeWidth={1.75} />
-                Aplicar peça do estoque
+                <Plus className="size-4" strokeWidth={1.75} />
+                Adicionar serviço
               </Button>
               <Button className="rounded-xl font-semibold" variant="outline" onClick={() => handleOpenPendingPartDialog()}>
                 <Plus className="size-4" strokeWidth={1.75} />
@@ -963,14 +967,6 @@ export function ServiceOrderDetailsPage() {
         </CardContent>
       </Card>
 
-      <PendingPartOfferDialog
-        open={!isReadOnly && pendingPartOfferOpen}
-        onOpenChange={setPendingPartOfferOpen}
-        onAddPendingPart={() => {
-          setPendingPartOfferOpen(false);
-          handleOpenPendingPartDialog();
-        }}
-      />
       <PendingPartDialog
         open={!isReadOnly && pendingPartDialogOpen}
         pendingPart={pendingPartToEdit}
@@ -983,9 +979,9 @@ export function ServiceOrderDetailsPage() {
       />
       <ServiceOrderStockPartDialog
         open={canManageStockParts && stockPartDialogOpen}
-        isSubmitting={addStockPartMutation.isPending}
+        isSubmitting={addServiceMutation.isPending}
         onOpenChange={setStockPartDialogOpen}
-        onSubmit={(payload) => addStockPartMutation.mutate(payload)}
+        onSubmit={(payload) => addServiceMutation.mutate(payload)}
       />
       <ServiceOrderItemDialog
         item={canManageStockParts ? executionItemToEdit : null}

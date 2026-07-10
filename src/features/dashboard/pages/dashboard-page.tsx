@@ -519,7 +519,7 @@ export function DashboardPage() {
   if (query.isLoading) return <LoadingState />;
   if (query.isError || !query.data) return <ErrorState onRetry={() => query.refetch()} />;
 
-  const { serviceOrders, budgets, financial, inventory: inventoryData, activeServiceOrders, pendingBudgets, operationalAlerts } = query.data;
+  const { serviceOrders, budgets, clients, financial, inventory: inventoryData, operational, activeServiceOrders, pendingBudgets, operationalAlerts } = query.data;
   const currentActiveServiceOrdersPage = Math.min(activeServiceOrdersPage, activeServiceOrdersTotalPages);
   const activeServiceOrdersStartIndex = (currentActiveServiceOrdersPage - 1) * ACTIVE_SERVICE_ORDERS_PAGE_SIZE;
   const paginatedActiveServiceOrders = activeServiceOrders.slice(activeServiceOrdersStartIndex, activeServiceOrdersStartIndex + ACTIVE_SERVICE_ORDERS_PAGE_SIZE);
@@ -537,7 +537,6 @@ export function DashboardPage() {
   const projectedBalance = financial.monthRevenue - financial.stockOutValue;
   const averageTicket = financial.averageTicket;
   const periodSubtitle = dashboardPeriodLabels[dashboardPeriod];
-  const pendingBudgetTotal = pendingBudgets.reduce((total, budget) => total + budget.total, 0);
   const stockUnitsAtRisk = inventoryData.lowStockItems.reduce((total, item) => total + Math.max(item.minimumQuantity - item.quantity, 0), 0);
   const sparklineFromValue = (value: number) => {
     const base = Math.max(value, 1);
@@ -651,12 +650,12 @@ export function DashboardPage() {
     },
     {
       id: 'stock-out',
-      title: 'Despesas',
+      title: 'Saída de estoque',
       category: 'Financeiro',
       className: 'md:col-span-2',
       render: () => (
         <MetricCard
-          title="Despesas"
+          title="Saída de estoque"
           value={financial.stockOutValue}
           formatter={formatCurrency}
           delta={6.4}
@@ -693,15 +692,9 @@ export function DashboardPage() {
     },
     {
       id: 'accounts-receivable',
-      title: 'Faturamento',
+      title: 'Contas a receber',
       category: 'Financeiro',
-      render: () => <MetricCard title="Faturamento" value={pendingBudgetTotal} formatter={formatCurrency} delta={19.8} tone="green" icon={Receipt} />,
-    },
-    {
-      id: 'accounts-payable',
-      title: 'Contas a pagar',
-      category: 'Financeiro',
-      render: () => <MetricCard title="Contas a pagar" value={financial.stockOutValue} formatter={formatCurrency} delta={10.5} tone="red" icon={TrendingDown} />,
+      render: () => <MetricCard title="Contas a receber" value={financial.receivablesValue} formatter={formatCurrency} delta={19.8} tone="green" icon={Receipt} />,
     },
     {
       id: 'os-ready',
@@ -725,7 +718,7 @@ export function DashboardPage() {
       id: 'execution-time',
       title: 'Tempo médio de execução',
       category: 'Ordens de Serviço',
-      render: () => <MetricCard title="Tempo médio de execução" value={Math.max(1, Math.round(activeOrderTotal / 2))} formatter={formatWithSuffix('dias')} delta={-7.4} tone="green" icon={Gauge} />,
+      render: () => <MetricCard title="Tempo médio de execução" value={operational.averageExecutionDays} formatter={formatWithSuffix('dias')} delta={-7.4} tone="green" icon={Gauge} />,
     },
     {
       id: 'os-status',
@@ -743,28 +736,28 @@ export function DashboardPage() {
     },
     {
       id: 'os-month',
-      title: 'OS por mês',
+      title: 'OS em fluxo',
       category: 'Ordens de Serviço',
       className: 'md:col-span-2 lg:col-span-4',
-      render: () => <BarMetricCard title="OS por mês" value={activeOrderTotal} values={orderMonthSeries} />,
+      render: () => <BarMetricCard title="OS em fluxo" value={activeOrderTotal} values={orderMonthSeries} />,
     },
     {
       id: 'clients-new',
       title: 'Clientes novos',
       category: 'Clientes',
-      render: () => <MetricCard title="Clientes novos" value={Object.keys(clientGroups).length} delta={20.8} tone="orange" icon={Users} sparkline={sparklineFromValue(Object.keys(clientGroups).length)} />,
+      render: () => <MetricCard title="Clientes novos" value={clients.new} delta={20.8} tone="orange" icon={Users} sparkline={sparklineFromValue(clients.new)} />,
     },
     {
       id: 'clients-total',
       title: 'Total de clientes',
       category: 'Clientes',
-      render: () => <MetricCard title="Total de clientes" value={Object.keys(clientGroups).length} delta={3.1} tone="slate" icon={Users} />,
+      render: () => <MetricCard title="Total de clientes" value={clients.total} delta={3.1} tone="slate" icon={Users} />,
     },
     {
       id: 'return-rate',
       title: 'Taxa de retorno',
       category: 'Clientes',
-      render: () => <MetricCard title="Taxa de retorno" value={Math.min(100, Math.round((activeOrderTotal / Math.max(Object.keys(clientGroups).length, 1)) * 18))} formatter={(value) => `${formatInteger(value)}%`} delta={4.3} tone="green" icon={TrendingUp} />,
+      render: () => <MetricCard title="Taxa de retorno" value={clients.returnRate} formatter={(value) => `${formatInteger(value)}%`} delta={4.3} tone="green" icon={TrendingUp} />,
     },
     {
       id: 'inventory-low',
@@ -774,15 +767,15 @@ export function DashboardPage() {
     },
     {
       id: 'inventory-out',
-      title: 'Saídas de estoque',
+      title: 'Reposição necessária',
       category: 'Estoque',
-      render: () => <MetricCard title="Saídas de estoque" value={stockUnitsAtRisk} formatter={formatWithSuffix('un')} delta={16.7} tone="orange" icon={PackageSearch} sparkline={sparklineFromValue(stockUnitsAtRisk)} />,
+      render: () => <MetricCard title="Reposição necessária" value={stockUnitsAtRisk} formatter={formatWithSuffix('un')} delta={16.7} tone="orange" icon={PackageSearch} sparkline={sparklineFromValue(stockUnitsAtRisk)} />,
     },
     {
       id: 'inventory-in',
-      title: 'Entradas de estoque',
+      title: 'Itens monitorados',
       category: 'Estoque',
-      render: () => <MetricCard title="Entradas de estoque" value={Math.max(stockUnitsAtRisk + inventoryData.lowStockCount, inventoryData.lowStockCount)} formatter={formatWithSuffix('un')} delta={13.8} tone="orange" icon={PackageCheck} sparkline={sparklineFromValue(stockUnitsAtRisk + inventoryData.lowStockCount)} />,
+      render: () => <MetricCard title="Itens monitorados" value={inventoryData.lowStockCount} formatter={formatWithSuffix('itens')} delta={13.8} tone="orange" icon={PackageCheck} sparkline={sparklineFromValue(inventoryData.lowStockCount)} />,
     },
     {
       id: 'mechanics-active',
@@ -1052,7 +1045,7 @@ export function DashboardPage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Dashboard" description="Visão operacional da oficina em tempo real.">
+      <PageHeader title="Dashboard" description="Visão operacional do negócio em tempo real.">
         <Button
           className="min-h-11 rounded-xl border-border bg-card px-4 font-semibold shadow-xs"
           type="button"
@@ -1086,7 +1079,6 @@ export function DashboardPage() {
           'projected-balance',
           'average-ticket',
           'accounts-receivable',
-          'accounts-payable',
           'os-ready',
           'os-progress',
           'budget-pending',

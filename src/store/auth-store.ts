@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import axios from 'axios';
+import { env } from '@/lib/env';
 import type { AuthSession, Role } from '@/types/auth';
 
 interface AuthState {
@@ -54,8 +56,20 @@ export const useAuthStore = create<AuthState>()((set) => ({
       return false;
     }
 
-    set({ hydrated: true });
-    return false;
+    try {
+      const response = await axios.post<AuthSession>(
+        `${env.VITE_API_BASE_URL}/auth/refresh`,
+        {},
+        { withCredentials: true },
+      );
+      const session = normalizeSession(response.data);
+
+      set({ session, hydrated: true });
+      return Boolean(session);
+    } catch {
+      set({ session: null, hydrated: true });
+      return false;
+    }
   },
   logout: async () => {
     set({ session: null, hydrated: true });

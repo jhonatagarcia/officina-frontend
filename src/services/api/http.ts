@@ -23,6 +23,15 @@ function isAdminRoute() {
   return typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
 }
 
+function isLoginRoute() {
+  return typeof window !== 'undefined' && window.location.pathname === '/login';
+}
+
+function isAuthRequest(config?: InternalAxiosRequestConfig) {
+  const url = config?.url ?? '';
+  return url.includes('/auth/login') || url.includes('/auth/signup') || url.includes('/auth/google');
+}
+
 function normalizeMessageValue(message: unknown) {
   const value = Array.isArray(message) ? message[0] : message;
   if (typeof value !== 'string') return null;
@@ -85,6 +94,8 @@ http.interceptors.response.use(
       original &&
       !original._retried &&
       !original._skipRefreshRetry &&
+      !isAuthRequest(original) &&
+      !isLoginRoute() &&
       !isAdminRoute()
     ) {
       original._retried = true;
@@ -112,7 +123,7 @@ http.interceptors.response.use(
     const payload = error.response?.data as ApiErrorResponse | undefined;
     const normalizedError = normalizeApiErrorResponse(status, payload);
 
-    if (status === 401 && !isAdminRoute()) {
+    if (status === 401 && !isAdminRoute() && !isLoginRoute() && !isAuthRequest(original)) {
       useAuthStore.getState().setSession(null);
       emitAuthEvent({ type: 'SESSION_EXPIRED' });
     } else if (status === 403) {

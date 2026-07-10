@@ -292,7 +292,7 @@ export const appRoutes: AppRouteDefinition[] = [
     path: 'oficina',
     roles: ['ADMIN'],
     element: <WorkshopProfilePage />,
-    label: 'Oficina',
+    label: 'Meu Negócio',
     icon: Building2,
     sidebar: true,
   },

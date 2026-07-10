@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, CheckCircle2, Clock, DollarSign, PackageSearch, TrendingUp } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, DollarSign, PackageSearch, TrendingUp } from 'lucide-react';
 import { financialService } from '@/features/financial/services/financial-service';
 import type { FinancialEntry, PaymentMethod } from '@/features/financial/types';
 import { useListParams } from '@/hooks/use-list-params';
@@ -25,12 +25,11 @@ import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader,
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 
 function canRegisterPayment(status: string) {
-  return status === 'PENDENTE' || status === 'VENCIDO';
+  return status === 'VENCIDO';
 }
 
 function getFinancialRowClass(status: string) {
   if (status === 'VENCIDO') return 'bg-rose-50/45 hover:bg-rose-50/70';
-  if (status === 'PENDENTE') return 'bg-amber-50/30 hover:bg-amber-50/55';
   return undefined;
 }
 
@@ -82,7 +81,7 @@ function FinancialPageContent() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
-  const selectedStatus = params.status || 'ALL';
+  const selectedStatus = params.status === 'PAGO' || params.status === 'VENCIDO' ? params.status : 'ALL';
   const filteredEntries =
     query.data?.data.filter((item) => {
       const matchesStatus = selectedStatus !== 'ALL' ? item.status === selectedStatus : true;
@@ -103,7 +102,6 @@ function FinancialPageContent() {
   const income = summaryQuery.data?.receivablesValue ?? filteredEntries.filter((item) => item.type === 'RECEIVABLE').reduce((acc, item) => acc + item.amount, 0) ?? 0;
   const stockOutValue = summaryQuery.data?.stockOutValue ?? 0;
   const projectedBalance = income - stockOutValue;
-  const pendingEntriesCount = filteredEntries.filter((item) => item.status === 'PENDENTE').length;
   const paidEntriesCount = filteredEntries.filter((item) => item.status === 'PAGO').length;
   const overdueEntriesCount = filteredEntries.filter((item) => item.status === 'VENCIDO').length;
   const pageTotal = filteredEntries.reduce((total, item) => total + item.amount, 0);
@@ -131,13 +129,6 @@ function FinancialPageContent() {
       icon: PackageSearch,
       valueClassName: 'text-rose-600',
       mediaClassName: 'border-rose-200 bg-rose-50 text-rose-700',
-    },
-    {
-      id: 'pending',
-      title: 'Pendentes na página',
-      value: String(pendingEntriesCount),
-      icon: Clock,
-      mediaClassName: 'border-amber-200 bg-amber-50 text-amber-700',
     },
     {
       id: 'paid',
@@ -188,7 +179,6 @@ function FinancialPageContent() {
               value={selectedStatus}
               options={[
                 { value: 'ALL', label: 'Todos', count: query.data.data.length, icon: DollarSign, tone: 'slate' },
-                { value: 'PENDENTE', label: 'Pendente', count: pendingEntriesCount, icon: Clock, tone: 'amber' },
                 { value: 'PAGO', label: 'Pago', count: paidEntriesCount, icon: CheckCircle2, tone: 'emerald' },
                 { value: 'VENCIDO', label: 'Vencido', count: overdueEntriesCount, icon: AlertTriangle, tone: 'rose' },
               ]}

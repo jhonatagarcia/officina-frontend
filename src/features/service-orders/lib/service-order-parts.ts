@@ -16,7 +16,7 @@ export type AppliedServiceOrderPart = {
 function hasPlannedInventoryPart(
   item: ServiceOrderBudgetItem,
 ): item is ServiceOrderBudgetItem & { inventoryItem: NonNullable<ServiceOrderBudgetItem['inventoryItem']> } {
-  return (item.type === 'PART' || item.type === 'LABOR_AND_PART') && item.inventoryItem !== null;
+  return (item.type === 'PART' || item.type === 'LABOR_AND_PART') && item.inventoryItem != null;
 }
 
 export function getPlannedServiceOrderParts(order: ServiceOrder): AppliedServiceOrderPart[] {

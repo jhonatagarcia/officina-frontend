@@ -17,9 +17,15 @@ interface DashboardSummaryApiResponse {
   budgets: {
     pending: number;
   };
+  clients: {
+    total: number;
+    new: number;
+    returnRate: number;
+  };
   financial: {
     monthRevenue: number | string;
     stockOutValue: number | string;
+    receivablesValue: number | string;
     averageTicket?: number | string;
   };
   inventory: {
@@ -32,6 +38,9 @@ interface DashboardSummaryApiResponse {
       internalCode: string;
     }[];
   };
+  operational: {
+    averageExecutionDays: number | string;
+  };
 }
 
 type DashboardSummary = Omit<DashboardOverview, 'activeServiceOrders' | 'pendingBudgets' | 'operationalAlerts'>;
@@ -40,12 +49,21 @@ function mapDashboardSummary(response: DashboardSummaryApiResponse): DashboardSu
   return {
     serviceOrders: response.serviceOrders,
     budgets: response.budgets,
+    clients: {
+      total: toNumber(response.clients.total),
+      new: toNumber(response.clients.new),
+      returnRate: toNumber(response.clients.returnRate),
+    },
     financial: {
       monthRevenue: toNumber(response.financial.monthRevenue),
       stockOutValue: toNumber(response.financial.stockOutValue),
+      receivablesValue: toNumber(response.financial.receivablesValue),
       averageTicket: toNumber(response.financial.averageTicket),
     },
     inventory: response.inventory,
+    operational: {
+      averageExecutionDays: toNumber(response.operational.averageExecutionDays),
+    },
   };
 }
 

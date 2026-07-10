@@ -134,4 +134,26 @@ describe('service-order-parts helpers', () => {
 
     expect(getPlannedServiceOrderParts(order)).toEqual([]);
   });
+
+  it('ignora item misto sem relacionamento de estoque carregado', () => {
+    const order: ServiceOrder = {
+      ...baseOrder,
+      budgetItems: [
+        {
+          id: 'budget-mixed-1',
+          type: 'LABOR_AND_PART',
+          serviceCatalogItemId: 'service-1',
+          inventoryItemId: 'inventory-1',
+          serviceCode: 'SRV-001',
+          description: 'Troca de oleo + oleo',
+          quantity: 1,
+          unitPrice: 180,
+          totalPrice: 180,
+          inventoryItem: undefined as unknown as null,
+        },
+      ],
+    };
+
+    expect(getPlannedServiceOrderParts(order)).toEqual([]);
+  });
 });

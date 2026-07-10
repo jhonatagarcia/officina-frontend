@@ -35,6 +35,7 @@ interface BudgetItemsEditorProps {
   fieldArray: UseFieldArrayReturn<BudgetSchema, 'items'>;
   readOnly: boolean;
   items: BudgetSchema['items'];
+  onRemoveItem?: (index: number, item: BudgetSchema['items'][number]) => void;
 }
 
 interface BudgetItemRowProps {
@@ -374,6 +375,7 @@ export function BudgetItemsEditor({
   fieldArray,
   readOnly,
   items,
+  onRemoveItem,
 }: BudgetItemsEditorProps) {
   const serviceOptionsQuery = useServiceOptions();
   const inventoryOptionsQuery = useInventoryOptions();
@@ -417,7 +419,9 @@ export function BudgetItemsEditor({
             inventoryOptions={inventoryOptions}
             isLoadingServices={serviceOptionsQuery.isLoading}
             isLoadingInventory={inventoryOptionsQuery.isLoading}
-            onRemove={() => fieldArray.remove(index)}
+            onRemove={() =>
+              onRemoveItem ? onRemoveItem(index, item) : fieldArray.remove(index)
+            }
           />
         );
       })}
