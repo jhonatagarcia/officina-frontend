@@ -133,9 +133,12 @@ export function LoginModal({ isOpen, onClose, onRegisterClick }: LoginModalProps
 
               <div className="mt-4 flex justify-end">
                 <button
-                  className="cursor-not-allowed text-sm font-medium text-orange-300 opacity-40"
-                  disabled
+                  className="text-sm font-medium text-orange-300 transition-colors hover:text-orange-200"
                   type="button"
+                  onClick={() => {
+                    onClose();
+                    navigate('/login');
+                  }}
                 >
                   Esqueci minha senha
                 </button>

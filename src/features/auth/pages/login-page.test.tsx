@@ -360,14 +360,15 @@ describe('LoginPage', () => {
     expect(toastErrorMock).not.toHaveBeenCalledWith('stack trace ou detalhe interno');
   });
 
-  it('mantem recuperacao de senha bloqueada temporariamente', () => {
+  it('habilita recuperacao de senha pelo login', () => {
     renderWithProviders(<LoginPage />);
 
     const forgotButton = screen.getByRole('button', { name: /esqueci minha senha/i });
-    expect(forgotButton).toBeDisabled();
+    expect(forgotButton).toBeEnabled();
     fireEvent.click(forgotButton);
 
-    expect(screen.queryByRole('heading', { name: /recuperar senha/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /recuperar senha/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /enviar instruções/i })).toBeInTheDocument();
     expect(forgotPasswordMock).not.toHaveBeenCalled();
   });
 
