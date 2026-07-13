@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { getGoogleSignInUnavailableReason } from '@/features/auth/lib/google-sign-in-config';
 import { env } from '@/lib/env';
 import { cn } from '@/lib/utils';
 
@@ -46,6 +47,7 @@ interface GoogleIdentityWindow extends Window {
 type GoogleButtonState = 'loading' | 'ready' | 'unavailable';
 type GoogleSignInErrorReason =
   | 'invalid_client_id'
+  | 'origin_not_allowed'
   | 'script_load_failed'
   | 'script_timeout'
   | 'identity_unavailable'
@@ -64,25 +66,19 @@ function getGoogleIdentity() {
   return (window as GoogleIdentityWindow).google?.accounts?.id;
 }
 
-function isValidGoogleClientId(clientId: string) {
-  const normalizedClientId = clientId.trim();
-
-  return (
-    /^[^\s@]+\.apps\.googleusercontent\.com$/.test(normalizedClientId) &&
-    !normalizedClientId.startsWith('local-google-client-id') &&
-    !normalizedClientId.startsWith('SUBSTITUA_')
-  );
-}
-
 function reportGoogleIdentityIssue(reason: GoogleSignInErrorReason, error?: unknown) {
   const detail = error instanceof Error ? error.message : error;
   const safeDetail = typeof detail === 'string' ? detail.slice(0, 256) : undefined;
 
-  console.error('[Google Identity] Nao foi possivel iniciar o login com Google.', {
+  console.warn('[Google Identity] Nao foi possivel iniciar o login com Google.', {
     reason,
     origin: window.location.origin,
     detail: safeDetail,
   });
+
+  if (reason === 'origin_not_allowed') {
+    return;
+  }
 
   void fetch(`${env.VITE_API_BASE_URL}/auth/google/identity-issue`, {
     method: 'POST',
@@ -162,11 +158,17 @@ function loadGoogleIdentityScript() {
 export function GoogleSignInButton({ clientId, disabled = false, isSubmitting = false, onCredential, onGoogleError }: GoogleSignInButtonProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const descriptionId = useId();
-  const hasValidClientId = isValidGoogleClientId(clientId);
+  const initialUnavailableReason = getGoogleSignInUnavailableReason(
+    clientId,
+    env.VITE_GOOGLE_ALLOWED_ORIGINS,
+  );
+  const canLoadGoogleIdentity = !initialUnavailableReason;
   const [retryCount, setRetryCount] = useState(0);
-  const [state, setState] = useState<GoogleButtonState>(hasValidClientId ? 'loading' : 'unavailable');
+  const [state, setState] = useState<GoogleButtonState>(
+    canLoadGoogleIdentity ? 'loading' : 'unavailable',
+  );
   const [unavailableReason, setUnavailableReason] = useState<GoogleSignInErrorReason | undefined>(
-    hasValidClientId ? undefined : 'invalid_client_id',
+    initialUnavailableReason,
   );
 
   useEffect(() => {
@@ -206,8 +208,8 @@ export function GoogleSignInButton({ clientId, disabled = false, isSubmitting = 
     }
 
     async function initializeGoogleButton() {
-      if (!hasValidClientId || !containerRef.current) {
-        setUnavailableReason('invalid_client_id');
+      if (!canLoadGoogleIdentity || !containerRef.current) {
+        setUnavailableReason(initialUnavailableReason);
         setState('unavailable');
         return;
       }
@@ -253,7 +255,7 @@ export function GoogleSignInButton({ clientId, disabled = false, isSubmitting = 
     return () => {
       cancelled = true;
     };
-  }, [clientId, hasValidClientId, onCredential, onGoogleError, retryCount]);
+  }, [canLoadGoogleIdentity, clientId, initialUnavailableReason, onCredential, onGoogleError, retryCount]);
 
   const isUnavailable = state === 'unavailable';
   const isLoading = state === 'loading';
@@ -280,9 +282,10 @@ export function GoogleSignInButton({ clientId, disabled = false, isSubmitting = 
         disabled={isFallbackBlocked}
         type="button"
         onClick={() => {
-          if (!hasValidClientId) {
-            reportGoogleIdentityIssue('invalid_client_id');
-            onGoogleError('invalid_client_id');
+          if (!canLoadGoogleIdentity) {
+            const reason = initialUnavailableReason ?? 'identity_unavailable';
+            reportGoogleIdentityIssue(reason);
+            onGoogleError(reason);
             return;
           }
 

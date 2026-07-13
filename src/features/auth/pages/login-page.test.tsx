@@ -8,11 +8,12 @@ import { LoginPage } from '@/features/auth/pages/login-page';
 import { renderWithProviders } from '@/test/render-with-providers';
 import { useAuthStore } from '@/store/auth-store';
 
-const { loginMock, googleLoginMock, registerWorkshopMock, forgotPasswordMock, toastErrorMock, toastSuccessMock, loginState, googleLoginState } = vi.hoisted(() => ({
+const { loginMock, googleLoginMock, registerWorkshopMock, forgotPasswordMock, executeRecaptchaMock, toastErrorMock, toastSuccessMock, loginState, googleLoginState } = vi.hoisted(() => ({
   loginMock: vi.fn(),
   googleLoginMock: vi.fn(),
   registerWorkshopMock: vi.fn(),
   forgotPasswordMock: vi.fn(),
+  executeRecaptchaMock: vi.fn(),
   toastErrorMock: vi.fn(),
   toastSuccessMock: vi.fn(),
   loginState: { isLoggingIn: false },
@@ -31,6 +32,10 @@ vi.mock('@/features/auth/hooks/use-google-login', () => ({
     loginWithGoogle: googleLoginMock,
     isGoogleLoggingIn: googleLoginState.isGoogleLoggingIn,
   }),
+}));
+
+vi.mock('@/features/auth/hooks/use-recaptcha', () => ({
+  useRecaptcha: () => executeRecaptchaMock,
 }));
 
 vi.mock('@/features/auth/services/auth-service', () => ({
@@ -103,6 +108,8 @@ describe('LoginPage', () => {
     googleLoginMock.mockReset();
     registerWorkshopMock.mockReset();
     forgotPasswordMock.mockReset();
+    executeRecaptchaMock.mockReset();
+    executeRecaptchaMock.mockResolvedValue('recaptcha-token');
     toastErrorMock.mockReset();
     toastSuccessMock.mockReset();
     loginState.isLoggingIn = false;
@@ -111,26 +118,25 @@ describe('LoginPage', () => {
     installGoogleIdentityMock();
   });
 
-  it('renderiza login com captcha e envia credenciais válidas', async () => {
+  it('gera token reCAPTCHA e envia credenciais válidas', async () => {
     loginMock.mockResolvedValue(undefined);
 
     renderWithProviders(<LoginPage />);
 
     expect(screen.getByRole('heading', { name: /entrar na sua conta/i })).toBeInTheDocument();
-    expect(screen.getByText(/não sou um robô/i)).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText(/e-mail/i), { target: { value: 'gestor@oficina.com' } });
     fireEvent.change(screen.getByLabelText(/^senha$/i), { target: { value: 'Senha123' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /não sou um robô/i }));
     fireEvent.click(screen.getByRole('button', { name: /^entrar$/i }));
 
     await waitFor(() =>
       expect(loginMock).toHaveBeenCalledWith({
         email: 'gestor@oficina.com',
         password: 'Senha123',
-        captchaToken: 'local-captcha-ok',
+        captchaToken: 'recaptcha-token',
       }),
     );
+    expect(executeRecaptchaMock).toHaveBeenCalledWith('login');
   });
 
   it('renderiza botao de login com Google via Google Identity Services', async () => {
@@ -333,7 +339,7 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /^entrar$/i }));
 
     expect(await screen.findByText(/informe um e-mail válido/i)).toBeInTheDocument();
-    expect(screen.getByText(/confirme o captcha/i)).toBeInTheDocument();
+    expect(executeRecaptchaMock).not.toHaveBeenCalled();
     expect(loginMock).not.toHaveBeenCalled();
   });
 
@@ -352,7 +358,6 @@ describe('LoginPage', () => {
 
     fireEvent.change(screen.getByLabelText(/e-mail/i), { target: { value: 'gestor@oficina.com' } });
     fireEvent.change(screen.getByLabelText(/^senha$/i), { target: { value: 'Senha123' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /não sou um robô/i }));
     fireEvent.click(screen.getByRole('button', { name: /^entrar$/i }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Usuário não cadastrado ou senha inválida.');
@@ -398,7 +403,6 @@ describe('LoginPage', () => {
 
     fireEvent.change(screen.getByLabelText(/e-mail/i), { target: { value: 'gestor@oficina.com' } });
     fireEvent.change(screen.getByLabelText(/^senha$/i), { target: { value: 'Senha123' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /não sou um robô/i }));
     fireEvent.click(screen.getByRole('button', { name: /^entrar$/i }));
 
     expect(await screen.findByText('Dashboard seguro')).toBeInTheDocument();

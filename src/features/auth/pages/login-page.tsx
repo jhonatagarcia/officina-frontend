@@ -7,6 +7,7 @@ import { ArrowLeft, Wrench } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useLogin } from '@/features/auth/hooks/use-login';
 import { useGoogleLogin } from '@/features/auth/hooks/use-google-login';
+import { useRecaptcha } from '@/features/auth/hooks/use-recaptcha';
 import { authService } from '@/features/auth/services/auth-service';
 import { forgotPasswordSchema, loginSchema, type ForgotPasswordSchema, type LoginSchema } from '@/features/auth/schemas/login-schema';
 import { CaptchaField } from '@/features/auth/components/captcha-field';
@@ -49,6 +50,7 @@ function getGoogleLoginErrorMessage(error: unknown) {
 export function LoginPage() {
   const { login, isLoggingIn } = useLogin();
   const { loginWithGoogle, isGoogleLoggingIn } = useGoogleLogin();
+  const executeRecaptcha = useRecaptcha();
   const navigate = useNavigate();
   const location = useLocation();
   const [mode, setMode] = useState<'login' | 'forgot'>('login');
@@ -83,7 +85,8 @@ export function LoginPage() {
   async function onLoginSubmit(values: LoginSchema) {
     try {
       loginForm.clearErrors('root');
-      const session = await login(values);
+      const captchaToken = await executeRecaptcha('login');
+      const session = await login({ ...values, captchaToken });
       toast.success('Acesso realizado com sucesso.');
       navigate(getSafePostLoginPath(location.state, session), { replace: true });
     } catch {
@@ -204,12 +207,6 @@ export function LoginPage() {
                       onChange={field.onChange}
                     />
                   )}
-                />
-                <CaptchaField
-                  disabled={isAuthenticating}
-                  error={loginForm.formState.errors.captchaToken?.message}
-                  value={loginForm.watch('captchaToken')}
-                  onChange={(value) => loginForm.setValue('captchaToken', value, { shouldValidate: true })}
                 />
                 <Button className="h-11 w-full" disabled={isAuthenticating} type="submit">
                   {isLoggingIn ? 'Entrando...' : 'Entrar'}

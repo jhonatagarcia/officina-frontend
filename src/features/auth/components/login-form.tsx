@@ -3,8 +3,8 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useLogin } from '@/features/auth/hooks/use-login';
+import { useRecaptcha } from '@/features/auth/hooks/use-recaptcha';
 import { loginSchema, type LoginSchema } from '@/features/auth/schemas/login-schema';
-import { CaptchaField } from '@/features/auth/components/captcha-field';
 import { PasswordField } from '@/features/auth/components/password-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ interface LoginFormProps {
 
 export function LoginForm({ onSuccess, redirectTo = '/inicio/dashboard' }: LoginFormProps) {
   const { login, isLoggingIn } = useLogin();
+  const executeRecaptcha = useRecaptcha();
   const navigate = useNavigate();
 
   const form = useForm<LoginSchema>({
@@ -29,7 +30,8 @@ export function LoginForm({ onSuccess, redirectTo = '/inicio/dashboard' }: Login
   async function onSubmit(values: LoginSchema) {
     try {
       form.clearErrors('root');
-      await login(values);
+      const captchaToken = await executeRecaptcha('login');
+      await login({ ...values, captchaToken });
       toast.success('Acesso realizado com sucesso.');
       onSuccess?.();
       navigate(redirectTo, { replace: true });
@@ -75,13 +77,6 @@ export function LoginForm({ onSuccess, redirectTo = '/inicio/dashboard' }: Login
             onChange={field.onChange}
           />
         )}
-      />
-
-      <CaptchaField
-        disabled={isLoggingIn}
-        error={form.formState.errors.captchaToken?.message}
-        value={form.watch('captchaToken')}
-        onChange={(value) => form.setValue('captchaToken', value, { shouldValidate: true })}
       />
 
       <Button className="h-11 w-full" disabled={isLoggingIn} type="submit">

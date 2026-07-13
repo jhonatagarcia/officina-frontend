@@ -21,7 +21,7 @@ export interface AuthSession {
 export interface LoginPayload {
   email: string;
   password: string;
-  captchaToken?: string;
+  captchaToken?: string | undefined;
 }
 
 export interface GoogleLoginPayload {
