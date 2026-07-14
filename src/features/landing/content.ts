@@ -155,9 +155,15 @@ export const showcase = {
 export const showcaseTabs: BrowserTab[] = [
   { id: 'dashboard', label: 'Dashboard', image: landingImages.showcaseDashboard },
   { id: 'clientes', label: 'Clientes', image: landingImages.showcaseClientes },
+  { id: 'veiculos', label: 'Veículos', image: landingImages.showcaseVeiculos },
   { id: 'orcamentos', label: 'Orçamentos', image: landingImages.showcaseOrcamentos },
   { id: 'ordens', label: 'Ordem de Serviço', image: landingImages.showcaseOrdens },
   { id: 'financeiro', label: 'Financeiro', image: landingImages.showcaseFinanceiro },
+  { id: 'chamados', label: 'Chamados', image: landingImages.showcaseChamados },
+  { id: 'meu-negocio', label: 'Meu Negócio', image: landingImages.showcaseMeuNegocio },
+  { id: 'servicos', label: 'Serviços', image: landingImages.showcaseServicos },
+  { id: 'estoque', label: 'Estoque', image: landingImages.showcaseEstoque },
+  { id: 'mecanicos', label: 'Mecânicos', image: landingImages.showcaseMecanicos },
 ];
 
 /* ── Seções de detalhe por segmento ───────────────── */

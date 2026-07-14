@@ -6,6 +6,7 @@ import { GuestRoute, ProtectedRoute, RoleGuard } from '@/routes/route-guards';
 import { LoginPage } from '@/features/auth/pages/login-page';
 import { ResetPasswordPage } from '@/features/auth/pages/reset-password-page';
 import { LandingPage } from '@/features/landing/pages/landing-page';
+import { TestimonialsPage } from '@/features/landing/pages/testimonials-page';
 import { appRoutes } from '@/routes/route-manifest';
 import { env } from '@/lib/env';
 
@@ -17,7 +18,9 @@ function LegacyAppRedirect() {
   const location = useLocation();
   const nextPath = location.pathname.replace(/^\/app\b/, '/inicio');
 
-  return <Navigate to={`${nextPath}${location.search}${location.hash}`} replace />;
+  return (
+    <Navigate to={`${nextPath}${location.search}${location.hash}`} replace />
+  );
 }
 
 export function AppRouter() {
@@ -26,6 +29,7 @@ export function AppRouter() {
       <Routes>
         {/* ── PÚBLICO ── */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/avaliacoes" element={<TestimonialsPage />} />
 
         {/* ── ADMIN ── */}
         {env.VITE_ADMIN_PANEL_ENABLED ? (
@@ -42,9 +46,15 @@ export function AppRouter() {
         <Route path="/app/*" element={<LegacyAppRedirect />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/inicio" element={<AppLayout />}>
-            <Route index element={<Navigate to="/inicio/dashboard" replace />} />
+            <Route
+              index
+              element={<Navigate to="/inicio/dashboard" replace />}
+            />
             {appRoutes.map((route) => (
-              <Route key={route.key} element={<RoleGuard roles={route.roles} />}>
+              <Route
+                key={route.key}
+                element={<RoleGuard roles={route.roles} />}
+              >
                 <Route path={route.path} element={route.element} />
               </Route>
             ))}

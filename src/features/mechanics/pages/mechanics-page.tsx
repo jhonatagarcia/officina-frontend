@@ -35,7 +35,6 @@ import { mechanicsService } from '@/features/mechanics/services/mechanics-servic
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 import { useListParams } from '@/hooks/use-list-params';
 import { useSortableData } from '@/hooks/use-sortable-data';
-import { formatDateOnly } from '@/lib/utils';
 
 type ActiveFilter = 'ACTIVE' | 'INACTIVE' | 'ALL';
 
@@ -72,8 +71,6 @@ export function MechanicsPage() {
     accessors: {
       name: (item) => item.name,
       status: (item) => item.isActive,
-      lastLoginAt: (item) =>
-        item.lastLoginAt ? new Date(item.lastLoginAt) : null,
     },
   });
   const activeCount = listedItems.filter((item) => item.isActive).length;
@@ -198,13 +195,6 @@ export function MechanicsPage() {
                     >
                       Status
                     </SortableTableHead>
-                    <SortableTableHead
-                      column="lastLoginAt"
-                      sortState={sortState}
-                      onSort={requestSort}
-                    >
-                      Último acesso
-                    </SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -216,11 +206,6 @@ export function MechanicsPage() {
                         <Badge variant={item.isActive ? 'success' : 'danger'}>
                           {item.isActive ? 'Ativo' : 'Inativo'}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {item.lastLoginAt
-                          ? formatDateOnly(item.lastLoginAt)
-                          : '-'}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">

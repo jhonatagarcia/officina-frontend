@@ -10,6 +10,7 @@ describe('getSidebarRoutes', () => {
       'orcamentos-list',
       'ordens-servico-list',
       'financeiro-list',
+      'chamados',
       'oficina-profile',
       'servicos-list',
       'estoque-list',
@@ -24,14 +25,22 @@ describe('getSidebarRoutes', () => {
       'veiculos-list',
       'orcamentos-list',
       'ordens-servico-list',
+      'chamados',
       'servicos-list',
       'estoque-list',
     ]);
   });
 
   it('limita rotas do mecanico e financeiro aos seus escopos principais', () => {
-    expect(getSidebarRoutes('MECANICO').map((route) => route.key)).toEqual(['ordens-servico-list']);
-    expect(getSidebarRoutes('FINANCEIRO').map((route) => route.key)).toEqual(['dashboard', 'financeiro-list']);
+    expect(getSidebarRoutes('MECANICO').map((route) => route.key)).toEqual([
+      'ordens-servico-list',
+      'chamados',
+    ]);
+    expect(getSidebarRoutes('FINANCEIRO').map((route) => route.key)).toEqual([
+      'dashboard',
+      'financeiro-list',
+      'chamados',
+    ]);
   });
 
   it('nao retorna rotas quando nao ha perfil carregado', () => {

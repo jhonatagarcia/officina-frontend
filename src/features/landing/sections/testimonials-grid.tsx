@@ -1,7 +1,12 @@
-import { testimonials } from '../content';
-import { Reveal } from '../components/reveal';
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+import { usePublicTestimonials } from '@/features/support/hooks/use-support';
+import { TestimonialCard } from '../components/testimonial-card';
 
 export function TestimonialsGrid() {
+  const testimonialsQuery = usePublicTestimonials(1, 3);
+  const testimonials = testimonialsQuery.data?.data.slice(0, 3) ?? [];
+
   return (
     <section className="section testimonials-section">
       <div className="section-inner">
@@ -9,20 +14,26 @@ export function TestimonialsGrid() {
         <h2 className="section-title">Quem usa, recomenda</h2>
         <div className="testimonials-grid">
           {testimonials.map((testimonial, index) => (
-            <Reveal key={testimonial.name} delay={index * 80} className="testi">
-              <div className="testi-stars" aria-label="5 de 5 estrelas">
-                <span aria-hidden="true">★★★★★</span>
-              </div>
-              <p className="testi-text">"{testimonial.quote}"</p>
-              <div className="testi-author">
-                <div className="testi-avatar">{testimonial.initials}</div>
-                <div>
-                  <div className="testi-name">{testimonial.name}</div>
-                  <div className="testi-role">{testimonial.role}</div>
-                </div>
-              </div>
-            </Reveal>
+            <TestimonialCard
+              key={testimonial.id}
+              testimonial={testimonial}
+              index={index}
+            />
           ))}
+        </div>
+        {testimonialsQuery.isLoading ? (
+          <p className="testimonials-feedback">Carregando comentários...</p>
+        ) : null}
+        {!testimonialsQuery.isLoading && testimonials.length === 0 ? (
+          <p className="testimonials-feedback">
+            Os próximos comentários 5 estrelas aparecerão aqui.
+          </p>
+        ) : null}
+        <div className="testimonials-more">
+          <Link to="/avaliacoes">
+            Ver todos os comentários positivos{' '}
+            <ArrowRight size={16} aria-hidden="true" />
+          </Link>
         </div>
       </div>
     </section>
