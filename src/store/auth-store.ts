@@ -19,7 +19,28 @@ const validRoles = new Set<Role>([
   'FINANCEIRO',
 ]);
 function isAdminRoute() {
-  return typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+  return (
+    typeof window !== 'undefined' &&
+    window.location.pathname.startsWith('/admin')
+  );
+}
+
+let refreshInFlight: Promise<AuthSession> | null = null;
+let authStateVersion = 0;
+
+function requestSessionRefresh(): Promise<AuthSession> {
+  refreshInFlight ??= axios
+    .post<AuthSession>(
+      `${env.VITE_API_BASE_URL}/auth/refresh`,
+      {},
+      { withCredentials: true },
+    )
+    .then((response) => response.data)
+    .finally(() => {
+      refreshInFlight = null;
+    });
+
+  return refreshInFlight;
 }
 
 function normalizeSession(session: AuthSession | null): AuthSession | null {
@@ -47,8 +68,10 @@ function normalizeSession(session: AuthSession | null): AuthSession | null {
 export const useAuthStore = create<AuthState>()((set) => ({
   session: null,
   hydrated: false,
-  setSession: (session) =>
-    set({ session: normalizeSession(session), hydrated: true }),
+  setSession: (session) => {
+    authStateVersion += 1;
+    set({ session: normalizeSession(session), hydrated: true });
+  },
   setHydrated: (hydrated) => set({ hydrated }),
   silentRefresh: async () => {
     if (isAdminRoute()) {
@@ -56,22 +79,33 @@ export const useAuthStore = create<AuthState>()((set) => ({
       return false;
     }
 
-    try {
-      const response = await axios.post<AuthSession>(
-        `${env.VITE_API_BASE_URL}/auth/refresh`,
-        {},
-        { withCredentials: true },
-      );
-      const session = normalizeSession(response.data);
+    const requestVersion = authStateVersion;
 
-      set({ session, hydrated: true });
+    try {
+      const session = normalizeSession(await requestSessionRefresh());
+
+      if (requestVersion === authStateVersion) {
+        set({ session, hydrated: true });
+      }
       return Boolean(session);
     } catch {
-      set({ session: null, hydrated: true });
+      if (requestVersion === authStateVersion) {
+        set({ session: null, hydrated: true });
+      }
       return false;
     }
   },
   logout: async () => {
-    set({ session: null, hydrated: true });
+    authStateVersion += 1;
+
+    try {
+      await axios.post(
+        `${env.VITE_API_BASE_URL}/auth/logout`,
+        {},
+        { withCredentials: true },
+      );
+    } finally {
+      set({ session: null, hydrated: true });
+    }
   },
 }));

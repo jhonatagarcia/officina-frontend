@@ -27,8 +27,8 @@ export default function LogsPage() {
           <Metric label="Ultimo registro" value={lastLogTime} color="#35d05f" />
         </div>
 
-        <div className="admin-grid" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
-          <Metric label="WAHA 24h" value={summary.data?.waha ?? 0} color="#a472f7" />
+        <div className="admin-grid" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+          {/* TODO(WhatsApp Cloud API): restaurar a metrica de mensagens depois do rollout. */}
           <Metric label="Redis 24h" value={summary.data?.redis ?? 0} color="#ff7425" />
           <Metric label="Filas 24h" value={summary.data?.queue ?? 0} color="#35d05f" />
         </div>
@@ -41,7 +41,7 @@ export default function LogsPage() {
                 <option value="">Todas categorias</option>
                 <option value="SECURITY">Seguranca</option>
                 <option value="HTTP">API</option>
-                <option value="WAHA">WAHA</option>
+                {/* TODO(WhatsApp Cloud API): restaurar o filtro de logs depois do rollout. */}
                 <option value="REDIS">Redis</option>
                 <option value="QUEUE">Fila</option>
                 <option value="AUTH">Autenticacao</option>
@@ -92,7 +92,7 @@ function levelColor(level: AdminLog['level']) {
 function categoryColor(category: AdminLog['category']) {
   return category === 'SECURITY' || category === 'HTTP'
     ? 'red'
-    : category === 'WAHA' || category === 'REDIS' || category === 'QUEUE'
+    : category === 'REDIS' || category === 'QUEUE'
       ? 'yellow'
       : 'blue';
 }

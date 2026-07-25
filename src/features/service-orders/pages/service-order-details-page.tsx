@@ -166,7 +166,7 @@ export function ServiceOrderDetailsPage() {
   });
   const mutation = useMutation({
     mutationFn: (status: Parameters<typeof serviceOrdersService.updateStatus>[1]) => serviceOrdersService.updateStatus(id, status),
-    onSuccess: (updatedOrder) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
       queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
       queryClient.invalidateQueries({ queryKey: ['financeiro'] });
@@ -174,15 +174,18 @@ export function ServiceOrderDetailsPage() {
       setNextStatus('');
       setRegressiveStatusToConfirm(null);
       toast.success('Status atualizado com sucesso.');
-      if (updatedOrder.whatsappNotification?.status === 'SENT') {
-        toast.success('Notificação enviada pelo WhatsApp.');
-      }
-      if (updatedOrder.whatsappNotification?.status === 'SKIPPED') {
-        toast.warning(updatedOrder.whatsappNotification.reason || 'WhatsApp não enviado: backend marcou a notificação como ignorada.');
-      }
-      if (updatedOrder.whatsappNotification?.status === 'FAILED') {
-        toast.error(updatedOrder.whatsappNotification.reason || 'Status atualizado, mas não foi possível enviar a mensagem no WhatsApp.');
-      }
+      /*
+       * TODO(WhatsApp Cloud API): restaurar os toasts de envio quando a feature voltar.
+       * if (updatedOrder.whatsappNotification?.status === 'SENT') {
+       *   toast.success('Notificação enviada pelo WhatsApp.');
+       * }
+       * if (updatedOrder.whatsappNotification?.status === 'SKIPPED') {
+       *   toast.warning(updatedOrder.whatsappNotification.reason || 'WhatsApp não enviado.');
+       * }
+       * if (updatedOrder.whatsappNotification?.status === 'FAILED') {
+       *   toast.error(updatedOrder.whatsappNotification.reason || 'Falha ao enviar WhatsApp.');
+       * }
+       */
 
       query.refetch();
     },
@@ -300,18 +303,21 @@ export function ServiceOrderDetailsPage() {
   });
   const resumeMutation = useMutation({
     mutationFn: () => serviceOrdersService.resumeAfterPartsArrival(id),
-    onSuccess: (updatedOrder) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
       queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setResumeDialogOpen(false);
       toast.success('OS retomada com sucesso.');
-      if (updatedOrder.whatsappNotification?.status === 'SENT') {
-        toast.success('Notificação enviada pelo WhatsApp.');
-      }
-      if (updatedOrder.whatsappNotification?.status === 'FAILED') {
-        toast.error(updatedOrder.whatsappNotification.reason || 'OS retomada, mas não foi possível enviar a mensagem no WhatsApp.');
-      }
+      /*
+       * TODO(WhatsApp Cloud API): restaurar os toasts quando a integracao for reativada.
+       * if (updatedOrder.whatsappNotification?.status === 'SENT') {
+       *   toast.success('Notificação enviada pelo WhatsApp.');
+       * }
+       * if (updatedOrder.whatsappNotification?.status === 'FAILED') {
+       *   toast.error(updatedOrder.whatsappNotification.reason || 'Falha ao enviar WhatsApp.');
+       * }
+       */
       query.refetch();
     },
     onError: (error: { message?: string | string[] }) => {
@@ -835,8 +841,11 @@ export function ServiceOrderDetailsPage() {
           {plannedParts.length ? (
             <div>
               <p className="mb-3 flex items-center gap-2 font-bold">
-                <Package className="size-4 text-primary" /> Peças previstas no orçamento{' '}
+                <Package className="size-4 text-primary" /> Peças cobradas na OS{' '}
                 <span className="rounded-full bg-muted px-2 text-sm text-muted-foreground">{plannedParts.length}</span>
+              </p>
+              <p className="mb-3 text-sm text-muted-foreground">
+                Estas peças compõem o subtotal de peças e o total a receber do cliente.
               </p>
               <Table>
                 <TableHeader>
@@ -894,7 +903,10 @@ export function ServiceOrderDetailsPage() {
           ) : null}
 
           <div>
-            <p className="mb-3 flex items-center gap-2 font-bold"><Package className="size-4 text-primary" /> Peças aplicadas <span className="rounded-full bg-muted px-2 text-sm text-muted-foreground">{appliedParts.length}</span></p>
+            <p className="mb-3 flex items-center gap-2 font-bold"><Package className="size-4 text-primary" /> Baixas de peças no estoque <span className="rounded-full bg-muted px-2 text-sm text-muted-foreground">{appliedParts.length}</span></p>
+            <p className="mb-3 text-sm text-muted-foreground">
+              Controle operacional das peças efetivamente retiradas do estoque para esta OS.
+            </p>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -936,7 +948,7 @@ export function ServiceOrderDetailsPage() {
                 )) : (
                   <TableRow>
                     <TableCell className="py-6 text-center text-muted-foreground" colSpan={canManageStockParts ? 6 : 5}>
-                      Nenhuma peça aplicada.
+                      Nenhuma baixa de estoque registrada.
                     </TableCell>
                   </TableRow>
                 )}

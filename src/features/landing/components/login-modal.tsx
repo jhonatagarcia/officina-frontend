@@ -7,7 +7,6 @@ import { GoogleSignInButton } from '@/features/auth/components/google-sign-in-bu
 import { useGoogleLogin } from '@/features/auth/hooks/use-google-login';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { env } from '@/lib/env';
-import type { AuthSession } from '@/types/auth';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -15,11 +14,7 @@ interface LoginModalProps {
   onRegisterClick: () => void;
 }
 
-function getSafePostLoginPath(session?: AuthSession) {
-  if (session?.user.role === 'ADMIN' && session.user.workshopFiscalStatus === 'INCOMPLETE') {
-    return '/inicio/oficina';
-  }
-
+function getSafePostLoginPath() {
   return '/inicio/dashboard';
 }
 
@@ -37,7 +32,11 @@ function getGoogleLoginErrorMessage(error: unknown) {
   return 'Não foi possível entrar com Google. Tente novamente ou use e-mail e senha.';
 }
 
-export function LoginModal({ isOpen, onClose, onRegisterClick }: LoginModalProps) {
+export function LoginModal({
+  isOpen,
+  onClose,
+  onRegisterClick,
+}: LoginModalProps) {
   const navigate = useNavigate();
   const { loginWithGoogle, isGoogleLoggingIn } = useGoogleLogin();
 
@@ -57,23 +56,24 @@ export function LoginModal({ isOpen, onClose, onRegisterClick }: LoginModalProps
     };
   }, [isOpen, onClose]);
 
-  const onGoogleCredential = useCallback(async (credential: string) => {
-    try {
-      const session = await loginWithGoogle({ credential });
-      toast.success(
-        session.user.workshopFiscalStatus === 'INCOMPLETE'
-          ? 'Acesso com Google realizado. Complete os dados do negócio para liberar todos os recursos.'
-          : 'Acesso com Google realizado com sucesso.',
-      );
-      onClose();
-      navigate(getSafePostLoginPath(session), { replace: true });
-    } catch (error) {
-      toast.error(getGoogleLoginErrorMessage(error));
-    }
-  }, [loginWithGoogle, navigate, onClose]);
+  const onGoogleCredential = useCallback(
+    async (credential: string) => {
+      try {
+        await loginWithGoogle({ credential });
+        toast.success('Acesso com Google realizado com sucesso.');
+        onClose();
+        navigate(getSafePostLoginPath(), { replace: true });
+      } catch (error) {
+        toast.error(getGoogleLoginErrorMessage(error));
+      }
+    },
+    [loginWithGoogle, navigate, onClose],
+  );
 
   const onGoogleError = useCallback(() => {
-    toast.error('Não foi possível iniciar o login com Google. Tente novamente ou use e-mail e senha.');
+    toast.error(
+      'Não foi possível iniciar o login com Google. Tente novamente ou use e-mail e senha.',
+    );
   }, []);
 
   if (!isOpen) return null;
@@ -85,7 +85,9 @@ export function LoginModal({ isOpen, onClose, onRegisterClick }: LoginModalProps
       role="dialog"
       aria-modal="true"
       aria-label="Login"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       {/* modal panel */}
       <div className="relative w-full max-w-[480px] rounded-3xl border border-white/10 bg-slate-950 shadow-[0_32px_96px_rgba(0,0,0,0.6)]">
@@ -104,21 +106,29 @@ export function LoginModal({ isOpen, onClose, onRegisterClick }: LoginModalProps
             <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-[0_18px_44px_rgba(234,88,12,0.22)]">
               <Wrench className="size-8" />
             </div>
-            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">{env.VITE_APP_NAME}</h2>
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
+              {env.VITE_APP_NAME}
+            </h2>
           </div>
 
           {/* login card */}
           <Card className="w-full border-white/10 bg-slate-900 text-slate-100 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <CardHeader className="space-y-1 px-6 pb-4 pt-6 text-center">
-              <CardTitle className="text-xl font-extrabold text-white">Entrar na sua conta</CardTitle>
-              <p className="text-sm text-slate-400">Acesse o sistema de gestão do negócio.</p>
+              <CardTitle className="text-xl font-extrabold text-white">
+                Entrar na sua conta
+              </CardTitle>
+              <p className="text-sm text-slate-400">
+                Acesse o sistema de gestão do negócio.
+              </p>
             </CardHeader>
             <CardContent className="px-6 pb-6">
               <LoginForm onSuccess={onClose} redirectTo="/inicio/dashboard" />
 
               <div className="mt-5 flex items-center gap-3" aria-hidden="true">
                 <span className="h-px flex-1 bg-white/10" />
-                <span className="text-xs font-medium uppercase tracking-wide text-slate-500">ou continue com</span>
+                <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  ou continue com
+                </span>
                 <span className="h-px flex-1 bg-white/10" />
               </div>
 

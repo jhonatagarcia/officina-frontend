@@ -20,9 +20,22 @@ interface ServiceOrderPartApiResponse extends Omit<ServiceOrderPart, 'unitPrice'
 }
 
 interface ServiceOrderBudgetItemApiResponse
-  extends Omit<ServiceOrderBudgetItem, 'unitPrice' | 'totalPrice' | 'inventoryItem'> {
+  extends Omit<
+    ServiceOrderBudgetItem,
+    | 'unitPrice'
+    | 'totalPrice'
+    | 'laborUnitPrice'
+    | 'laborTotalPrice'
+    | 'partUnitPrice'
+    | 'partTotalPrice'
+    | 'inventoryItem'
+  > {
   unitPrice: number | string;
   totalPrice: number | string;
+  laborUnitPrice?: number | string | undefined;
+  laborTotalPrice?: number | string | undefined;
+  partUnitPrice?: number | string | undefined;
+  partTotalPrice?: number | string | undefined;
   inventoryItem?: ServiceOrderBudgetItem['inventoryItem'] | undefined;
 }
 
@@ -79,6 +92,14 @@ function mapServiceOrderBudgetItem(item: ServiceOrderBudgetItemApiResponse): Ser
     ...item,
     unitPrice: toNumber(item.unitPrice),
     totalPrice: toNumber(item.totalPrice),
+    laborUnitPrice:
+      item.laborUnitPrice !== undefined ? toNumber(item.laborUnitPrice) : undefined,
+    laborTotalPrice:
+      item.laborTotalPrice !== undefined ? toNumber(item.laborTotalPrice) : undefined,
+    partUnitPrice:
+      item.partUnitPrice !== undefined ? toNumber(item.partUnitPrice) : undefined,
+    partTotalPrice:
+      item.partTotalPrice !== undefined ? toNumber(item.partTotalPrice) : undefined,
     inventoryItem: item.inventoryItem ?? null,
   };
 }

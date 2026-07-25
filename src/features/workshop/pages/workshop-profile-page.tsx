@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { AlertCircle, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Info } from 'lucide-react';
 import { PageContainer } from '@/components/shared/page-container';
 import { PageHeader } from '@/components/shared/page-header';
 import {
@@ -109,7 +109,7 @@ export function WorkshopProfilePage() {
     <PageContainer>
       <PageHeader
         title="Cadastro do negócio"
-        description="Mantenha os dados fiscais do negócio atualizados para liberar recursos financeiros e fiscais."
+        description="Mantenha os dados cadastrais do negócio atualizados. O CNPJ é opcional e não condiciona recursos operacionais ou financeiros."
       >
         <Button
           className="min-h-11 rounded-xl font-semibold"
@@ -133,7 +133,7 @@ export function WorkshopProfilePage() {
               });
             }}
           >
-            <FormSectionHeader eyebrow="Meu Negócio" title="Dados fiscais" />
+            <FormSectionHeader eyebrow="Meu Negócio" title="Dados cadastrais" />
             <div className="space-y-2">
               <Label htmlFor="workshop-trade-name">Nome fantasia</Label>
               <Input
@@ -157,8 +157,8 @@ export function WorkshopProfilePage() {
                 id="workshop-cnpj-help"
                 className="text-sm text-muted-foreground"
               >
-                Informe um CNPJ válido. Este dado libera funcionalidades que
-                dependem de identificação fiscal.
+                Se informado, use um CNPJ válido. O financeiro não depende deste
+                dado, que também não habilita emissão fiscal.
               </p>
             </div>
             <FormActions>
@@ -181,27 +181,25 @@ export function WorkshopProfilePage() {
         >
           <CardContent className="p-5">
             <div className="flex items-start gap-3">
-              {fiscalStatus.isIncomplete ? (
-                <AlertCircle
-                  className="mt-0.5 size-5 text-amber-500"
+              {fiscalStatus.hasCnpj ? (
+                <CheckCircle2
+                  className="mt-0.5 size-5 text-emerald-500"
                   aria-hidden="true"
                 />
               ) : (
-                <CheckCircle2
-                  className="mt-0.5 size-5 text-emerald-500"
+                <Info
+                  className="mt-0.5 size-5 text-amber-500"
                   aria-hidden="true"
                 />
               )}
               <div>
                 <p className="font-semibold text-foreground">
-                  {fiscalStatus.isIncomplete
-                    ? 'Cadastro fiscal incompleto'
-                    : 'Cadastro fiscal liberado'}
+                  {fiscalStatus.hasCnpj ? 'CNPJ cadastrado' : 'CNPJ opcional'}
                 </p>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  {fiscalStatus.isIncomplete
-                    ? 'Cadastre o CNPJ para liberar funcionalidades fiscais no sistema.'
-                    : 'O CNPJ está cadastrado e os recursos fiscais já estão disponíveis.'}
+                  Financeiro, estoque, orçamentos e ordens de serviço permanecem
+                  disponíveis sem CNPJ. Emissão fiscal não está disponível nesta
+                  versão.
                 </p>
               </div>
             </div>

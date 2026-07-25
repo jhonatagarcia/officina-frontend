@@ -8,7 +8,8 @@ import { RegisterWorkshopDialog } from '@/features/auth/components/register-work
 
 const navItems = [
   { label: 'Funcionalidades', href: '#funcionalidades' },
-  { label: 'WhatsApp', href: '#whatsapp' },
+  // TODO(WhatsApp Cloud API): restaurar o link quando a secao voltar a landing page.
+  // { label: 'WhatsApp', href: '#whatsapp' },
   { label: 'Produto', href: '#produto' },
   { label: 'Planos', href: '#planos' },
 ];

@@ -27,7 +27,8 @@ export interface ServiceOrder {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
-  whatsappNotification?: ServiceOrderWhatsAppNotification | undefined;
+  // TODO(WhatsApp Cloud API): reativar com o contrato de notificacao do backend.
+  // whatsappNotification?: ServiceOrderWhatsAppNotification | undefined;
   partsTotal?: number | undefined;
   laborTotal?: number | undefined;
   discount?: number | undefined;
@@ -42,10 +43,13 @@ export interface ServiceOrder {
   pendingParts?: ServiceOrderPendingPart[] | undefined;
 }
 
-export interface ServiceOrderWhatsAppNotification {
-  status: 'SENT' | 'SKIPPED' | 'FAILED';
-  reason?: string | undefined;
-}
+/*
+ * TODO(WhatsApp Cloud API): contrato preservado para a retomada da feature.
+ * export interface ServiceOrderWhatsAppNotification {
+ *   status: 'SENT' | 'SKIPPED' | 'FAILED';
+ *   reason?: string | undefined;
+ * }
+ */
 
 export type PendingPartStatus =
   | 'PENDING'
@@ -113,6 +117,10 @@ export interface ServiceOrderBudgetItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  laborUnitPrice?: number | undefined;
+  laborTotalPrice?: number | undefined;
+  partUnitPrice?: number | undefined;
+  partTotalPrice?: number | undefined;
   inventoryItem: {
     id: string;
     name: string;

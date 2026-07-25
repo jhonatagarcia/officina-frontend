@@ -129,7 +129,6 @@ export interface AppRouteDefinition {
   label?: string;
   icon?: LucideIcon | undefined;
   sidebar?: boolean;
-  requiresCnpj?: boolean;
 }
 
 export const appRoutes: AppRouteDefinition[] = [
@@ -327,7 +326,6 @@ export const appRoutes: AppRouteDefinition[] = [
     label: 'Financeiro',
     icon: BadgeDollarSign,
     sidebar: true,
-    requiresCnpj: true,
   },
   {
     key: 'chamados',

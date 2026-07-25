@@ -88,7 +88,7 @@ export const landingImages = {
   showcaseMeuNegocio: {
     id: 'showcaseMeuNegocio',
     src: '/screenshots/meu-negocio.png',
-    alt: 'Cadastro fiscal do negócio no AutoPro System',
+    alt: 'Cadastro do negócio no AutoPro System',
     url: 'app.autoprosystem.com.br/meu-negocio',
   },
   showcaseServicos: {

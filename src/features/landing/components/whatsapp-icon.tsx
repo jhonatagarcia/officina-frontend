@@ -1,3 +1,6 @@
+/*
+ * TODO(WhatsApp Cloud API): icone preservado para a futura reativacao da landing page.
+ *
 interface WhatsAppIconProps {
   size?: number;
 }
@@ -9,3 +12,6 @@ export function WhatsAppIcon({ size = 20 }: WhatsAppIconProps) {
     </svg>
   );
 }
+*/
+
+export {};

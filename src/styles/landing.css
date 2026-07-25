@@ -874,7 +874,8 @@
   line-height: 1.6;
 }
 
-/* ── WhatsApp ─────────────────────────────────────── */
+/*
+ * TODO(WhatsApp Cloud API): estilos preservados e pausados junto com a secao da landing page.
 
 .landing-root .wa-section {
   background: var(--lp-bg);
@@ -981,7 +982,7 @@
   color: var(--lp-green-500);
 }
 
-/* Mockup de celular — cores literais do WhatsApp nos dois temas */
+Mockup de celular — cores literais do WhatsApp nos dois temas
 .landing-root .wa-phone-outer {
   display: flex;
   justify-content: center;
@@ -1141,6 +1142,7 @@
   justify-content: center;
   color: #ffffff;
 }
+*/
 
 /* ── Showcase ─────────────────────────────────────── */
 
@@ -2111,10 +2113,12 @@
     grid-template-columns: 1fr;
   }
 
+  /* TODO(WhatsApp Cloud API):
   .landing-root .wa-grid {
     grid-template-columns: 1fr;
     gap: 40px;
   }
+  */
 
   .landing-root .detail-grid {
     grid-template-columns: 1fr;
@@ -2199,9 +2203,11 @@
     border-right: none !important;
   }
 
+  /* TODO(WhatsApp Cloud API):
   .landing-root .wa-phone {
     width: min(266px, 100%);
   }
+  */
 }
 
 /* ── Movimento reduzido ───────────────────────────── */
@@ -2222,8 +2228,10 @@
     transform: none;
   }
 
+  /* TODO(WhatsApp Cloud API):
   .landing-root .wa-bubble {
     opacity: 1;
     transform: none;
   }
+  */
 }

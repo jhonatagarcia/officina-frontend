@@ -6,7 +6,8 @@ import { HeroSection } from '../sections/hero-section';
 import { SegmentsStrip } from '../sections/segments-strip';
 import { StatsBar } from '../sections/stats-bar';
 import { FeaturesGrid } from '../sections/features-grid';
-import { WhatsAppSection } from '../sections/whatsapp-section';
+// TODO(WhatsApp Cloud API): reativar a secao comercial somente quando a feature voltar ao produto.
+// import { WhatsAppSection } from '../sections/whatsapp-section';
 import { ProductShowcase } from '../sections/product-showcase';
 import { SegmentDetailsSection } from '../sections/segment-details-section';
 import { PricingSection } from '../sections/pricing-section';
@@ -34,7 +35,7 @@ export function LandingPage() {
         <SegmentsStrip />
         <StatsBar />
         <FeaturesGrid />
-        <WhatsAppSection />
+        {/* TODO(WhatsApp Cloud API): <WhatsAppSection /> */}
         <ProductShowcase />
         <SegmentDetailsSection />
         <PricingSection />

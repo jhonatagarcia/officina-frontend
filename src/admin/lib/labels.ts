@@ -50,7 +50,7 @@ export function logCategoryLabel(category: AdminLog['category']): string {
     HTTP: 'API',
     SECURITY: 'Seguranca',
     QUEUE: 'Fila',
-    WAHA: 'WAHA',
+    // TODO(WhatsApp Cloud API): WHATSAPP: 'WhatsApp',
     REDIS: 'Redis',
   };
 

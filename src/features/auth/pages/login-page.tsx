@@ -9,7 +9,12 @@ import { useLogin } from '@/features/auth/hooks/use-login';
 import { useGoogleLogin } from '@/features/auth/hooks/use-google-login';
 import { useRecaptcha } from '@/features/auth/hooks/use-recaptcha';
 import { authService } from '@/features/auth/services/auth-service';
-import { forgotPasswordSchema, loginSchema, type ForgotPasswordSchema, type LoginSchema } from '@/features/auth/schemas/login-schema';
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  type ForgotPasswordSchema,
+  type LoginSchema,
+} from '@/features/auth/schemas/login-schema';
 import { CaptchaField } from '@/features/auth/components/captcha-field';
 import { PasswordField } from '@/features/auth/components/password-field';
 import { RegisterWorkshopDialog } from '@/features/auth/components/register-workshop-dialog';
@@ -19,18 +24,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { env } from '@/lib/env';
-import type { AuthSession } from '@/types/auth';
 
 const loginFailureMessage = 'Usuário não cadastrado ou senha inválida.';
 
-function getSafePostLoginPath(state: unknown, session?: AuthSession) {
-  if (session?.user.role === 'ADMIN' && session.user.workshopFiscalStatus === 'INCOMPLETE') {
-    return '/inicio/oficina';
-  }
+function getSafePostLoginPath(state: unknown) {
+  const pathname = (state as { from?: { pathname?: unknown } } | null)?.from
+    ?.pathname;
 
-  const pathname = (state as { from?: { pathname?: unknown } } | null)?.from?.pathname;
-
-  return typeof pathname === 'string' && pathname.startsWith('/inicio/') ? pathname : '/inicio/dashboard';
+  return typeof pathname === 'string' && pathname.startsWith('/inicio/')
+    ? pathname
+    : '/inicio/dashboard';
 }
 
 function getGoogleLoginErrorMessage(error: unknown) {
@@ -73,12 +76,16 @@ export function LoginPage() {
   const forgotMutation = useMutation({
     mutationFn: authService.forgotPassword,
     onSuccess: () => {
-      toast.success('Se o e-mail estiver cadastrado, enviaremos as instruções de redefinição.');
+      toast.success(
+        'Se o e-mail estiver cadastrado, enviaremos as instruções de redefinição.',
+      );
       forgotForm.reset({ email: '', captchaToken: '' });
       setMode('login');
     },
     onError: () => {
-      toast.error('Não foi possível solicitar a redefinição agora. Tente novamente em instantes.');
+      toast.error(
+        'Não foi possível solicitar a redefinição agora. Tente novamente em instantes.',
+      );
     },
   });
 
@@ -86,9 +93,9 @@ export function LoginPage() {
     try {
       loginForm.clearErrors('root');
       const captchaToken = await executeRecaptcha('login');
-      const session = await login({ ...values, captchaToken });
+      await login({ ...values, captchaToken });
       toast.success('Acesso realizado com sucesso.');
-      navigate(getSafePostLoginPath(location.state, session), { replace: true });
+      navigate(getSafePostLoginPath(location.state), { replace: true });
     } catch {
       loginForm.setError('root', { message: loginFailureMessage });
       toast.error(loginFailureMessage);
@@ -99,22 +106,23 @@ export function LoginPage() {
     forgotMutation.mutate(values);
   }
 
-  const onGoogleCredential = useCallback(async (credential: string) => {
-    try {
-      const session = await loginWithGoogle({ credential });
-      toast.success(
-        session.user.workshopFiscalStatus === 'INCOMPLETE'
-          ? 'Acesso com Google realizado. Complete os dados do negócio para liberar todos os recursos.'
-          : 'Acesso com Google realizado com sucesso.',
-      );
-      navigate(getSafePostLoginPath(location.state, session), { replace: true });
-    } catch (error) {
-      toast.error(getGoogleLoginErrorMessage(error));
-    }
-  }, [location.state, loginWithGoogle, navigate]);
+  const onGoogleCredential = useCallback(
+    async (credential: string) => {
+      try {
+        await loginWithGoogle({ credential });
+        toast.success('Acesso com Google realizado com sucesso.');
+        navigate(getSafePostLoginPath(location.state), { replace: true });
+      } catch (error) {
+        toast.error(getGoogleLoginErrorMessage(error));
+      }
+    },
+    [location.state, loginWithGoogle, navigate],
+  );
 
   const onGoogleError = useCallback(() => {
-    toast.error('Não foi possível iniciar o login com Google. Tente novamente ou use e-mail e senha.');
+    toast.error(
+      'Não foi possível iniciar o login com Google. Tente novamente ou use e-mail e senha.',
+    );
   }, []);
 
   const isForgotMode = mode === 'forgot';
@@ -127,7 +135,9 @@ export function LoginPage() {
           <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-[0_18px_44px_rgba(234,88,12,0.22)]">
             <Wrench className="size-8" />
           </div>
-          <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">{env.VITE_APP_NAME}</h1>
+          <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+            {env.VITE_APP_NAME}
+          </h1>
         </div>
 
         <Card className="w-full max-w-[480px] border-white/10 bg-slate-900/78 text-slate-100 shadow-[0_28px_80px_rgba(0,0,0,0.34)] backdrop-blur-xl">
@@ -142,16 +152,25 @@ export function LoginPage() {
                 Voltar ao login
               </button>
             ) : null}
-            <CardTitle className="text-2xl font-extrabold text-white">{isForgotMode ? 'Recuperar senha' : 'Entrar na sua conta'}</CardTitle>
+            <CardTitle className="text-2xl font-extrabold text-white">
+              {isForgotMode ? 'Recuperar senha' : 'Entrar na sua conta'}
+            </CardTitle>
             <p className="text-sm text-slate-400">
-              {isForgotMode ? 'Informe seu e-mail e enviaremos as instruções se houver uma conta vinculada.' : 'Acesse o sistema de gestão do negócio.'}
+              {isForgotMode
+                ? 'Informe seu e-mail e enviaremos as instruções se houver uma conta vinculada.'
+                : 'Acesse o sistema de gestão do negócio.'}
             </p>
           </CardHeader>
           <CardContent className="px-6 pb-7 sm:px-12">
             {isForgotMode ? (
-              <form className="space-y-5" onSubmit={forgotForm.handleSubmit(onForgotSubmit)}>
+              <form
+                className="space-y-5"
+                onSubmit={forgotForm.handleSubmit(onForgotSubmit)}
+              >
                 <div className="space-y-2">
-                  <Label htmlFor="forgot-email" className="text-slate-200">E-mail</Label>
+                  <Label htmlFor="forgot-email" className="text-slate-200">
+                    E-mail
+                  </Label>
                   <Input
                     id="forgot-email"
                     autoComplete="email"
@@ -162,22 +181,41 @@ export function LoginPage() {
                     type="email"
                     {...forgotForm.register('email')}
                   />
-                  {forgotForm.formState.errors.email ? <p className="text-xs text-destructive">{forgotForm.formState.errors.email.message}</p> : null}
+                  {forgotForm.formState.errors.email ? (
+                    <p className="text-xs text-destructive">
+                      {forgotForm.formState.errors.email.message}
+                    </p>
+                  ) : null}
                 </div>
                 <CaptchaField
                   disabled={forgotMutation.isPending}
                   error={forgotForm.formState.errors.captchaToken?.message}
                   value={forgotForm.watch('captchaToken')}
-                  onChange={(value) => forgotForm.setValue('captchaToken', value, { shouldValidate: true })}
+                  onChange={(value) =>
+                    forgotForm.setValue('captchaToken', value, {
+                      shouldValidate: true,
+                    })
+                  }
                 />
-                <Button className="h-11 w-full" disabled={forgotMutation.isPending} type="submit">
-                  {forgotMutation.isPending ? 'Enviando...' : 'Enviar instruções'}
+                <Button
+                  className="h-11 w-full"
+                  disabled={forgotMutation.isPending}
+                  type="submit"
+                >
+                  {forgotMutation.isPending
+                    ? 'Enviando...'
+                    : 'Enviar instruções'}
                 </Button>
               </form>
             ) : (
-              <form className="space-y-5" onSubmit={loginForm.handleSubmit(onLoginSubmit)}>
+              <form
+                className="space-y-5"
+                onSubmit={loginForm.handleSubmit(onLoginSubmit)}
+              >
                 <div className="space-y-2">
-                  <Label htmlFor="login-email" className="text-slate-200">E-mail</Label>
+                  <Label htmlFor="login-email" className="text-slate-200">
+                    E-mail
+                  </Label>
                   <Input
                     id="login-email"
                     autoComplete="email"
@@ -188,7 +226,11 @@ export function LoginPage() {
                     type="email"
                     {...loginForm.register('email')}
                   />
-                  {loginForm.formState.errors.email ? <p className="text-xs text-destructive">{loginForm.formState.errors.email.message}</p> : null}
+                  {loginForm.formState.errors.email ? (
+                    <p className="text-xs text-destructive">
+                      {loginForm.formState.errors.email.message}
+                    </p>
+                  ) : null}
                 </div>
                 <Controller
                   control={loginForm.control}
@@ -208,17 +250,26 @@ export function LoginPage() {
                     />
                   )}
                 />
-                <Button className="h-11 w-full" disabled={isAuthenticating} type="submit">
+                <Button
+                  className="h-11 w-full"
+                  disabled={isAuthenticating}
+                  type="submit"
+                >
                   {isLoggingIn ? 'Entrando...' : 'Entrar'}
                 </Button>
                 {loginForm.formState.errors.root?.message ? (
-                  <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+                  <p
+                    className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                    role="alert"
+                  >
                     {loginForm.formState.errors.root.message}
                   </p>
                 ) : null}
                 <div className="flex items-center gap-3" aria-hidden="true">
                   <span className="h-px flex-1 bg-white/10" />
-                  <span className="text-xs font-medium uppercase tracking-wide text-slate-500">ou continue com</span>
+                  <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    ou continue com
+                  </span>
                   <span className="h-px flex-1 bg-white/10" />
                 </div>
                 <GoogleSignInButton
