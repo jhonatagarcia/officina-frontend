@@ -10,5 +10,7 @@ npm run test:e2e
 ```
 
 No CI, instale o navegador antes de executar `npm run test:e2e`. Os próximos
-fluxos devem usar os mesmos dados sintéticos/interceptação para clientes,
-veículos, OS e financeiro; não devem depender de backend real.
+fluxos devem usar `fixtures/api.ts`: `syntheticSession` para papel/tenant,
+`interceptApi` para resposta aderente ao contrato, `interceptApiError` para
+erro seguro e `futureFlowFixtures` para listas de clientes, veículos, OS e
+financeiro. Não devem depender de backend real.

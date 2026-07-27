@@ -13,8 +13,10 @@ test('exibe erro de login sem vazar detalhes internos', async ({ page }) => {
   await page.route('**/auth/login', (route) => route.fulfill({ status: 401, body: JSON.stringify({ message: 'DATABASE_URL=secret' }) }));
   await page.goto('/login');
   await page.getByLabel(/e-mail/i).fill('synthetic@example.test');
-  await page.getByLabel(/senha/i).fill('senha-sintetica');
-  await page.getByRole('button', { name: /entrar/i }).click();
-  await expect(page.getByText(/usuário não cadastrado ou senha inválida/i)).toBeVisible();
+  await page.getByRole('textbox', { name: /^senha$/i }).fill('senha-sintetica');
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(
+    page.locator('p[role="alert"]', { hasText: /usuário não cadastrado ou senha inválida/i }),
+  ).toBeVisible();
   await expect(page.getByText(/DATABASE_URL/i)).toHaveCount(0);
 });
