@@ -18,11 +18,13 @@ const financialTypeMap: Record<string, FinancialType> = {
 };
 
 const financialStatusMap: Record<string, FinancialStatus> = {
+  EM_ABERTO: 'EM_ABERTO',
+  OPEN: 'EM_ABERTO',
   OVERDUE: 'VENCIDO',
   PAID: 'PAGO',
   PAGO: 'PAGO',
-  PENDENTE: 'VENCIDO',
-  PENDING: 'VENCIDO',
+  PENDENTE: 'EM_ABERTO',
+  PENDING: 'EM_ABERTO',
   VENCIDO: 'VENCIDO',
 };
 

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { type FormEvent, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, CheckCircle2, DollarSign, PackageSearch, TrendingUp } from 'lucide-react';
+import { toast } from 'sonner';
 import { financialService } from '@/features/financial/services/financial-service';
-import type { FinancialEntry, PaymentMethod } from '@/features/financial/types';
+import type { FinancialEntry, FinancialType, PaymentMethod } from '@/features/financial/types';
 import { useListParams } from '@/hooks/use-list-params';
 import { useSortableData } from '@/hooks/use-sortable-data';
 import { cn, formatCurrency, formatDate, formatServiceOrderNumber } from '@/lib/utils';
@@ -21,11 +22,13 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 
 function canRegisterPayment(status: string) {
-  return status === 'VENCIDO';
+  return status === 'EM_ABERTO' || status === 'VENCIDO';
 }
 
 function getFinancialRowClass(status: string) {
@@ -58,6 +61,14 @@ function FinancialPageContent() {
   const params = useListParams();
   const queryClient = useQueryClient();
   const [isConfiguringPanel, setIsConfiguringPanel] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newEntry, setNewEntry] = useState({
+    type: 'RECEIVABLE' as FinancialType,
+    description: '',
+    category: '',
+    amount: '',
+    dueDate: toDateInputValue(new Date()),
+  });
   const [paymentDates, setPaymentDates] = useState<Record<string, string>>({});
   const today = toDateInputValue(new Date());
   const query = useQuery({
@@ -80,8 +91,32 @@ function FinancialPageContent() {
       queryClient.invalidateQueries({ queryKey: ['financeiro'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
+    onError: (error: { message?: string | string[] }) => {
+      const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      toast.error(message || 'Não foi possível registrar o pagamento.');
+    },
   });
-  const selectedStatus = params.status === 'PAGO' || params.status === 'VENCIDO' ? params.status : 'ALL';
+  const createMutation = useMutation({
+    mutationFn: financialService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['financeiro'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      setIsCreateOpen(false);
+      setNewEntry({
+        type: 'RECEIVABLE',
+        description: '',
+        category: '',
+        amount: '',
+        dueDate: toDateInputValue(new Date()),
+      });
+      toast.success('Lançamento financeiro criado.');
+    },
+    onError: (error: { message?: string | string[] }) => {
+      const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      toast.error(message || 'Não foi possível criar o lançamento financeiro.');
+    },
+  });
+  const selectedStatus = params.status === 'EM_ABERTO' || params.status === 'PAGO' || params.status === 'VENCIDO' ? params.status : 'ALL';
   const filteredEntries =
     query.data?.data.filter((item) => {
       const matchesStatus = selectedStatus !== 'ALL' ? item.status === selectedStatus : true;
@@ -103,6 +138,7 @@ function FinancialPageContent() {
   const stockOutValue = summaryQuery.data?.stockOutValue ?? 0;
   const projectedBalance = income - stockOutValue;
   const paidEntriesCount = filteredEntries.filter((item) => item.status === 'PAGO').length;
+  const openEntriesCount = filteredEntries.filter((item) => item.status === 'EM_ABERTO').length;
   const overdueEntriesCount = filteredEntries.filter((item) => item.status === 'VENCIDO').length;
   const pageTotal = filteredEntries.reduce((total, item) => total + item.amount, 0);
   const summaryCards = [
@@ -138,6 +174,13 @@ function FinancialPageContent() {
       mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
     },
     {
+      id: 'open',
+      title: 'Em aberto na página',
+      value: String(openEntriesCount),
+      icon: DollarSign,
+      mediaClassName: 'border-amber-200 bg-amber-50 text-amber-700',
+    },
+    {
       id: 'overdue',
       title: 'Vencidos na página',
       value: String(overdueEntriesCount),
@@ -153,10 +196,33 @@ function FinancialPageContent() {
     },
   ];
 
+  const handleCreateEntry = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const amount = Number(newEntry.amount);
+
+    if (!newEntry.description.trim() || !newEntry.category.trim() || !Number.isFinite(amount) || amount <= 0) {
+      toast.error('Preencha os campos obrigatórios do lançamento.');
+      return;
+    }
+
+    createMutation.mutate({
+      type: newEntry.type,
+      description: newEntry.description.trim(),
+      category: newEntry.category.trim(),
+      amount,
+      dueDate: new Date(`${newEntry.dueDate}T12:00:00`).toISOString(),
+      status: 'EM_ABERTO',
+    });
+  };
+
   return (
     <PageContainer>
       <PageHeader title="Financeiro" description="Faturamento, saída de estoque e conciliação.">
-        <IndicatorHeaderActions onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}>
+        <IndicatorHeaderActions
+          onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
+          primaryActionLabel="Novo lançamento"
+          onPrimaryAction={() => setIsCreateOpen(true)}
+        >
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por descrição ou origem" />
         </IndicatorHeaderActions>
       </PageHeader>
@@ -179,6 +245,7 @@ function FinancialPageContent() {
               value={selectedStatus}
               options={[
                 { value: 'ALL', label: 'Todos', count: query.data.data.length, icon: DollarSign, tone: 'slate' },
+                { value: 'EM_ABERTO', label: 'Em aberto', count: openEntriesCount, icon: DollarSign, tone: 'amber' },
                 { value: 'PAGO', label: 'Pago', count: paidEntriesCount, icon: CheckCircle2, tone: 'emerald' },
                 { value: 'VENCIDO', label: 'Vencido', count: overdueEntriesCount, icon: AlertTriangle, tone: 'rose' },
               ]}
@@ -260,6 +327,51 @@ function FinancialPageContent() {
           ) : null}
         </CardContent>
       </Card>
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo lançamento financeiro</DialogTitle>
+            <DialogDescription>Registre uma conta a receber ou a pagar em aberto.</DialogDescription>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={handleCreateEntry}>
+            <div className="space-y-2">
+              <Label htmlFor="financial-type">Tipo</Label>
+              <select
+                id="financial-type"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                value={newEntry.type}
+                onChange={(event) => setNewEntry((current) => ({ ...current, type: event.target.value as FinancialType }))}
+              >
+                <option value="RECEIVABLE">Conta a receber</option>
+                <option value="PAYABLE">Conta a pagar</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="financial-description">Descrição</Label>
+              <Input id="financial-description" value={newEntry.description} onChange={(event) => setNewEntry((current) => ({ ...current, description: event.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="financial-category">Categoria</Label>
+              <Input id="financial-category" value={newEntry.category} onChange={(event) => setNewEntry((current) => ({ ...current, category: event.target.value }))} />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="financial-amount">Valor</Label>
+                <Input id="financial-amount" min="0.01" step="0.01" type="number" value={newEntry.amount} onChange={(event) => setNewEntry((current) => ({ ...current, amount: event.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="financial-due-date">Vencimento</Label>
+                <Input id="financial-due-date" type="date" value={newEntry.dueDate} onChange={(event) => setNewEntry((current) => ({ ...current, dueDate: event.target.value }))} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button disabled={createMutation.isPending} type="submit">
+                {createMutation.isPending ? 'Criando...' : 'Criar lançamento'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }

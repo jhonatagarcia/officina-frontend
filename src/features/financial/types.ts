@@ -1,5 +1,5 @@
 export type FinancialType = 'RECEIVABLE' | 'PAYABLE';
-export type FinancialStatus = 'PAGO' | 'VENCIDO';
+export type FinancialStatus = 'EM_ABERTO' | 'PAGO' | 'VENCIDO';
 export type PaymentMethod =
   | 'DINHEIRO'
   | 'PIX'

@@ -525,7 +525,7 @@ export function ServiceOrderDetailsPage() {
                 {isGeneratingPdf ? 'Gerando...' : 'Gerar PDF'}
               </Button>
               <Select onValueChange={(value) => setNextStatus(value as ServiceOrderStatus)} value={nextStatus}>
-                <SelectTrigger className="h-10 w-[190px] rounded-xl">
+                <SelectTrigger aria-label="Novo status da OS" className="h-10 w-[190px] rounded-xl">
                   <SelectValue placeholder="Novo status" />
                 </SelectTrigger>
                 <SelectContent>
