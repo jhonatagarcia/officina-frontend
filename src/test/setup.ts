@@ -23,6 +23,16 @@ Object.defineProperty(window, 'matchMedia', {
 
 beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
+
+  // O JSDOM não implementa a API de captura de ponteiro usada pelo Select do Radix.
+  // No navegador ela existe; este polyfill mantém o teste exercitando o componente real.
+  if (!Element.prototype.hasPointerCapture) {
+    Object.defineProperties(Element.prototype, {
+      hasPointerCapture: { configurable: true, value: () => false },
+      setPointerCapture: { configurable: true, value: () => undefined },
+      releasePointerCapture: { configurable: true, value: () => undefined },
+    });
+  }
 });
 
 afterEach(async () => {
