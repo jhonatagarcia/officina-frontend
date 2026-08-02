@@ -62,6 +62,33 @@ describe('route guards', () => {
     expect(screen.getByText(/acesso não autorizado/i)).toBeInTheDocument();
   });
 
+  it('permite acesso quando o perfil possui uma das permissões exigidas', () => {
+    useAuthStore.setState({
+      hydrated: true,
+      session: {
+        accessToken: 'token',
+        user: {
+          id: '1',
+          name: 'Administradora',
+          email: 'admin@oficina.com',
+          role: 'ADMIN',
+        },
+      },
+    });
+
+    renderWithQuery(
+      <Routes>
+        <Route element={<RoleGuard roles={['ADMIN', 'FINANCEIRO']} />}>
+          <Route path="/financeiro" element={<div>Financeiro</div>} />
+        </Route>
+      </Routes>,
+      ['/financeiro'],
+    );
+
+    expect(screen.getByText('Financeiro')).toBeInTheDocument();
+    expect(screen.queryByText(/acesso não autorizado/i)).not.toBeInTheDocument();
+  });
+
   it('renderiza rota de visitante enquanto a sessao ainda hidrata', () => {
     useAuthStore.setState({
       session: {
