@@ -4,7 +4,10 @@ import { cleanup } from '@testing-library/react';
 
 vi.stubEnv('VITE_API_BASE_URL', 'http://localhost:8080/api');
 vi.stubEnv('VITE_APP_NAME', 'OficinaPro');
-vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'google-client-id.test.apps.googleusercontent.com');
+vi.stubEnv(
+  'VITE_GOOGLE_CLIENT_ID',
+  'google-client-id.test.apps.googleusercontent.com',
+);
 vi.stubEnv('VITE_GOOGLE_ALLOWED_ORIGINS', 'http://localhost:3000');
 
 Object.defineProperty(window, 'matchMedia', {
@@ -39,8 +42,10 @@ afterEach(async () => {
   cleanup();
   sessionStorage.clear();
   const { useAuthStore } = await import('@/store/auth-store');
+  const { useAdminAuth } = await import('@/admin/auth/useAdminAuth');
   useAuthStore.setState({
     session: null,
     hydrated: true,
   });
+  useAdminAuth.setState({ token: null, user: null });
 });

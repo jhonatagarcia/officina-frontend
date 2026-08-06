@@ -1,10 +1,12 @@
 export type Role = 'ADMIN' | 'ATENDENTE' | 'MECANICO' | 'FINANCEIRO';
+export type AdminRole = 'SUPER_ADMIN' | 'SUPPORT';
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: Role;
+  adminRole?: AdminRole;
   isActive?: boolean;
   lastLoginAt?: string | null;
   createdAt?: string;

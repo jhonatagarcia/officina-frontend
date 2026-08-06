@@ -3,9 +3,14 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { adminApi } from '@/admin/api/admin-api';
-import type { AuthSession } from '@/types/auth';
 import { useAdminAuth } from './useAdminAuth';
+import type { AdminAuthUser } from './useAdminAuth';
 import '../admin.css';
+
+interface AdminAuthSession {
+  accessToken: string;
+  user: AdminAuthUser;
+}
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -16,15 +21,15 @@ export default function AdminLoginPage() {
   const mutation = useMutation({
     mutationFn: () =>
       adminApi
-        .post<AuthSession>('/auth/login', { email, password })
+        .post<AdminAuthSession>('/auth/login', { email, password })
         .then((response) => response.data),
     onSuccess: ({ accessToken, user }) => {
-      if (user.role !== 'ADMIN') {
+      if (user.role !== 'ADMIN' || user.adminRole !== 'SUPER_ADMIN') {
         toast.error('Usuário sem permissão de administrador');
         return;
       }
 
-      login(accessToken);
+      login(accessToken, user);
       navigate('/admin/dashboard', { replace: true });
     },
     onError: () => {
@@ -52,7 +57,10 @@ export default function AdminLoginPage() {
 
   return (
     <main className="admin-shell" style={{ gridTemplateColumns: '1fr' }}>
-      <section className="admin-modal-backdrop" style={{ background: '#090a12' }}>
+      <section
+        className="admin-modal-backdrop"
+        style={{ background: '#090a12' }}
+      >
         <form className="admin-modal" onSubmit={handleSubmit}>
           <div className="admin-modal-header">
             <div>
@@ -60,7 +68,10 @@ export default function AdminLoginPage() {
               <div className="admin-muted">Acesso Administrador Master</div>
             </div>
           </div>
-          <div className="admin-form-grid" style={{ gridTemplateColumns: '1fr' }}>
+          <div
+            className="admin-form-grid"
+            style={{ gridTemplateColumns: '1fr' }}
+          >
             <div className="admin-field">
               <label htmlFor="admin-email">E-mail</label>
               <input
@@ -91,7 +102,11 @@ export default function AdminLoginPage() {
             ) : null}
           </div>
           <div className="admin-modal-footer">
-            <button className="admin-button" type="submit" disabled={mutation.isPending}>
+            <button
+              className="admin-button"
+              type="submit"
+              disabled={mutation.isPending}
+            >
               {mutation.isPending ? 'Entrando...' : 'Entrar'}
             </button>
           </div>
