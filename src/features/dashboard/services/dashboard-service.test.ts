@@ -49,7 +49,7 @@ const emptySummary = {
   financial: {
     monthRevenue: '0',
     stockOutValue: '0',
-    receivablesValue: '0',
+    pendingServiceOrderPaymentsValue: '0',
     averageTicket: '0',
   },
   inventory: {
@@ -199,7 +199,7 @@ describe('dashboardService', () => {
       financial: {
         monthRevenue: '12345.67',
         stockOutValue: '890.25',
-        receivablesValue: '3500.50',
+        pendingServiceOrderPaymentsValue: '3500.50',
         averageTicket: '4115.22',
       },
       inventory: {
@@ -233,7 +233,7 @@ describe('dashboardService', () => {
 
     expect(overview.financial.monthRevenue).toBe(12345.67);
     expect(overview.financial.stockOutValue).toBe(890.25);
-    expect(overview.financial.receivablesValue).toBe(3500.5);
+    expect(overview.financial.pendingServiceOrderPaymentsValue).toBe(3500.5);
     expect(overview.financial.averageTicket).toBe(4115.22);
     expect(overview.clients.total).toBe(15);
     expect(overview.clients.new).toBe(4);
@@ -274,12 +274,11 @@ describe('dashboardService', () => {
           severity: 'danger',
         }),
         expect.objectContaining({
-          id: 'pending-budgets',
+          id: 'pending-service-order-payments',
+          severity: 'warning',
         }),
         expect.objectContaining({
-          id: 'workshop-flow',
-          actionLabel: 'Ver ordens de serviço',
-          actionTo: '/inicio/ordens-servico',
+          id: 'pending-budgets',
         }),
       ]),
     );
@@ -454,12 +453,6 @@ describe('dashboardService', () => {
     expect(overview.operationalAlerts.find((alert) => alert.id === 'pending-budgets')).toEqual(
       expect.objectContaining({
         description: 'Cliente Antigo aguarda aprovação há 6 dias.',
-      }),
-    );
-    expect(overview.operationalAlerts.find((alert) => alert.id === 'workshop-flow')).toEqual(
-      expect.objectContaining({
-        severity: 'warning',
-        metric: '11 veículo(s) em fluxo',
       }),
     );
   });

@@ -106,6 +106,48 @@ test('mostra erro seguro quando a atualização de status falha', async ({ page 
   await expect(page.getByText('DATABASE_URL-secret')).toHaveCount(0);
 });
 
+test('devolve peça auditável pela tela da OS sem alterar comissão', async ({ page }) => {
+  await authenticated(page);
+  const part = {
+    id: 'part-e2e-1',
+    serviceOrderId: fixtures.serviceOrder.id,
+    inventoryItemId: 'inventory-e2e-1',
+    quantity: 2,
+    unitPrice: 40,
+    totalPrice: 80,
+    closedAt: null,
+    createdAt: '2026-01-01T12:00:00.000Z',
+    updatedAt: '2026-01-01T12:00:00.000Z',
+    inventoryItem: { id: 'inventory-e2e-1', name: 'Peça Sintética', internalCode: 'SYN-001' },
+  };
+  await interceptServiceOrderDetail(page, () => ({ ...fixtures.serviceOrder, parts: [part] }));
+  await interceptApi(
+    page,
+    `/service-orders/${fixtures.serviceOrder.id}/parts/${part.id}/returnable-consumptions`,
+    [{ id: 'movement-e2e-1', quantityConsumed: 2, quantityReturned: 0, quantityAvailable: 2, createdAt: '2026-01-01T12:00:00.000Z' }],
+  );
+  await interceptApiMethod(
+    page,
+    `/service-orders/${fixtures.serviceOrder.id}/parts/${part.id}/returns`,
+    'POST',
+    { part, movement: { id: 'return-e2e-1' }, idempotent: false },
+    201,
+  );
+
+  await page.goto(`/inicio/ordens-servico/${fixtures.serviceOrder.id}?mode=operate`);
+  await page.getByRole('button', { name: 'Remover Peça Sintética da OS' }).click();
+  await expect(page.getByText('Remover peça da OS')).toBeVisible();
+  await expect(page.getByText(/não altera a comissão/i)).toBeVisible();
+  await page.getByLabel('Motivo').fill('Devolução de teste');
+  const requestPromise = page.waitForRequest((request) =>
+    request.method() === 'POST' && request.url().includes(`/api/v1/service-orders/${fixtures.serviceOrder.id}/parts/${part.id}/returns`),
+  );
+  await page.getByRole('button', { name: 'Confirmar devolução' }).click();
+  const request = await requestPromise;
+  expect(request.postDataJSON()).toEqual({ consumptionMovementId: 'movement-e2e-1', quantity: 1, reason: 'Devolução de teste' });
+  await expect(page.getByText('Peça devolvida ao estoque. A comissão não foi alterada.')).toBeVisible();
+});
+
 test('bloqueia visualmente a OS para perfil financeiro', async ({ page }) => {
   await authenticated(page, 'FINANCEIRO');
 

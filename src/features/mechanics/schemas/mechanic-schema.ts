@@ -6,6 +6,7 @@ export function createMechanicSchema(mode: 'create' | 'edit' | 'view') {
   return z.object({
     name: z.string().min(3, 'Informe o nome'),
     isActive: z.boolean(),
+    userId: z.string().nullable(),
   });
 }
 

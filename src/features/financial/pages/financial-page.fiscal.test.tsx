@@ -43,7 +43,10 @@ function mockFinancialQueries(entries = [openEntry]) {
   });
   vi.mocked(financialService.getSummary).mockResolvedValue({
     receivablesValue: 120,
+    grossRevenueValue: 120,
+    receivedRevenueValue: 0,
     stockOutValue: 0,
+    netBalanceValue: 0,
   });
 }
 
@@ -53,7 +56,7 @@ describe('FinancialPage', () => {
 
     renderWithProviders(<FinancialPage />);
 
-    expect(await screen.findByText('Saldo projetado')).toBeInTheDocument();
+    expect(await screen.findByText('Saldo líquido operacional')).toBeInTheDocument();
     expect(screen.queryByText('Financeiro bloqueado temporariamente')).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /cadastrar cnpj/i })).not.toBeInTheDocument();
   });

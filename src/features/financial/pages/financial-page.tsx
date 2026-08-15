@@ -134,26 +134,28 @@ function FinancialPageContent() {
     },
   });
   const pagination = query.data;
-  const income = summaryQuery.data?.receivablesValue ?? filteredEntries.filter((item) => item.type === 'RECEIVABLE').reduce((acc, item) => acc + item.amount, 0) ?? 0;
+  const grossRevenue =
+    summaryQuery.data?.grossRevenueValue ??
+    filteredEntries.filter((item) => item.type === 'RECEIVABLE').reduce((acc, item) => acc + item.amount, 0) ??
+    0;
   const stockOutValue = summaryQuery.data?.stockOutValue ?? 0;
-  const projectedBalance = income - stockOutValue;
+  const netBalance = summaryQuery.data?.netBalanceValue ?? grossRevenue - stockOutValue;
   const paidEntriesCount = filteredEntries.filter((item) => item.status === 'PAGO').length;
   const openEntriesCount = filteredEntries.filter((item) => item.status === 'EM_ABERTO').length;
   const overdueEntriesCount = filteredEntries.filter((item) => item.status === 'VENCIDO').length;
-  const pageTotal = filteredEntries.reduce((total, item) => total + item.amount, 0);
   const summaryCards = [
     {
       id: 'projected-balance',
-      title: 'Saldo projetado',
-      value: formatCurrency(projectedBalance),
+      title: 'Saldo líquido operacional',
+      value: formatCurrency(netBalance),
       icon: DollarSign,
-      valueClassName: projectedBalance < 0 ? 'text-rose-600' : 'text-sky-600',
+      valueClassName: netBalance < 0 ? 'text-rose-600' : 'text-sky-600',
       mediaClassName: 'border-sky-200 bg-sky-50 text-sky-700',
     },
     {
       id: 'receivables',
-      title: 'Faturamento',
-      value: formatCurrency(income),
+      title: 'Faturamento total',
+      value: formatCurrency(grossRevenue),
       icon: TrendingUp,
       valueClassName: 'text-emerald-600',
       mediaClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
@@ -186,13 +188,6 @@ function FinancialPageContent() {
       value: String(overdueEntriesCount),
       icon: AlertTriangle,
       mediaClassName: 'border-rose-200 bg-rose-50 text-rose-700',
-    },
-    {
-      id: 'page-total',
-      title: 'Total da página',
-      value: formatCurrency(pageTotal),
-      icon: DollarSign,
-      mediaClassName: 'border-violet-200 bg-violet-50 text-violet-700',
     },
   ];
 

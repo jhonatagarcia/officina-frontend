@@ -1,9 +1,5 @@
 export type ServiceOrderStatus =
-  | 'ABERTA'
-  | 'AGUARDANDO_PECA'
-  | 'EM_ANDAMENTO'
-  | 'FINALIZADA'
-  | 'ENTREGUE';
+  'ABERTA' | 'AGUARDANDO_PECA' | 'EM_ANDAMENTO' | 'FINALIZADA' | 'ENTREGUE';
 
 export interface ServiceOrder {
   id: string;
@@ -12,6 +8,7 @@ export interface ServiceOrder {
   clientId: string;
   vehicleId: string;
   mechanicId: string | null;
+  mechanicEmployeeId?: string | null;
   clientName: string;
   vehicleLabel: string;
   mechanicName: string | null;
@@ -52,11 +49,7 @@ export interface ServiceOrder {
  */
 
 export type PendingPartStatus =
-  | 'PENDING'
-  | 'PARTIALLY_AVAILABLE'
-  | 'AVAILABLE'
-  | 'RESOLVED'
-  | 'CANCELED';
+  'PENDING' | 'PARTIALLY_AVAILABLE' | 'AVAILABLE' | 'RESOLVED' | 'CANCELED';
 
 export interface ServiceOrderPendingPart {
   id: string;
@@ -146,7 +139,9 @@ export interface ServiceOrderVehicleSummary {
 export interface ServiceOrderMechanicSummary {
   id: string;
   name: string;
-  role: string;
+  function: string;
+  isActive: boolean;
+  legacy: boolean;
 }
 
 export interface ServiceOrderPart {
@@ -163,4 +158,18 @@ export interface ServiceOrderPart {
     name: string;
     internalCode: string;
   };
+}
+
+export interface ReturnableServiceOrderPartConsumption {
+  id: string;
+  quantityConsumed: number;
+  quantityReturned: number;
+  quantityAvailable: number;
+  createdAt: string;
+}
+
+export interface ReturnServiceOrderPartPayload {
+  consumptionMovementId: string;
+  quantity: number;
+  reason: string;
 }

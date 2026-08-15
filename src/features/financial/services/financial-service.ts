@@ -61,11 +61,23 @@ export const financialService = {
     return mapFinancialEntry(response.data);
   },
   async getSummary() {
-    const response = await http.get<{ receivablesValue: number | string; stockOutValue: number | string }>('/financial/summary');
+    const response = await http.get<{
+      receivablesValue: number | string;
+      grossRevenueValue?: number | string;
+      receivedRevenueValue?: number | string;
+      stockOutValue: number | string;
+      netBalanceValue?: number | string;
+    }>('/financial/summary');
 
     return {
       receivablesValue: toNumber(response.data.receivablesValue),
+      grossRevenueValue: toNumber(response.data.grossRevenueValue ?? response.data.receivablesValue),
+      receivedRevenueValue: toNumber(response.data.receivedRevenueValue ?? response.data.receivablesValue),
       stockOutValue: toNumber(response.data.stockOutValue),
+      netBalanceValue:
+        response.data.netBalanceValue !== undefined
+          ? toNumber(response.data.netBalanceValue)
+          : toNumber(response.data.receivablesValue) - toNumber(response.data.stockOutValue),
     };
   },
   async create(payload: {

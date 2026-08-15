@@ -82,7 +82,11 @@ export function useServiceForm(mode: 'create' | 'edit' | 'view', id: string, onS
       onSuccess();
     },
     onError: (error: ApiErrorResponse) => {
-      if (error.statusCode === 409) {
+      if (
+        error.statusCode === 409 &&
+        error.code === 'SERVICE_NAME_CATEGORY_CONFLICT' &&
+        error.field === 'name'
+      ) {
         form.setError('name', {
           type: 'server',
           message: error.message || 'Já existe um serviço com este nome na categoria informada.',

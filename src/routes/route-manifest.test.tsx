@@ -15,6 +15,8 @@ describe('getSidebarRoutes', () => {
       'servicos-list',
       'estoque-list',
       'mecanicos-list',
+      'usuarios-list',
+      'comissoes-list',
     ]);
   });
 
@@ -35,6 +37,7 @@ describe('getSidebarRoutes', () => {
     expect(getSidebarRoutes('MECANICO').map((route) => route.key)).toEqual([
       'ordens-servico-list',
       'chamados',
+      'comissoes-list',
     ]);
     expect(getSidebarRoutes('FINANCEIRO').map((route) => route.key)).toEqual([
       'dashboard',

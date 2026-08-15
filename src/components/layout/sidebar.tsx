@@ -33,10 +33,10 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="surface-grid sticky top-0 h-screen overflow-hidden border-r border-slate-800/60 bg-slate-950 px-5 py-6 text-slate-100">
+    <aside className="surface-grid sticky top-0 h-dvh overflow-hidden border-r border-slate-800/60 bg-slate-950 px-5 py-6 text-slate-100">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.2),transparent_26%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.12),transparent_24%)]" />
       <div className="relative flex h-full flex-col">
-        <div className="mb-8 rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.24)] backdrop-blur">
+        <div className="mb-8 shrink-0 rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.24)] backdrop-blur">
           <div className="flex items-start gap-3">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-[0_18px_44px_rgba(234,88,12,0.22)]">
               <Wrench className="size-7" />
@@ -52,7 +52,7 @@ export function Sidebar() {
             Mecanica, Funilarias e Auto Elétricas
           </p>
         </div>
-        <nav className="space-y-2">
+        <nav className="sidebar-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
           {menuItems.map((item) => {
             const isLocked =
               role !== 'ADMIN' && (!role || !item.roles.includes(role));
@@ -103,7 +103,7 @@ export function Sidebar() {
             );
           })}
         </nav>
-        <div className="mt-auto pt-6">
+        <div className="mt-auto shrink-0 pt-6">
           <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 shadow-[0_18px_44px_rgba(0,0,0,0.18)] backdrop-blur">
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-white">

@@ -1,11 +1,17 @@
-import type { Role } from '@/types/auth';
-
 export interface Mechanic {
   id: string;
   name: string;
-  role: Role;
+  function: 'MECHANIC';
   isActive: boolean;
-  lastLoginAt: string | null;
+  hasAccess: boolean;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    isActive: boolean;
+    lastLoginAt: string | null;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }

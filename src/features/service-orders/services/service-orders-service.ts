@@ -7,6 +7,8 @@ import type {
   ServiceOrder,
   ServiceOrderBudgetItem,
   ServiceOrderPart,
+  ReturnableServiceOrderPartConsumption,
+  ReturnServiceOrderPartPayload,
   ServiceOrderPendingPart,
   ServiceOrderStatus,
   UpdateServiceOrderPendingPartPayload,
@@ -17,6 +19,11 @@ import { formatPlate, toNumber } from '@/lib/utils';
 interface ServiceOrderPartApiResponse extends Omit<ServiceOrderPart, 'unitPrice' | 'totalPrice'> {
   unitPrice: number | string;
   totalPrice: number | string;
+}
+
+interface ReturnableServiceOrderPartConsumptionApiResponse
+  extends Omit<ReturnableServiceOrderPartConsumption, 'createdAt'> {
+  createdAt: string;
 }
 
 interface ServiceOrderBudgetItemApiResponse
@@ -196,6 +203,25 @@ export const serviceOrdersService = {
   async removePart(id: string, partId: string) {
     const response = await http.delete<ServiceOrderPartApiResponse>(`/service-orders/${id}/parts/${partId}`);
     return mapServiceOrderPart(response.data);
+  },
+  async listReturnableConsumptions(id: string, partId: string) {
+    const response = await http.get<ReturnableServiceOrderPartConsumptionApiResponse[]>(
+      `/service-orders/${id}/parts/${partId}/returnable-consumptions`,
+    );
+    return response.data;
+  },
+  async returnPart(
+    id: string,
+    partId: string,
+    payload: ReturnServiceOrderPartPayload,
+    operationKey: string,
+  ) {
+    const response = await http.post<{ part: ServiceOrderPartApiResponse }>(
+      `/service-orders/${id}/parts/${partId}/returns`,
+      payload,
+      { headers: { 'Idempotency-Key': operationKey } },
+    );
+    return mapServiceOrderPart(response.data.part);
   },
   async updateItem(id: string, itemId: string, payload: UpdateServiceOrderItemPayload) {
     const response = await http.patch<ServiceOrderBudgetItemApiResponse>(

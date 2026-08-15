@@ -9,6 +9,8 @@ import {
   FileText,
   LayoutDashboard,
   MessagesSquare,
+  HandCoins,
+  KeyRound,
   UserRoundCog,
   UsersRound,
   Wrench,
@@ -119,6 +121,16 @@ const SupportPage = lazy(() =>
   import('@/features/support/pages/support-page').then(({ SupportPage }) => ({
     default: SupportPage,
   })),
+);
+const UsersPage = lazy(() =>
+  import('@/features/users/pages/users-page').then(({ UsersPage }) => ({
+    default: UsersPage,
+  })),
+);
+const CommissionsPage = lazy(() =>
+  import('@/features/commissions/pages/commissions-page').then(
+    ({ CommissionsPage }) => ({ default: CommissionsPage }),
+  ),
 );
 
 export interface AppRouteDefinition {
@@ -328,6 +340,24 @@ export const appRoutes: AppRouteDefinition[] = [
     sidebar: true,
   },
   {
+    key: 'usuarios-list',
+    path: 'usuarios',
+    roles: ['ADMIN'],
+    element: <UsersPage />,
+    label: 'Contas de acesso',
+    icon: KeyRound,
+    sidebar: true,
+  },
+  {
+    key: 'comissoes-list',
+    path: 'comissoes',
+    roles: ['ADMIN', 'MECANICO'],
+    element: <CommissionsPage />,
+    label: 'Comissoes',
+    icon: HandCoins,
+    sidebar: true,
+  },
+  {
     key: 'chamados',
     path: 'chamados',
     roles: ['ADMIN', 'ATENDENTE', 'MECANICO', 'FINANCEIRO'],
@@ -359,6 +389,8 @@ const sidebarOrder = [
   'servicos-list',
   'estoque-list',
   'mecanicos-list',
+  'usuarios-list',
+  'comissoes-list',
 ] as const;
 
 export function getSidebarRoutes(role?: Role) {

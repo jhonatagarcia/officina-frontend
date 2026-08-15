@@ -28,7 +28,7 @@ describe('service-order-status', () => {
     expect(getServiceOrderStatusLabel('EM_ANDAMENTO')).toBe('Em andamento');
   });
 
-  it('torna OS entregue somente leitura', () => {
+  it('identifica OS entregue como somente leitura para edição de conteúdo', () => {
     expect(isReadOnlyServiceOrderStatus('ENTREGUE')).toBe(true);
     expect(isReadOnlyServiceOrderStatus('FINALIZADA')).toBe(false);
   });
