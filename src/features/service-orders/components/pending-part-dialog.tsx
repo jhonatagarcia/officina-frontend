@@ -47,6 +47,7 @@ export function PendingPartDialog({
 
   const selectedItem = inventoryOptionsQuery.data?.find((item) => item.value === inventoryItemId);
   const availableQuantity = selectedItem?.quantity ?? pendingPart?.quantityAvailable ?? 0;
+  const selectedItemOutOfStock = Boolean(selectedItem) && availableQuantity <= 0;
   const canSubmit = Boolean(inventoryItemId) && quantityRequired > 0 && !isSubmitting;
 
   return (
@@ -92,16 +93,14 @@ export function PendingPartDialog({
           </div>
 
           <div className="rounded-xl border border-border-soft bg-stone-50 p-4 text-sm md:col-span-2">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <p className="font-semibold text-muted-foreground">Disponível em estoque</p>
-                <p className="mt-1 text-lg font-bold">{availableQuantity}</p>
-              </div>
-              <div>
-                <p className="font-semibold text-muted-foreground">Quantidade necessária</p>
-                <p className="mt-1 text-lg font-bold">{quantityRequired > 0 ? quantityRequired : 0}</p>
-              </div>
-            </div>
+            <p className="font-semibold text-muted-foreground">
+              Disponível em estoque: <span className="text-lg font-bold text-foreground dark:text-slate-950">{availableQuantity}</span>
+            </p>
+            {selectedItemOutOfStock ? (
+              <p className="mt-3 font-semibold text-red-600 dark:text-red-400">
+                Produto não disponível em estoque. Será necessário efetuar a compra do produto.
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-2 md:col-span-2">

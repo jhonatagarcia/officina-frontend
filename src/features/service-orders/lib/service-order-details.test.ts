@@ -172,5 +172,33 @@ describe('service-order-details helpers', () => {
 
       expect(items).toEqual([]);
     });
+
+    it('mostra somente a parcela de mao de obra de um item misto', () => {
+      const items = getServiceOrderLaborItems({
+        ...baseOrder,
+        budgetItems: [
+          {
+            id: 'mixed-1',
+            type: 'LABOR_AND_PART',
+            serviceCatalogItemId: 'service-1',
+            inventoryItemId: 'inventory-1',
+            serviceCode: 'SRV-001',
+            description: 'Revisao + filtro',
+            quantity: 1,
+            unitPrice: 360,
+            totalPrice: 360,
+            laborUnitPrice: 200.2,
+            laborTotalPrice: 200.2,
+            partUnitPrice: 159.8,
+            partTotalPrice: 159.8,
+            inventoryItem: { id: 'inventory-1', name: 'Filtro', internalCode: 'FIL-001' },
+          },
+        ],
+      });
+
+      expect(items).toEqual([
+        expect.objectContaining({ unitPrice: 200.2, totalPrice: 200.2 }),
+      ]);
+    });
   });
 });

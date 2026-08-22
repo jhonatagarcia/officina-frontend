@@ -2,8 +2,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useEffect } from 'react';
 import { budgetSchema, type BudgetSchema } from '@/features/budgets/schemas/budget-schema';
 import { budgetsService } from '@/features/budgets/services/budgets-service';
+import type { Budget } from '@/features/budgets/types';
 import { normalizeNullableString } from '@/lib/utils';
 
 const defaultBudgetValues: BudgetSchema = {
@@ -25,6 +27,26 @@ const defaultBudgetValues: BudgetSchema = {
   ],
 };
 
+function toBudgetFormValues(budget: Budget): BudgetSchema {
+  return {
+    clientId: budget.clientId,
+    vehicleId: budget.vehicleId,
+    problemDescription: budget.problemDescription,
+    notes: budget.notes ?? '',
+    discount: budget.discount,
+    items: budget.items.map((item) => ({
+      id: item.id,
+      type: item.type,
+      serviceCatalogItemId: item.serviceCatalogItemId ?? '',
+      inventoryItemId: item.inventoryItemId ?? '',
+      serviceCode: item.serviceCode ?? '',
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+    })),
+  };
+}
+
 export function useBudgetForm(mode: 'create' | 'edit' | 'view', id: string, onSuccess: () => void) {
   const queryClient = useQueryClient();
   const budgetQuery = useQuery({
@@ -35,25 +57,19 @@ export function useBudgetForm(mode: 'create' | 'edit' | 'view', id: string, onSu
 
   const form = useForm<BudgetSchema>({
     resolver: zodResolver(budgetSchema),
-    values:
-      (budgetQuery.data && {
-        clientId: budgetQuery.data.clientId,
-        vehicleId: budgetQuery.data.vehicleId,
-        problemDescription: budgetQuery.data.problemDescription,
-        notes: budgetQuery.data.notes ?? '',
-        discount: budgetQuery.data.discount,
-        items: budgetQuery.data.items.map((item) => ({
-          type: item.type,
-          serviceCatalogItemId: item.serviceCatalogItemId ?? '',
-          inventoryItemId: item.inventoryItemId ?? '',
-          serviceCode: item.serviceCode ?? '',
-          description: item.description,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-        })),
-      }) ??
-      defaultBudgetValues,
+    defaultValues: defaultBudgetValues,
   });
+
+  useEffect(() => {
+    if (mode === 'create') {
+      form.reset(defaultBudgetValues);
+      return;
+    }
+
+    if (budgetQuery.data) {
+      form.reset(toBudgetFormValues(budgetQuery.data));
+    }
+  }, [budgetQuery.data, form, mode]);
 
   const fieldArray = useFieldArray({ control: form.control, name: 'items' });
 

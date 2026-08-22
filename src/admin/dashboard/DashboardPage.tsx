@@ -51,7 +51,7 @@ export default function DashboardPage() {
         <div className="admin-grid admin-kpis">
           <KpiCard label="Receita mensal" value={brl(kpis.data?.mrr ?? 0)} hint="+12% vs periodo ant." />
           <KpiCard label="Receita anual projetada" value={brl(kpis.data?.arr ?? 0)} hint="+12% anualizado" color="#35d05f" />
-          <KpiCard label="Oficinas ativas" value={String(kpis.data?.active ?? 0)} hint={`+${kpis.data?.newInPeriod ?? 0} novas no periodo`} color="#4db5ff" />
+          <KpiCard label="Negócios ativos" value={String(kpis.data?.active ?? 0)} hint={`+${kpis.data?.newInPeriod ?? 0} novos no periodo`} color="#4db5ff" />
           <KpiCard label="Pagantes" value={String(kpis.data?.paying ?? 0)} hint="conversao atual" color="#a472f7" />
           <KpiCard label="Cancelamentos" value={`${kpis.data?.churnRate ?? 0}%`} hint="monitorado no periodo" color="#f1c400" negative />
           <KpiCard label="Em risco" value={String(kpis.data?.atRisk ?? 0)} hint="+30 dias sem login" color="#ff3f67" negative />
@@ -71,7 +71,7 @@ export default function DashboardPage() {
             </div>
           </section>
           <section className="admin-card admin-card-pad">
-            <strong>Oficinas por plano</strong>
+            <strong>Negócios por plano</strong>
             <div className="admin-muted">Distribuicao atual</div>
             {Object.entries(kpis.data?.planDistribution ?? {}).map(([plan, count]) => (
               <div className="admin-list-row" key={plan}>

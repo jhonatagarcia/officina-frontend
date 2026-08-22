@@ -73,12 +73,48 @@ export const landingImages = {
     alt: 'Controle financeiro do AutoPro System com entradas e saídas',
     url: 'app.autoprosystem.com.br/financeiro',
   },
+  showcaseVeiculos: {
+    id: 'showcaseVeiculos',
+    src: '/screenshots/veiculos.png',
+    alt: 'Gestão de veículos do AutoPro System com cliente, ano e ações',
+    url: 'app.autoprosystem.com.br/veiculos',
+  },
+  showcaseChamados: {
+    id: 'showcaseChamados',
+    src: '/screenshots/chamados.png',
+    alt: 'Central de chamados do AutoPro System com comunicação com o suporte master',
+    url: 'app.autoprosystem.com.br/chamados',
+  },
+  showcaseMeuNegocio: {
+    id: 'showcaseMeuNegocio',
+    src: '/screenshots/meu-negocio.png',
+    alt: 'Cadastro do negócio no AutoPro System',
+    url: 'app.autoprosystem.com.br/meu-negocio',
+  },
+  showcaseServicos: {
+    id: 'showcaseServicos',
+    src: '/screenshots/servicos.png',
+    alt: 'Catálogo de serviços do AutoPro System com categorias e valores',
+    url: 'app.autoprosystem.com.br/servicos',
+  },
+  showcaseEstoque: {
+    id: 'showcaseEstoque',
+    src: '/screenshots/estoque.png',
+    alt: 'Controle de estoque do AutoPro System com níveis e alertas',
+    url: 'app.autoprosystem.com.br/estoque',
+  },
+  showcaseMecanicos: {
+    id: 'showcaseMecanicos',
+    src: '/screenshots/mecanicos.png',
+    alt: 'Gestão de mecânicos do AutoPro System com status e indicadores',
+    url: 'app.autoprosystem.com.br/mecanicos',
+  },
 
   /* Seções de detalhe por segmento */
-  detailOficinas: {
-    id: 'detailOficinas',
+  detailNegocios: {
+    id: 'detailNegocios',
     src: '/screenshots/ordem-servico.png',
-    alt: 'Ordem de serviço de oficina mecânica no AutoPro System',
+    alt: 'Ordem de serviço de negócio automotivo no AutoPro System',
   },
   detailFunilarias: {
     id: 'detailFunilarias',

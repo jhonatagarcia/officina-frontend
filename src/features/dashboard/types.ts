@@ -2,7 +2,8 @@ import type { Budget } from '@/features/budgets/types';
 import type { ServiceOrder } from '@/features/service-orders/types';
 
 export type DashboardAlertSeverity = 'danger' | 'warning' | 'info';
-export type DashboardPeriod = 'WEEK' | 'MONTH' | 'BIMESTER' | 'TRIMESTER' | 'YEAR';
+export type DashboardPeriod =
+  'WEEK' | 'MONTH' | 'BIMESTER' | 'TRIMESTER' | 'YEAR';
 
 export interface DashboardOperationalAlert {
   id: string;
@@ -23,9 +24,16 @@ export interface DashboardOverview {
   budgets: {
     pending: number;
   };
+  clients: {
+    total: number;
+    new: number;
+    returnRate: number;
+  };
   financial: {
     monthRevenue: number;
     stockOutValue: number;
+    netBalanceValue: number;
+    pendingServiceOrderPaymentsValue: number;
     averageTicket: number;
   };
   inventory: {
@@ -37,6 +45,12 @@ export interface DashboardOverview {
       minimumQuantity: number;
       internalCode: string;
     }[];
+  };
+  operational: {
+    averageExecutionDays: number;
+  };
+  workforce: {
+    activeEmployees: number;
   };
   activeServiceOrders: ServiceOrder[];
   pendingBudgets: Budget[];

@@ -1,6 +1,8 @@
 export interface ApiErrorResponse {
   message: string;
   statusCode?: number | undefined;
+  code?: string | undefined;
+  field?: 'name' | 'code' | 'internalCode' | undefined;
   details?: unknown;
 }
 

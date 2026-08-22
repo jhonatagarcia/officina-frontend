@@ -1,4 +1,5 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
+import axios from 'axios';
 import { vi } from 'vitest';
 import { Sidebar } from '@/components/layout/sidebar';
 import { useAuthStore } from '@/store/auth-store';
@@ -14,7 +15,13 @@ vi.mock('@/features/auth/services/auth-service', () => ({
   },
 }));
 
+const axiosPostSpy = vi.spyOn(axios, 'post');
+
 describe('Sidebar', () => {
+  beforeEach(() => {
+    axiosPostSpy.mockResolvedValue({ data: undefined });
+  });
+
   it('renderiza menus restritos com cadeado para perfil financeiro', () => {
     const user = {
       id: '1',
@@ -37,7 +44,9 @@ describe('Sidebar', () => {
     expect(screen.getAllByText('Financeiro').length).toBeGreaterThan(0);
     expect(screen.getByText('Clientes')).toBeInTheDocument();
     expect(screen.getByText('Estoque')).toBeInTheDocument();
-    expect(screen.getAllByLabelText('Acesso bloqueado').length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText('Acesso bloqueado').length).toBeGreaterThan(
+      0,
+    );
   });
 
   it('renderiza todos os menus liberados para administrador', () => {

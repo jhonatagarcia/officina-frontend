@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useInventoryOptions } from '@/features/reference-data/hooks/use-inventory-options';
+import { useServiceOptions } from '@/features/reference-data/hooks/use-service-options';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,13 +13,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, parseCurrencyInput } from '@/lib/utils';
+import type { AddServiceOrderServicePayload } from '@/features/service-orders/types';
+
+const NO_INVENTORY_ITEM = 'NONE';
 
 interface ServiceOrderStockPartDialogProps {
   open: boolean;
   isSubmitting: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (payload: { inventoryItemId: string; quantity: number; unitPrice: number }) => void;
+  onSubmit: (payload: AddServiceOrderServicePayload) => void;
 }
 
 export function ServiceOrderStockPartDialog({
@@ -27,43 +31,95 @@ export function ServiceOrderStockPartDialog({
   onOpenChange,
   onSubmit,
 }: ServiceOrderStockPartDialogProps) {
+  const serviceOptionsQuery = useServiceOptions();
   const inventoryOptionsQuery = useInventoryOptions();
+  const [serviceCatalogItemId, setServiceCatalogItemId] = useState('');
   const [inventoryItemId, setInventoryItemId] = useState('');
+  const [description, setDescription] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [unitPrice, setUnitPrice] = useState(0);
 
   useEffect(() => {
     if (!open) return;
+    setServiceCatalogItemId('');
     setInventoryItemId('');
+    setDescription('');
     setQuantity(1);
+    setUnitPrice(0);
   }, [open]);
 
+  const selectedService = serviceOptionsQuery.data?.find((item) => item.value === serviceCatalogItemId);
   const selectedItem = inventoryOptionsQuery.data?.find((item) => item.value === inventoryItemId);
-  const availableQuantity = selectedItem?.quantity ?? 0;
-  const unitPrice = selectedItem?.salePrice ?? 0;
-  const canSubmit = Boolean(selectedItem) && quantity > 0 && quantity <= availableQuantity && !isSubmitting;
+  const compositeUnitPrice = unitPrice + (selectedItem?.salePrice ?? 0);
+  const canSubmit = Boolean(selectedService) && description.trim().length >= 3 && quantity > 0 && unitPrice >= 0 && !isSubmitting;
+
+  const handleServiceChange = (value: string) => {
+    const service = serviceOptionsQuery.data?.find((option) => option.value === value);
+    setServiceCatalogItemId(value);
+    setDescription(service?.description ?? '');
+    setUnitPrice(service?.suggestedTotalPrice ?? 0);
+  };
+
+  const handleInventoryChange = (value: string) => {
+    if (value === NO_INVENTORY_ITEM) {
+      setInventoryItemId('');
+      setDescription(selectedService?.description ?? description);
+      setUnitPrice(selectedService?.suggestedTotalPrice ?? unitPrice);
+      return;
+    }
+
+    const inventoryItem = inventoryOptionsQuery.data?.find((option) => option.value === value);
+    setInventoryItemId(value);
+    const descriptionParts = [selectedService?.description, inventoryItem?.name].filter(Boolean);
+    if (descriptionParts.length) {
+      setDescription(descriptionParts.join(' + '));
+    }
+    setUnitPrice(selectedService?.suggestedTotalPrice ?? unitPrice);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl rounded-2xl">
         <DialogHeader>
-          <DialogTitle>Aplicar peça do estoque</DialogTitle>
+          <DialogTitle>Adicionar serviço</DialogTitle>
           <DialogDescription>
-            Use esta ação quando a peça já estiver disponível. Se não houver estoque suficiente, registre como peça pendente.
+            Inclua um novo serviço na OS e no orçamento vinculado. A peça de estoque é opcional.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 md:grid-cols-[1fr_150px]">
-          <div className="space-y-2">
-            <Label>Peça do estoque</Label>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2 md:col-span-2">
+            <Label>Serviço</Label>
             <Select
-              disabled={inventoryOptionsQuery.isLoading || isSubmitting}
-              value={inventoryItemId}
-              onValueChange={setInventoryItemId}
+              disabled={serviceOptionsQuery.isLoading || isSubmitting}
+              value={serviceCatalogItemId}
+              onValueChange={handleServiceChange}
             >
               <SelectTrigger>
-                <SelectValue placeholder={inventoryOptionsQuery.isLoading ? 'Carregando peças...' : 'Selecione a peça'} />
+                <SelectValue placeholder={serviceOptionsQuery.isLoading ? 'Carregando serviços...' : 'Selecione o serviço'} />
               </SelectTrigger>
               <SelectContent>
+                {serviceOptionsQuery.data?.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2 md:col-span-2">
+            <Label>Peça vinculada</Label>
+            <Select
+              disabled={inventoryOptionsQuery.isLoading || isSubmitting}
+              value={inventoryItemId || NO_INVENTORY_ITEM}
+              onValueChange={handleInventoryChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={inventoryOptionsQuery.isLoading ? 'Carregando peças...' : 'Nenhuma peça vinculada'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_INVENTORY_ITEM}>Sem peça vinculada</SelectItem>
                 {inventoryOptionsQuery.data?.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -73,10 +129,20 @@ export function ServiceOrderStockPartDialog({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="stock-part-quantity">Quantidade necessária</Label>
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="service-order-new-service-description">Descrição</Label>
             <Input
-              id="stock-part-quantity"
+              id="service-order-new-service-description"
+              disabled={isSubmitting}
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="service-order-new-service-quantity">Quantidade</Label>
+            <Input
+              id="service-order-new-service-quantity"
               min={1}
               type="number"
               value={quantity}
@@ -84,25 +150,29 @@ export function ServiceOrderStockPartDialog({
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="service-order-new-service-unit-price">Valor unitário do serviço</Label>
+            <Input
+              id="service-order-new-service-unit-price"
+              disabled={isSubmitting}
+              inputMode="numeric"
+              value={formatCurrency(unitPrice)}
+              onChange={(event) => setUnitPrice(parseCurrencyInput(event.target.value))}
+            />
+          </div>
+
           <div className="rounded-xl border border-border-soft bg-stone-50 p-4 text-sm md:col-span-2">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div>
-                <p className="font-semibold text-muted-foreground">Disponível</p>
-                <p className="mt-1 text-lg font-bold">{availableQuantity}</p>
+            <p className="font-semibold text-muted-foreground">Subtotal</p>
+            <p className="mt-1 text-lg font-bold">{formatCurrency(Math.max(quantity, 0) * compositeUnitPrice)}</p>
+            {selectedItem ? (
+              <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                <p>
+                  Peça vinculada: <span className="font-semibold text-foreground">{formatCurrency(selectedItem.salePrice)}</span> por unidade.
+                </p>
+                <p>
+                  Estoque atual da peça vinculada: <span className="font-semibold text-foreground">{selectedItem.quantity}</span>
+                </p>
               </div>
-              <div>
-                <p className="font-semibold text-muted-foreground">Necessária</p>
-                <p className="mt-1 text-lg font-bold">{quantity > 0 ? quantity : 0}</p>
-              </div>
-              <div>
-                <p className="font-semibold text-muted-foreground">Valor unitário</p>
-                <p className="mt-1 text-lg font-bold">{formatCurrency(unitPrice)}</p>
-              </div>
-            </div>
-            {selectedItem && quantity > availableQuantity ? (
-              <p className="mt-3 font-semibold text-amber-700">
-                Estoque insuficiente para aplicar esta peça. Cadastre a necessidade como peça pendente.
-              </p>
             ) : null}
           </div>
         </div>
@@ -114,9 +184,15 @@ export function ServiceOrderStockPartDialog({
           <Button
             type="button"
             disabled={!canSubmit}
-            onClick={() => selectedItem && onSubmit({ inventoryItemId, quantity, unitPrice })}
+            onClick={() => onSubmit({
+              serviceCatalogItemId,
+              inventoryItemId: inventoryItemId || null,
+              description: description.trim(),
+              quantity,
+              unitPrice,
+            })}
           >
-            {isSubmitting ? 'Aplicando...' : 'Aplicar na OS'}
+            {isSubmitting ? 'Adicionando...' : 'Adicionar serviço'}
           </Button>
         </DialogFooter>
       </DialogContent>

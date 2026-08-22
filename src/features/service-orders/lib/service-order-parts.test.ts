@@ -134,4 +134,84 @@ describe('service-order-parts helpers', () => {
 
     expect(getPlannedServiceOrderParts(order)).toEqual([]);
   });
+
+  it('ignora item misto sem relacionamento de estoque carregado', () => {
+    const order: ServiceOrder = {
+      ...baseOrder,
+      budgetItems: [
+        {
+          id: 'budget-mixed-1',
+          type: 'LABOR_AND_PART',
+          serviceCatalogItemId: 'service-1',
+          inventoryItemId: 'inventory-1',
+          serviceCode: 'SRV-001',
+          description: 'Troca de oleo + oleo',
+          quantity: 1,
+          unitPrice: 180,
+          totalPrice: 180,
+          inventoryItem: undefined as unknown as null,
+        },
+      ],
+    };
+
+    expect(getPlannedServiceOrderParts(order)).toEqual([]);
+  });
+
+  it('mostra somente a parcela da peca de um item misto', () => {
+    const order: ServiceOrder = {
+      ...baseOrder,
+      budgetItems: [
+        {
+          id: 'budget-mixed-1',
+          type: 'LABOR_AND_PART',
+          serviceCatalogItemId: 'service-1',
+          inventoryItemId: 'inventory-1',
+          serviceCode: 'SRV-001',
+          description: 'Revisao + filtro',
+          quantity: 1,
+          unitPrice: 360,
+          totalPrice: 360,
+          laborUnitPrice: 200.2,
+          laborTotalPrice: 200.2,
+          partUnitPrice: 159.8,
+          partTotalPrice: 159.8,
+          inventoryItem: { id: 'inventory-1', name: 'Filtro', internalCode: 'FIL-001' },
+        },
+      ],
+    };
+
+    expect(getPlannedServiceOrderParts(order)).toEqual([
+      expect.objectContaining({ unitPrice: 159.8, totalPrice: 159.8 }),
+    ]);
+  });
+
+  it('mantem peca legada visivel mesmo sem vinculo atual com o estoque', () => {
+    const order: ServiceOrder = {
+      ...baseOrder,
+      budgetItems: [
+        {
+          id: 'legacy-part-1',
+          type: 'PART',
+          inventoryItemId: null,
+          serviceCode: null,
+          description: 'Filtro de ar Tecfil',
+          quantity: 1,
+          unitPrice: 69.9,
+          totalPrice: 69.9,
+          inventoryItem: null,
+        },
+      ],
+    };
+
+    expect(getPlannedServiceOrderParts(order)).toEqual([
+      expect.objectContaining({
+        unitPrice: 69.9,
+        totalPrice: 69.9,
+        inventoryItem: expect.objectContaining({
+          name: 'Filtro de ar Tecfil',
+          internalCode: '-',
+        }) as unknown,
+      }),
+    ]);
+  });
 });

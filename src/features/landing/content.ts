@@ -16,30 +16,30 @@ import { landingImages, type LandingImageAsset } from './assets/images';
 
 export const brand = {
   name: 'AutoPro System',
-  tagline: 'Gestão completa para oficinas mecânicas, funilarias e auto elétricas. Feito para o Brasil.',
+  tagline: 'Gestão completa para negócios automotivos, funilarias e auto elétricas. Feito para o Brasil.',
   contactEmail: 'contato@autoprosystem.com.br',
   demoHref: 'mailto:contato@autoprosystem.com.br?subject=Quero receber uma proposta do AutoPro System',
   siteUrl: 'https://autoprosystem.com.br',
 };
 
 export const seo = {
-  title: 'AutoPro System — Gestão para oficinas, funilarias e auto elétricas',
+  title: 'AutoPro System — Gestão para negócios automotivos',
   description:
-    'O ERP do negócio automotivo: ordens de serviço, orçamentos, clientes, estoque, financeiro e WhatsApp em uma plataforma feita para oficinas mecânicas, funilarias e auto elétricas.',
+    'O ERP do negócio automotivo: ordens de serviço, orçamentos, clientes, estoque e financeiro em uma plataforma feita para negócios automotivos, funilarias e auto elétricas.',
 };
 
 /* ── Hero ─────────────────────────────────────────── */
 
 export const hero = {
-  badge: 'Oficinas · Funilarias · Auto elétricas',
+  badge: 'Oficina Mecânica · Funilarias · Auto elétricas',
   titleLead: 'O ERP que seu',
   titleHighlight: 'negócio automotivo',
   titleTail: 'sempre precisou',
   subtitle:
-    'Oficinas mecânicas, funilarias e auto elétricas: do orçamento à ordem de serviço, do estoque ao financeiro — gestão completa em uma plataforma feita para o Brasil.',
+    'Negócios automotivos, oficina mecânica, funilarias e auto elétricas: do orçamento à ordem de serviço, do estoque ao financeiro — gestão completa em uma plataforma feita para o Brasil.',
   primaryCta: { label: 'Começar gratuitamente', href: '#planos' },
   secondaryCta: { label: 'Ver o sistema', href: '#produto' },
-  notification: { app: 'AutoPro System · WhatsApp', message: 'Seu Civic está pronto! 🎉' },
+  // TODO(WhatsApp Cloud API): notification: { app: 'AutoPro System · WhatsApp', message: 'Seu Civic está pronto! 🎉' },
   kpi: { label: 'OS abertas hoje', value: '23', delta: '↑ +5 vs ontem' },
 };
 
@@ -126,22 +126,24 @@ export const features: Feature[] = [
   },
 ];
 
-/* ── WhatsApp ─────────────────────────────────────── */
-
-export const whatsapp = {
-  tag: 'Integração nativa',
-  title: 'Seus clientes sempre informados no celular',
-  description:
-    'Envie notificações automáticas pelo WhatsApp diretamente da plataforma — sem apps extras, sem configuração manual.',
-  bullets: [
-    'Aviso automático quando o serviço é iniciado',
-    'Orçamento enviado com link de aprovação',
-    'Notificação quando o veículo fica pronto',
-    'Lembretes automáticos de revisão periódica',
-    'Mensagens personalizadas com nome e veículo do cliente',
-  ],
-  approvalLink: 'autoprosystem.com.br/orc/8821',
-};
+/*
+ * TODO(WhatsApp Cloud API): conteudo comercial preservado, mas pausado para nao ser enviado no bundle.
+ *
+ * export const whatsapp = {
+ *   tag: 'Integração nativa',
+ *   title: 'Seus clientes sempre informados no celular',
+ *   description:
+ *     'Envie notificações automáticas pelo WhatsApp diretamente da plataforma — sem apps extras, sem configuração manual.',
+ *   bullets: [
+ *     'Aviso automático quando o serviço é iniciado',
+ *     'Orçamento enviado com link de aprovação',
+ *     'Notificação quando o veículo fica pronto',
+ *     'Lembretes automáticos de revisão periódica',
+ *     'Mensagens personalizadas com nome e veículo do cliente',
+ *   ],
+ *   approvalLink: 'autoprosystem.com.br/orc/8821',
+ * };
+ */
 
 /* ── Showcase ─────────────────────────────────────── */
 
@@ -155,9 +157,15 @@ export const showcase = {
 export const showcaseTabs: BrowserTab[] = [
   { id: 'dashboard', label: 'Dashboard', image: landingImages.showcaseDashboard },
   { id: 'clientes', label: 'Clientes', image: landingImages.showcaseClientes },
+  { id: 'veiculos', label: 'Veículos', image: landingImages.showcaseVeiculos },
   { id: 'orcamentos', label: 'Orçamentos', image: landingImages.showcaseOrcamentos },
   { id: 'ordens', label: 'Ordem de Serviço', image: landingImages.showcaseOrdens },
   { id: 'financeiro', label: 'Financeiro', image: landingImages.showcaseFinanceiro },
+  { id: 'chamados', label: 'Chamados', image: landingImages.showcaseChamados },
+  { id: 'meu-negocio', label: 'Meu Negócio', image: landingImages.showcaseMeuNegocio },
+  { id: 'servicos', label: 'Serviços', image: landingImages.showcaseServicos },
+  { id: 'estoque', label: 'Estoque', image: landingImages.showcaseEstoque },
+  { id: 'mecanicos', label: 'Mecânicos', image: landingImages.showcaseMecanicos },
 ];
 
 /* ── Seções de detalhe por segmento ───────────────── */
@@ -177,18 +185,19 @@ export interface SegmentDetail {
 
 export const segmentDetails: SegmentDetail[] = [
   {
-    id: 'oficinas',
-    tag: 'Oficinas mecânicas',
+    id: 'negocios',
+    tag: 'Negócios automotivos',
     title: 'Gestão completa do processo mecânico',
     description:
       'Do diagnóstico à entrega, cada etapa documentada. Menos papel, mais agilidade no atendimento.',
     bullets: [
       'Abertura rápida de OS com placa do veículo',
       'Catálogo de serviços com valores pré-definidos',
-      'Aprovação de orçamento por link via WhatsApp',
+      // TODO(WhatsApp Cloud API): 'Aprovação de orçamento por link via WhatsApp',
+      'Acompanhamento digital do orçamento e da ordem de serviço',
       'Histórico completo de manutenções por veículo',
     ],
-    image: landingImages.detailOficinas,
+    image: landingImages.detailNegocios,
     reverse: false,
     alt: false,
   },
@@ -211,11 +220,11 @@ export const segmentDetails: SegmentDetail[] = [
   {
     id: 'auto-eletricas',
     tag: 'Auto elétricas',
-    title: 'Diagnóstico elétrico documentado do scanner à entrega',
+    title: 'Organize diagnósticos elétricos e registros técnicos',
     description:
-      'Registre falhas, módulos e leituras do scanner na própria OS. Cada veículo sai com o histórico elétrico completo — sem papelada.',
+      'Registre na OS os códigos de falha e as leituras obtidas com os equipamentos da sua autoelétrica. O AutoPro organiza essas informações no histórico do veículo — sem papelada.',
     bullets: [
-      'OS com registro de códigos de falha e leituras do scanner',
+      'Registro na OS das leituras obtidas com os equipamentos da oficina',
       'Controle de baterias, módulos e componentes no estoque',
       'Histórico de injeção eletrônica e intervenções por veículo',
       'Orçamento claro separando diagnóstico, peças e mão de obra',
@@ -258,7 +267,8 @@ export const plans: Plan[] = [
       'Clientes e veículos ilimitados',
       'Orçamentos e OS ilimitados',
       'Catálogo de serviços',
-      'Notificações WhatsApp',
+      // TODO(WhatsApp Cloud API): 'Notificações WhatsApp',
+      'Histórico de serviços por veículo',
       'Suporte via chat',
     ],
     cta: { label: 'Começar gratuitamente', href: brand.demoHref },
@@ -310,10 +320,10 @@ export interface Testimonial {
 export const testimonials: Testimonial[] = [
   {
     quote:
-      'Antes usávamos caderno e planilha. Com o AutoPro System, abrimos OS em segundos e o cliente aprova o orçamento pelo WhatsApp. Mudou tudo na nossa rotina.',
+      'Antes usávamos caderno e planilha. Com o AutoPro System, abrimos ordens de serviço em segundos e centralizamos toda a operação. Mudou tudo na nossa rotina.',
     initials: 'RC',
     name: 'Ricardo Caldas',
-    role: 'Oficina Mecânica Caldas, SP',
+    role: 'Meu Negócio Mecânica Caldas, SP',
   },
   {
     quote:
@@ -324,7 +334,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     quote:
-      'Trabalho com injeção e módulos, e diagnóstico elétrico era difícil de cobrar. Hoje registro as leituras do scanner na OS e o cliente entende exatamente o que está pagando.',
+      'Trabalho com injeção e módulos, e diagnóstico elétrico era difícil de cobrar. Hoje registro na OS as leituras obtidas com meus equipamentos e o cliente entende exatamente o que está pagando.',
     initials: 'CA',
     name: 'Carlos Andrade',
     role: 'Andrade Auto Elétrica, PR',
@@ -357,7 +367,7 @@ export const footerColumns: FooterColumn[] = [
     title: 'Produto',
     links: [
       { label: 'Funcionalidades', href: '#funcionalidades' },
-      { label: 'WhatsApp', href: '#whatsapp' },
+      // TODO(WhatsApp Cloud API): { label: 'WhatsApp', href: '#whatsapp' },
       { label: 'Conheça o sistema', href: '#produto' },
       { label: 'Planos e preços', href: '#planos' },
     ],
@@ -365,7 +375,7 @@ export const footerColumns: FooterColumn[] = [
   {
     title: 'Segmentos',
     links: [
-      { label: 'Oficinas mecânicas', href: '#oficinas' },
+      { label: 'Negócios automotivos', href: '#negocios' },
       { label: 'Funilarias', href: '#funilarias' },
       { label: 'Auto elétricas', href: '#auto-eletricas' },
     ],

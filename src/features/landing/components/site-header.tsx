@@ -4,17 +4,25 @@ import { brand } from '../content';
 import { useScrollShadow } from '../hooks/use-scroll-shadow';
 import { ButtonLink } from './button-link';
 import { LoginModal } from './login-modal';
+import { RegisterWorkshopDialog } from '@/features/auth/components/register-workshop-dialog';
 
 const navItems = [
   { label: 'Funcionalidades', href: '#funcionalidades' },
-  { label: 'WhatsApp', href: '#whatsapp' },
+  // TODO(WhatsApp Cloud API): restaurar o link quando a secao voltar a landing page.
+  // { label: 'WhatsApp', href: '#whatsapp' },
   { label: 'Produto', href: '#produto' },
   { label: 'Planos', href: '#planos' },
 ];
 
 export function SiteHeader() {
   const [loginOpen, setLoginOpen] = useState(false);
+  const [registerOpen, setRegisterOpen] = useState(false);
   const scrolled = useScrollShadow();
+
+  function openRegister() {
+    setLoginOpen(false);
+    setRegisterOpen(true);
+  }
 
   return (
     <>
@@ -46,7 +54,11 @@ export function SiteHeader() {
         </nav>
       </header>
 
-      <LoginModal isOpen={loginOpen} onClose={() => setLoginOpen(false)} />
+      <LoginModal isOpen={loginOpen} onClose={() => setLoginOpen(false)} onRegisterClick={openRegister} />
+      <RegisterWorkshopDialog
+        open={registerOpen}
+        onOpenChange={setRegisterOpen}
+      />
     </>
   );
 }

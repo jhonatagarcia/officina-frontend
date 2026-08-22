@@ -1,3 +1,6 @@
+/*
+ * TODO(WhatsApp Cloud API): exemplos de mensagens preservados e fora do bundle de producao.
+ *
 export type WhatsAppServiceOrderStatus =
   | 'EM_ANDAMENTO'
   | 'AGUARDANDO_PECA'
@@ -59,3 +62,6 @@ export const landingWhatsAppMessages: WhatsAppLandingMessage[] = [
     text: buildServiceOrderWhatsAppMessage('ENTREGUE'),
   },
 ];
+*/
+
+export {};

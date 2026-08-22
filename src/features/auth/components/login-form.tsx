@@ -3,12 +3,14 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useLogin } from '@/features/auth/hooks/use-login';
+import { useRecaptcha } from '@/features/auth/hooks/use-recaptcha';
 import { loginSchema, type LoginSchema } from '@/features/auth/schemas/login-schema';
-import { CaptchaField } from '@/features/auth/components/captcha-field';
 import { PasswordField } from '@/features/auth/components/password-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+
+const loginFailureMessage = 'Usuário não cadastrado ou senha inválida.';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -17,6 +19,7 @@ interface LoginFormProps {
 
 export function LoginForm({ onSuccess, redirectTo = '/inicio/dashboard' }: LoginFormProps) {
   const { login, isLoggingIn } = useLogin();
+  const executeRecaptcha = useRecaptcha();
   const navigate = useNavigate();
 
   const form = useForm<LoginSchema>({
@@ -26,12 +29,15 @@ export function LoginForm({ onSuccess, redirectTo = '/inicio/dashboard' }: Login
 
   async function onSubmit(values: LoginSchema) {
     try {
-      await login(values);
+      form.clearErrors('root');
+      const captchaToken = await executeRecaptcha('login');
+      await login({ ...values, captchaToken });
       toast.success('Acesso realizado com sucesso.');
       onSuccess?.();
       navigate(redirectTo, { replace: true });
     } catch {
-      toast.error('Não foi possível entrar. Verifique os dados e tente novamente.');
+      form.setError('root', { message: loginFailureMessage });
+      toast.error(loginFailureMessage);
     }
   }
 
@@ -45,7 +51,7 @@ export function LoginForm({ onSuccess, redirectTo = '/inicio/dashboard' }: Login
           className="border-white/10 bg-slate-800/80 text-white placeholder:text-slate-500"
           disabled={isLoggingIn}
           invalid={Boolean(form.formState.errors.email)}
-          placeholder="seuemail@oficina.com"
+          placeholder="seuemail@empresa.com"
           type="email"
           {...form.register('email')}
         />
@@ -73,16 +79,14 @@ export function LoginForm({ onSuccess, redirectTo = '/inicio/dashboard' }: Login
         )}
       />
 
-      <CaptchaField
-        disabled={isLoggingIn}
-        error={form.formState.errors.captchaToken?.message}
-        value={form.watch('captchaToken')}
-        onChange={(value) => form.setValue('captchaToken', value, { shouldValidate: true })}
-      />
-
       <Button className="h-11 w-full" disabled={isLoggingIn} type="submit">
         {isLoggingIn ? 'Entrando...' : 'Entrar'}
       </Button>
+      {form.formState.errors.root?.message ? (
+        <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+          {form.formState.errors.root.message}
+        </p>
+      ) : null}
     </form>
   );
 }

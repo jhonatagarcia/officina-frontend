@@ -30,14 +30,14 @@ function isValidCnpj(value: string) {
 export const loginSchema = z.object({
   email: z.string().email('Informe um e-mail válido'),
   password: z.string().min(8, 'A senha precisa ter ao menos 8 caracteres'),
-  captchaToken: z.string().min(1, 'Confirme o captcha para continuar'),
+  captchaToken: z.string().optional(),
 });
 
 export type LoginSchema = z.infer<typeof loginSchema>;
 
 export const registerSchema = z
   .object({
-    tradeName: z.string().trim().min(2, 'Informe o nome fantasia da oficina'),
+    tradeName: z.string().trim().min(2, 'Informe o nome fantasia do negócio'),
     cnpj: z
       .string()
       .trim()

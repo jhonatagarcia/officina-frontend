@@ -140,4 +140,32 @@
     background: hsl(var(--surface-1) / 0.85);
     backdrop-filter: blur(12px);
   }
+
+  .sidebar-scrollbar {
+    scrollbar-color: hsl(var(--primary) / 0.58) transparent;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar {
+    width: 0.625rem;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-track {
+    margin-block: 0.5rem;
+    border-radius: 9999px;
+    background: hsl(var(--foreground) / 0.04);
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    min-height: 3rem;
+    border: 0.1875rem solid transparent;
+    border-radius: 9999px;
+    background-clip: padding-box;
+    background-color: hsl(var(--primary) / 0.48);
+  }
+
+  .sidebar-scrollbar:hover::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--primary) / 0.8);
+  }
 }

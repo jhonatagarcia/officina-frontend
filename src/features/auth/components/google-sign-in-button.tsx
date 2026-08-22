@@ -1,9 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { getGoogleSignInUnavailableReason } from '@/features/auth/lib/google-sign-in-config';
+import { env } from '@/lib/env';
 import { cn } from '@/lib/utils';
 
 const googleIdentityScriptId = 'google-identity-services';
-const googleIdentityScriptSrc = 'https://accounts.google.com/gsi/client';
+const googleIdentityScriptSrc = 'https://accounts.google.com/gsi/client?hl=pt-BR';
+const googleIdentityScriptTimeoutMs = 10_000;
 
 interface GoogleCredentialResponse {
   credential?: string;
@@ -14,6 +17,7 @@ interface GoogleAccountsId {
   initialize: (config: {
     client_id: string;
     callback: (response: GoogleCredentialResponse) => void;
+    ux_mode?: 'popup';
     auto_select?: boolean;
     cancel_on_tap_outside?: boolean;
   }) => void;
@@ -27,6 +31,7 @@ interface GoogleAccountsId {
       text: 'signin_with';
       logo_alignment: 'left';
       width?: number;
+      locale?: string;
     },
   ) => void;
 }
@@ -39,22 +44,63 @@ interface GoogleIdentityWindow extends Window {
   };
 }
 
-type GoogleButtonState = 'idle' | 'loading' | 'ready' | 'unavailable';
+type GoogleButtonState = 'loading' | 'ready' | 'unavailable';
+type GoogleSignInErrorReason =
+  | 'invalid_client_id'
+  | 'origin_not_allowed'
+  | 'script_load_failed'
+  | 'script_timeout'
+  | 'identity_unavailable'
+  | 'render_failed'
+  | 'missing_credential';
 
 interface GoogleSignInButtonProps {
   clientId: string;
   disabled?: boolean;
   isSubmitting?: boolean;
   onCredential: (credential: string) => void;
-  onGoogleError: () => void;
+  onGoogleError: (reason?: GoogleSignInErrorReason) => void;
 }
 
 function getGoogleIdentity() {
   return (window as GoogleIdentityWindow).google?.accounts?.id;
 }
 
-function isValidGoogleClientId(clientId: string) {
-  return /^[^\s@]+\.apps\.googleusercontent\.com$/.test(clientId);
+function reportGoogleIdentityIssue(reason: GoogleSignInErrorReason, error?: unknown) {
+  const detail = error instanceof Error ? error.message : error;
+  const safeDetail = typeof detail === 'string' ? detail.slice(0, 256) : undefined;
+
+  console.warn('[Google Identity] Nao foi possivel iniciar o login com Google.', {
+    reason,
+    origin: window.location.origin,
+    detail: safeDetail,
+  });
+
+  if (reason === 'origin_not_allowed') {
+    return;
+  }
+
+  void fetch(`${env.VITE_API_BASE_URL}/auth/google/identity-issue`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    keepalive: true,
+    body: JSON.stringify({
+      reason,
+      origin: window.location.origin,
+      ...(safeDetail ? { detail: safeDetail } : {}),
+    }),
+  }).catch(() => undefined);
+}
+
+function getGoogleSignInErrorReason(error: unknown): GoogleSignInErrorReason {
+  if (!(error instanceof Error)) return 'render_failed';
+
+  if (error.message === 'script_timeout') return 'script_timeout';
+  if (error.message === 'identity_unavailable') return 'identity_unavailable';
+  if (error.message === 'script_load_failed') return 'script_load_failed';
+
+  return 'render_failed';
 }
 
 function loadGoogleIdentityScript() {
@@ -71,8 +117,21 @@ function loadGoogleIdentityScript() {
         return;
       }
 
-      existingScript.addEventListener('load', () => resolve(), { once: true });
-      existingScript.addEventListener('error', () => reject(new Error('google_identity_unavailable')), { once: true });
+      if (existingScript.dataset['loaded'] === 'true') {
+        reject(new Error('identity_unavailable'));
+        return;
+      }
+
+      const timeout = window.setTimeout(() => reject(new Error('script_timeout')), googleIdentityScriptTimeoutMs);
+      existingScript.addEventListener('load', () => {
+        window.clearTimeout(timeout);
+        existingScript.dataset['loaded'] = 'true';
+        resolve();
+      }, { once: true });
+      existingScript.addEventListener('error', () => {
+        window.clearTimeout(timeout);
+        reject(new Error('script_load_failed'));
+      }, { once: true });
     });
   }
 
@@ -82,8 +141,16 @@ function loadGoogleIdentityScript() {
     script.src = googleIdentityScriptSrc;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('google_identity_unavailable'));
+    const timeout = window.setTimeout(() => reject(new Error('script_timeout')), googleIdentityScriptTimeoutMs);
+    script.onload = () => {
+      window.clearTimeout(timeout);
+      script.dataset['loaded'] = 'true';
+      resolve();
+    };
+    script.onerror = () => {
+      window.clearTimeout(timeout);
+      reject(new Error('script_load_failed'));
+    };
     document.head.appendChild(script);
   });
 }
@@ -91,8 +158,18 @@ function loadGoogleIdentityScript() {
 export function GoogleSignInButton({ clientId, disabled = false, isSubmitting = false, onCredential, onGoogleError }: GoogleSignInButtonProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const descriptionId = useId();
-  const hasValidClientId = isValidGoogleClientId(clientId);
-  const [state, setState] = useState<GoogleButtonState>(hasValidClientId ? 'loading' : 'unavailable');
+  const initialUnavailableReason = getGoogleSignInUnavailableReason(
+    clientId,
+    env.VITE_GOOGLE_ALLOWED_ORIGINS,
+  );
+  const canLoadGoogleIdentity = !initialUnavailableReason;
+  const [retryCount, setRetryCount] = useState(0);
+  const [state, setState] = useState<GoogleButtonState>(
+    canLoadGoogleIdentity ? 'loading' : 'unavailable',
+  );
+  const [unavailableReason, setUnavailableReason] = useState<GoogleSignInErrorReason | undefined>(
+    initialUnavailableReason,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -102,15 +179,17 @@ export function GoogleSignInButton({ clientId, disabled = false, isSubmitting = 
 
       containerRef.current.replaceChildren();
       googleIdentity.initialize({
-        client_id: clientId,
+        client_id: clientId.trim(),
         callback: (response) => {
           const credential = response.credential?.trim();
           if (!credential) {
-            onGoogleError();
+            reportGoogleIdentityIssue('missing_credential', response.select_by);
+            onGoogleError('missing_credential');
             return;
           }
           onCredential(credential);
         },
+        ux_mode: 'popup',
         auto_select: false,
         cancel_on_tap_outside: true,
       });
@@ -122,23 +201,34 @@ export function GoogleSignInButton({ clientId, disabled = false, isSubmitting = 
         text: 'signin_with',
         logo_alignment: 'left',
         width: 400,
+        locale: 'pt-BR',
       });
+      setUnavailableReason(undefined);
       setState('ready');
     }
 
     async function initializeGoogleButton() {
-      if (!hasValidClientId || !containerRef.current) {
+      if (!canLoadGoogleIdentity || !containerRef.current) {
+        setUnavailableReason(initialUnavailableReason);
         setState('unavailable');
         return;
       }
 
       const loadedIdentity = getGoogleIdentity();
       if (loadedIdentity) {
-        renderGoogleButton(loadedIdentity);
+        try {
+          renderGoogleButton(loadedIdentity);
+        } catch (error) {
+          const reason = getGoogleSignInErrorReason(error);
+          reportGoogleIdentityIssue(reason, error);
+          setUnavailableReason(reason);
+          setState('unavailable');
+        }
         return;
       }
 
       setState('loading');
+      setUnavailableReason(undefined);
 
       try {
         await loadGoogleIdentityScript();
@@ -146,14 +236,16 @@ export function GoogleSignInButton({ clientId, disabled = false, isSubmitting = 
 
         const googleIdentity = getGoogleIdentity();
         if (!googleIdentity) {
-          throw new Error('google_identity_unavailable');
+          throw new Error('identity_unavailable');
         }
 
         renderGoogleButton(googleIdentity);
-      } catch {
+      } catch (error) {
         if (!cancelled) {
+          const reason = getGoogleSignInErrorReason(error);
+          reportGoogleIdentityIssue(reason, error);
+          setUnavailableReason(reason);
           setState('unavailable');
-          onGoogleError();
         }
       }
     }
@@ -163,11 +255,12 @@ export function GoogleSignInButton({ clientId, disabled = false, isSubmitting = 
     return () => {
       cancelled = true;
     };
-  }, [clientId, hasValidClientId, onCredential, onGoogleError]);
+  }, [canLoadGoogleIdentity, clientId, initialUnavailableReason, onCredential, onGoogleError, retryCount]);
 
   const isUnavailable = state === 'unavailable';
   const isLoading = state === 'loading';
   const isBlocked = disabled || isSubmitting || isLoading;
+  const isFallbackBlocked = disabled || isSubmitting;
 
   const googleLogo = (
     <svg aria-hidden="true" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg">
@@ -182,15 +275,32 @@ export function GoogleSignInButton({ clientId, disabled = false, isSubmitting = 
     return (
       <button
         aria-describedby={descriptionId}
-        className="grid h-11 w-full cursor-not-allowed place-items-center rounded-md border border-white/10 bg-slate-800/60 text-sm font-medium text-slate-300 opacity-60"
-        disabled
+        className={cn(
+          'grid h-11 w-full place-items-center rounded-md border border-white/10 bg-white text-sm font-medium text-slate-800 transition hover:bg-slate-100',
+          isFallbackBlocked ? 'cursor-not-allowed opacity-60' : null,
+        )}
+        disabled={isFallbackBlocked}
         type="button"
+        onClick={() => {
+          if (!canLoadGoogleIdentity) {
+            const reason = initialUnavailableReason ?? 'identity_unavailable';
+            reportGoogleIdentityIssue(reason);
+            onGoogleError(reason);
+            return;
+          }
+
+          if (unavailableReason) {
+            reportGoogleIdentityIssue(unavailableReason);
+          }
+          setState('loading');
+          setRetryCount((currentRetryCount) => currentRetryCount + 1);
+        }}
       >
         <span className="flex items-center gap-3">
           {googleLogo}
-          <span>Fazer Login com o Google</span>
+          <span>Entrar ou cadastrar com Google</span>
         </span>
-        <span id={descriptionId} className="sr-only">Login com Google indisponível.</span>
+        <span id={descriptionId} className="sr-only">Login com Google indisponível. Configure VITE_GOOGLE_CLIENT_ID.</span>
       </button>
     );
   }

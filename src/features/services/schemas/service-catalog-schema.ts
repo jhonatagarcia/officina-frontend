@@ -39,7 +39,7 @@ export const serviceCatalogSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['materialSource'],
-          message: 'Serviços apenas de mão de obra não podem usar material da oficina.',
+          message: 'Serviços apenas de mão de obra não podem usar material do negócio.',
         });
       }
     }

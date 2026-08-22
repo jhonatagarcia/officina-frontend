@@ -26,7 +26,7 @@ function setSessionUser(user: User) {
 }
 
 describe('FiscalSetupBanner', () => {
-  it('exibe aviso quando a oficina nao tem CNPJ', () => {
+  it('nao bloqueia nem avisa quando a oficina nao tem CNPJ', () => {
     const user: User = {
       id: 'user-1',
       name: 'Ana',
@@ -39,9 +39,10 @@ describe('FiscalSetupBanner', () => {
 
     renderWithProviders(<FiscalSetupBanner />);
 
-    expect(screen.getByText('Cadastro fiscal incompleto')).toBeInTheDocument();
-    expect(screen.getByText(/Complete o CNPJ da oficina/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /cadastrar cnpj/i })).toHaveAttribute('href', '/inicio/oficina');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /cadastrar cnpj/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('nao exibe aviso quando a oficina tem CNPJ', () => {
@@ -50,14 +51,18 @@ describe('FiscalSetupBanner', () => {
       name: 'Ana',
       email: 'ana@oficina.com',
       role: 'ADMIN',
-      workshop: { id: 'workshop-1', name: 'Oficina Pro', cnpj: '11222333000181' },
+      workshop: {
+        id: 'workshop-1',
+        name: 'Oficina Pro',
+        cnpj: '11222333000181',
+      },
     };
     setSessionUser(user);
     meMock.mockResolvedValue(user);
 
     renderWithProviders(<FiscalSetupBanner />);
 
-    expect(screen.queryByText('Cadastro fiscal incompleto')).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
   it('remove o aviso quando o estado recebido muda para completo', () => {
@@ -70,13 +75,17 @@ describe('FiscalSetupBanner', () => {
     };
     const completeUser: User = {
       ...incompleteUser,
-      workshop: { id: 'workshop-1', name: 'Oficina Pro', cnpj: '11222333000181' },
+      workshop: {
+        id: 'workshop-1',
+        name: 'Oficina Pro',
+        cnpj: '11222333000181',
+      },
     };
     setSessionUser(incompleteUser);
     meMock.mockResolvedValue(incompleteUser);
 
     const { rerender } = renderWithProviders(<FiscalSetupBanner />);
-    expect(screen.getByText('Cadastro fiscal incompleto')).toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
 
     act(() => {
       setSessionUser(completeUser);
@@ -84,10 +93,10 @@ describe('FiscalSetupBanner', () => {
       rerender(<FiscalSetupBanner />);
     });
 
-    expect(screen.queryByText('Cadastro fiscal incompleto')).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
-  it('nao bloqueia nem avisa quando o backend ainda nao envia o contrato fiscal', () => {
+  it('nao bloqueia nem avisa quando o backend ainda nao envia o contrato legado', () => {
     const user: User = {
       id: 'user-1',
       name: 'Ana',
@@ -99,6 +108,6 @@ describe('FiscalSetupBanner', () => {
 
     renderWithProviders(<FiscalSetupBanner />);
 
-    expect(screen.queryByText('Cadastro fiscal incompleto')).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });

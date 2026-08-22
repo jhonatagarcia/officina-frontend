@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/select';
 import { useMechanicForm } from '@/features/mechanics/hooks/use-mechanic-form';
 import { capitalizeFirstLetter } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { usersService } from '@/features/users/services/users-service';
 
 export function MechanicFormPage({
   mode,
@@ -36,6 +38,27 @@ export function MechanicFormPage({
     navigate('/inicio/mecanicos'),
   );
   const handleSubmit = form.handleSubmit((values) => mutation.mutate(values));
+  const usersQuery = useQuery({
+    queryKey: ['usuarios-acesso', 'employee-link'],
+    queryFn: () =>
+      usersService.list({
+        page: 1,
+        pageSize: 100,
+        active: true,
+        role: 'MECANICO',
+        eligibleForEmployee: true,
+      }),
+  });
+  const currentLinkedAccount = query.data?.user;
+  const eligibleAccounts = (usersQuery.data?.data ?? []).filter(
+    (user) => user.role === 'MECANICO' && user.isActive,
+  );
+  const accountOptions = currentLinkedAccount
+    ? [
+        currentLinkedAccount,
+        ...eligibleAccounts.filter((user) => user.id !== currentLinkedAccount.id),
+      ]
+    : eligibleAccounts;
 
   if (query.isLoading) return <LoadingState />;
   if (query.isError) return <ErrorState onRetry={() => query.refetch()} />;
@@ -90,6 +113,57 @@ export function MechanicFormPage({
                       <SelectItem value="false">Inativo</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              )}
+            />
+            <Controller
+              control={form.control}
+              name="userId"
+              render={({ field }) => (
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Conta de acesso vinculada</Label>
+                  <Select
+                    disabled={
+                      isReadOnly ||
+                      mutation.isPending ||
+                      usersQuery.isLoading ||
+                      usersQuery.isError
+                    }
+                    onValueChange={(value) =>
+                      field.onChange(value === 'NONE' ? null : value)
+                    }
+                    value={field.value ?? 'NONE'}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sem conta de acesso" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="NONE">Sem conta de acesso</SelectItem>
+                      {accountOptions.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name} — {user.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {usersQuery.isError ? (
+                    <p className="text-xs text-destructive">
+                      Não foi possível carregar as contas elegíveis. Tente novamente.
+                    </p>
+                  ) : null}
+                  {!usersQuery.isLoading &&
+                  !usersQuery.isError &&
+                  accountOptions.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      Nenhuma conta MECANICO ativa e sem vínculo está disponível. Crie
+                      primeiro uma conta em Contas de acesso.
+                    </p>
+                  ) : null}
+                  <p className="text-xs text-muted-foreground">
+                    Esta tela nao cria acesso nem deixa uma conta pronta para
+                    login. Ela apenas vincula uma conta MECANICO existente e ja
+                    ativada, sem criar ou alterar senha.
+                  </p>
                 </div>
               )}
             />

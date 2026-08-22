@@ -5,6 +5,8 @@ const envSchema = z.object({
   VITE_API_BASE_URL: z.string().trim().url(),
   VITE_APP_NAME: z.string().trim().default('AutoPro System'),
   VITE_GOOGLE_CLIENT_ID: z.string().trim().default(''),
+  VITE_GOOGLE_ALLOWED_ORIGINS: z.string().trim().default(''),
+  VITE_RECAPTCHA_SITE_KEY: z.string().trim().default(''),
   VITE_ADMIN_PANEL_ENABLED: z
     .string()
     .trim()
@@ -27,5 +29,7 @@ export const env = envSchema.parse({
   VITE_API_BASE_URL: readEnv('VITE_API_BASE_URL') ?? defaultApiBaseUrl,
   VITE_APP_NAME: readEnv('VITE_APP_NAME') ?? 'AutoPro System',
   VITE_GOOGLE_CLIENT_ID: readEnv('VITE_GOOGLE_CLIENT_ID') ?? '',
+  VITE_GOOGLE_ALLOWED_ORIGINS: readEnv('VITE_GOOGLE_ALLOWED_ORIGINS') ?? '',
+  VITE_RECAPTCHA_SITE_KEY: readEnv('VITE_RECAPTCHA_SITE_KEY') ?? '',
   VITE_ADMIN_PANEL_ENABLED: readEnv('VITE_ADMIN_PANEL_ENABLED') ?? defaultAdminPanelEnabled,
 });

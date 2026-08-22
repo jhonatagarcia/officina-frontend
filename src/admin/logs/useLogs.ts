@@ -3,7 +3,8 @@ import { adminApi } from '../api/admin-api';
 
 export interface AdminLog {
   level: 'ERROR' | 'WARN' | 'INFO';
-  category: 'ADMIN' | 'AUTH' | 'HTTP' | 'SECURITY' | 'QUEUE' | 'WAHA' | 'REDIS';
+  // TODO(WhatsApp Cloud API): readicionar a categoria WHATSAPP quando a feature voltar.
+  category: 'ADMIN' | 'AUTH' | 'HTTP' | 'SECURITY' | 'QUEUE' | 'REDIS';
   source?: string | null;
   action: string;
   entity: string;
@@ -22,7 +23,7 @@ export interface AdminLogSummary {
   errors: number;
   warnings: number;
   security: number;
-  waha: number;
+  // TODO(WhatsApp Cloud API): whatsapp: number;
   redis: number;
   queue: number;
   critical: number;

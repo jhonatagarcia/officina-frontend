@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, CheckCircle2, ClipboardList, Clock, Eye, Printer, Settings2, UserCheck, Wrench } from 'lucide-react';
+import { CalendarDays, CheckCircle2, ClipboardList, Clock, Eye, Settings2, UserCheck, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { serviceOrdersService } from '@/features/service-orders/services/service-orders-service';
@@ -54,7 +54,7 @@ function ServiceOrderStatusPill({ status }: { status: ServiceOrder['status'] }) 
       className={cn(
         'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold',
         tone === 'orange' && 'bg-orange-50 text-orange-700',
-        tone === 'stone' && 'bg-muted text-stone-700',
+        tone === 'stone' && 'bg-stone-500 text-white',
         tone === 'amber' && 'bg-amber-50 text-amber-700',
         tone === 'emerald' && 'bg-emerald-500/10 text-emerald-500',
         tone === 'sky' && 'bg-sky-50 text-sky-700',
@@ -264,16 +264,6 @@ export function ServiceOrdersPage() {
                               <Settings2 className="size-4" strokeWidth={1.75} />
                             </Button>
                           ) : null}
-                          <Button
-                            aria-label={`Imprimir ${formatServiceOrderNumber(item.orderNumber)}`}
-                            className="size-9 rounded-lg"
-                            size="icon"
-                            title="Imprimir OS"
-                            variant="outline"
-                            onClick={() => navigate(`/inicio/ordens-servico/${item.id}?mode=print`)}
-                          >
-                            <Printer className="size-4" strokeWidth={1.75} />
-                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>

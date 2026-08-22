@@ -42,9 +42,12 @@ export function InventoryRelatedOrdersDialog({
       queryClient.invalidateQueries({ queryKey: ['ordem-servico', updatedOrder.id, 'pending-parts'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success('OS retomada com sucesso.');
-      if (updatedOrder.whatsappNotification?.status === 'SENT') {
-        toast.success('Notificação enviada pelo WhatsApp.');
-      }
+      /*
+       * TODO(WhatsApp Cloud API): restaurar quando a notificacao voltar ao contrato da OS.
+       * if (updatedOrder.whatsappNotification?.status === 'SENT') {
+       *   toast.success('Notificação enviada pelo WhatsApp.');
+       * }
+       */
       setOrderToResume(null);
       onOpenChange(false);
     },

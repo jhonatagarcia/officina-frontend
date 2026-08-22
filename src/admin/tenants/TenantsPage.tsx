@@ -40,7 +40,7 @@ export default function TenantsPage() {
 
     mutation
       .then(() => {
-        toast.success(editing ? 'Oficina atualizada' : 'Oficina criada');
+        toast.success(editing ? 'Negócio atualizado' : 'Negócio criado');
         setEditing(undefined);
       })
       .catch((error: { message?: string }) => toast.error(error.message ?? 'Nao foi possivel salvar'));
@@ -65,16 +65,16 @@ export default function TenantsPage() {
 
   return (
     <>
-      <TopBar title="Oficinas" />
+      <TopBar title="Negócios" />
       <section className="admin-content">
         <div className="admin-card">
           <div className="admin-card-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <strong>Oficinas cadastradas</strong>
+              <strong>Negócios cadastrados</strong>
               <span className="admin-pill" style={{ marginLeft: 10 }}>{tenants.data?.meta.total ?? 0} total</span>
             </div>
             <button className="admin-button" type="button" onClick={() => setEditing(null)}>
-              <Plus size={14} /> Nova Oficina
+              <Plus size={14} /> Novo negócio
             </button>
           </div>
           <div className="admin-card-pad admin-controls" style={{ borderTop: '1px solid #303244' }}>
@@ -96,7 +96,7 @@ export default function TenantsPage() {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Oficina</th>
+                <th>Meu Negócio</th>
                 <th>Responsavel</th>
                 <th>Plano</th>
                 <th>Status</th>
@@ -136,8 +136,8 @@ export default function TenantsPage() {
       ) : null}
       {confirm ? (
         <ConfirmModal
-          title={confirm.type === 'delete' ? 'Excluir oficina?' : confirm.type === 'reactivate' ? 'Reativar oficina?' : 'Inativar oficina?'}
-          description={`A oficina ${confirm.tenant.name} sera atualizada.`}
+          title={confirm.type === 'delete' ? 'Excluir negócio?' : confirm.type === 'reactivate' ? 'Reativar negócio?' : 'Inativar negócio?'}
+          description={`O negócio ${confirm.tenant.name} sera atualizado.`}
           confirmLabel={confirm.type === 'delete' ? 'Excluir' : 'Confirmar'}
           danger={confirm.type === 'delete'}
           pending={inactivate.isPending || reactivate.isPending || remove.isPending}

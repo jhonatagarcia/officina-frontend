@@ -53,11 +53,11 @@ export function TenantModal({
     <div className="admin-modal-backdrop">
       <form className="admin-modal" onSubmit={submit}>
         <div className="admin-modal-header">
-          <strong>{tenant ? 'Editar Oficina' : 'Nova Oficina'}</strong>
+          <strong>{tenant ? 'Editar negócio' : 'Novo negócio'}</strong>
           <button className="admin-button secondary" type="button" onClick={onClose}>×</button>
         </div>
         <div className="admin-form-grid">
-          <Field label="Nome da Oficina *" value={form.name} onChange={(value) => update('name', value)} required />
+          <Field label="Nome do negócio *" value={form.name} onChange={(value) => update('name', value)} required />
           <Field label="Nome do Responsavel *" value={form.ownerName} onChange={(value) => update('ownerName', value)} required />
           <Field label="E-mail *" type="email" value={form.email} onChange={(value) => update('email', value)} required />
           <Field label="Telefone" value={form.phone ?? ''} onChange={(value) => update('phone', value)} />

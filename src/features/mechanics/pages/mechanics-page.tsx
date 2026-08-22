@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   CheckCircle2,
-  Clock,
+  KeyRound,
   Eye,
   Pencil,
   Wrench,
@@ -35,7 +35,6 @@ import { mechanicsService } from '@/features/mechanics/services/mechanics-servic
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 import { useListParams } from '@/hooks/use-list-params';
 import { useSortableData } from '@/hooks/use-sortable-data';
-import { formatDateOnly } from '@/lib/utils';
 
 type ActiveFilter = 'ACTIVE' | 'INACTIVE' | 'ALL';
 
@@ -58,11 +57,13 @@ export function MechanicsPage() {
       activeFilter,
     ],
     queryFn: () =>
-      mechanicsService.list({
+      mechanicsService.listEmployees({
         page: params.page,
         pageSize: DEFAULT_TABLE_PAGE_SIZE,
         search: params.search,
-        ...(activeFilter !== 'ALL' ? { active: activeFilter === 'ACTIVE' } : {}),
+        ...(activeFilter !== 'ALL'
+          ? { active: activeFilter === 'ACTIVE' }
+          : {}),
       }),
   });
 
@@ -72,15 +73,11 @@ export function MechanicsPage() {
     accessors: {
       name: (item) => item.name,
       status: (item) => item.isActive,
-      lastLoginAt: (item) =>
-        item.lastLoginAt ? new Date(item.lastLoginAt) : null,
     },
   });
   const activeCount = listedItems.filter((item) => item.isActive).length;
   const inactiveCount = listedItems.filter((item) => !item.isActive).length;
-  const withLastLoginCount = listedItems.filter(
-    (item) => item.lastLoginAt,
-  ).length;
+  const withAccessCount = listedItems.filter((item) => item.hasAccess).length;
   const summaryCards = [
     {
       id: 'total',
@@ -104,10 +101,10 @@ export function MechanicsPage() {
       mediaClassName: 'border-rose-200 bg-rose-50 text-rose-700',
     },
     {
-      id: 'last-login',
-      title: 'Com último acesso',
-      value: String(withLastLoginCount),
-      icon: Clock,
+      id: 'with-access',
+      title: 'Com conta de acesso',
+      value: String(withAccessCount),
+      icon: KeyRound,
       mediaClassName: 'border-sky-200 bg-sky-50 text-sky-700',
     },
   ];
@@ -116,7 +113,7 @@ export function MechanicsPage() {
     <PageContainer>
       <PageHeader
         title="Mecânicos"
-        description="Cadastro e gestão dos mecânicos da oficina."
+        description="Cadastro e gestão dos mecânicos do negócio."
       >
         <IndicatorHeaderActions
           onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
@@ -133,7 +130,7 @@ export function MechanicsPage() {
       <CustomizableSummaryCards
         storageKey="oficina:mecanicos:summary-cards:v1"
         cards={summaryCards}
-        defaultVisibleIds={['total', 'active', 'last-login']}
+        defaultVisibleIds={['total', 'active', 'with-access']}
         gridClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
         isConfiguring={isConfiguringPanel}
         onConfiguringChange={setIsConfiguringPanel}
@@ -198,13 +195,6 @@ export function MechanicsPage() {
                     >
                       Status
                     </SortableTableHead>
-                    <SortableTableHead
-                      column="lastLoginAt"
-                      sortState={sortState}
-                      onSort={requestSort}
-                    >
-                      Último acesso
-                    </SortableTableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -216,11 +206,11 @@ export function MechanicsPage() {
                         <Badge variant={item.isActive ? 'success' : 'danger'}>
                           {item.isActive ? 'Ativo' : 'Inativo'}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {item.lastLoginAt
-                          ? formatDateOnly(item.lastLoginAt)
-                          : '-'}
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {item.hasAccess
+                            ? 'Conta vinculada'
+                            : 'Sem conta vinculada'}
+                        </span>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
