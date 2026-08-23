@@ -25,6 +25,7 @@ import { RemoveServiceOrderItemDialog } from '@/features/service-orders/componen
 import { ResumeServiceOrderDialog } from '@/features/service-orders/components/resume-service-order-dialog';
 import { ServiceOrderStockPartDialog } from '@/features/service-orders/components/service-order-stock-part-dialog';
 import { ServiceOrderItemDialog } from '@/features/service-orders/components/service-order-item-dialog';
+import { ServiceOrderWhatsAppDialog } from '@/features/service-orders/components/service-order-whatsapp-dialog';
 import { serviceOrdersService } from '@/features/service-orders/services/service-orders-service';
 import type {
   CreateServiceOrderPendingPartPayload,
@@ -41,6 +42,10 @@ import {
   getServiceOrderLaborItems,
 } from '@/features/service-orders/lib/service-order-details';
 import { generateServiceOrderPdf } from '@/features/service-orders/lib/service-order-pdf';
+import {
+  buildServiceOrderWhatsAppMessage,
+  type ServiceOrderWhatsAppMessage,
+} from '@/features/service-orders/lib/service-order-whatsapp';
 import {
   getAppliedServiceOrderParts,
   getPlannedServiceOrderParts,
@@ -234,6 +239,8 @@ export function ServiceOrderDetailsPage() {
     useState<ServiceOrderStatus | null>(null);
   const [isEditingProblem, setIsEditingProblem] = useState(false);
   const [problemDraft, setProblemDraft] = useState('');
+  const [whatsAppNotification, setWhatsAppNotification] =
+    useState<ServiceOrderWhatsAppMessage | null>(null);
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ['ordem-servico', id],
@@ -252,7 +259,7 @@ export function ServiceOrderDetailsPage() {
     mutationFn: (
       status: Parameters<typeof serviceOrdersService.updateStatus>[1],
     ) => serviceOrdersService.updateStatus(id, status),
-    onSuccess: () => {
+    onSuccess: (_, status) => {
       queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
       queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
       queryClient.invalidateQueries({ queryKey: ['financeiro'] });
@@ -260,18 +267,13 @@ export function ServiceOrderDetailsPage() {
       setNextStatus('');
       setRegressiveStatusToConfirm(null);
       toast.success('Status atualizado com sucesso.');
-      /*
-       * TODO(WhatsApp Cloud API): restaurar os toasts de envio quando a feature voltar.
-       * if (updatedOrder.whatsappNotification?.status === 'SENT') {
-       *   toast.success('Notificação enviada pelo WhatsApp.');
-       * }
-       * if (updatedOrder.whatsappNotification?.status === 'SKIPPED') {
-       *   toast.warning(updatedOrder.whatsappNotification.reason || 'WhatsApp não enviado.');
-       * }
-       * if (updatedOrder.whatsappNotification?.status === 'FAILED') {
-       *   toast.error(updatedOrder.whatsappNotification.reason || 'Falha ao enviar WhatsApp.');
-       * }
-       */
+      const notification = buildServiceOrderWhatsAppMessage({
+        status,
+        clientName: query.data?.clientName ?? '',
+        clientPhone: query.data?.client?.phone,
+        expectedDeliveryAt: query.data?.expectedDeliveryAt,
+      });
+      if (notification) setWhatsAppNotification(notification);
 
       query.refetch();
     },
@@ -293,6 +295,13 @@ export function ServiceOrderDetailsPage() {
       queryClient.invalidateQueries({ queryKey: ['ordem-servico', id] });
       setPendingPartDialogOpen(false);
       toast.success('Peça pendente salva.');
+      const notification = buildServiceOrderWhatsAppMessage({
+        status: 'AGUARDANDO_PECA',
+        clientName: query.data?.clientName ?? '',
+        clientPhone: query.data?.client?.phone,
+        expectedDeliveryAt: query.data?.expectedDeliveryAt,
+      });
+      if (notification) setWhatsAppNotification(notification);
     },
     onError: (error: { message?: string | string[] }) => {
       const message = Array.isArray(error.message)
@@ -470,15 +479,13 @@ export function ServiceOrderDetailsPage() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setResumeDialogOpen(false);
       toast.success('OS retomada com sucesso.');
-      /*
-       * TODO(WhatsApp Cloud API): restaurar os toasts quando a integracao for reativada.
-       * if (updatedOrder.whatsappNotification?.status === 'SENT') {
-       *   toast.success('Notificação enviada pelo WhatsApp.');
-       * }
-       * if (updatedOrder.whatsappNotification?.status === 'FAILED') {
-       *   toast.error(updatedOrder.whatsappNotification.reason || 'Falha ao enviar WhatsApp.');
-       * }
-       */
+      const notification = buildServiceOrderWhatsAppMessage({
+        status: 'EM_ANDAMENTO',
+        clientName: query.data?.clientName ?? '',
+        clientPhone: query.data?.client?.phone,
+        expectedDeliveryAt: query.data?.expectedDeliveryAt,
+      });
+      if (notification) setWhatsAppNotification(notification);
       query.refetch();
     },
     onError: (error: { message?: string | string[] }) => {
@@ -720,6 +727,10 @@ export function ServiceOrderDetailsPage() {
           </Button>
         ) : null}
       </PageHeader>
+      <ServiceOrderWhatsAppDialog
+        notification={whatsAppNotification}
+        onClose={() => setWhatsAppNotification(null)}
+      />
 
       <Card className="bg-card shadow-xs">
         <CardContent className="p-6">

@@ -3,6 +3,7 @@ import {
   CarFront,
   CircleDollarSign,
   ClipboardList,
+  FileBadge,
   FileText,
   Package,
   Users,
@@ -16,9 +17,11 @@ import { landingImages, type LandingImageAsset } from './assets/images';
 
 export const brand = {
   name: 'AutoPro System',
-  tagline: 'Gestão completa para negócios automotivos, funilarias e auto elétricas. Feito para o Brasil.',
+  tagline:
+    'Gestão completa para negócios automotivos, funilarias e auto elétricas. Feito para o Brasil.',
   contactEmail: 'contato@autoprosystem.com.br',
-  demoHref: 'mailto:contato@autoprosystem.com.br?subject=Quero receber uma proposta do AutoPro System',
+  demoHref:
+    'mailto:contato@autoprosystem.com.br?subject=Quero receber uma proposta do AutoPro System',
   siteUrl: 'https://autoprosystem.com.br',
 };
 
@@ -51,7 +54,11 @@ export interface BrowserTab {
 
 export const heroTabs: BrowserTab[] = [
   { id: 'clientes', label: 'Clientes', image: landingImages.heroClientes },
-  { id: 'orcamentos', label: 'Orçamentos', image: landingImages.heroOrcamentos },
+  {
+    id: 'orcamentos',
+    label: 'Orçamentos',
+    image: landingImages.heroOrcamentos,
+  },
   { id: 'ordens', label: 'Ordem de Serviço', image: landingImages.heroOrdens },
   { id: 'veiculos', label: 'Veículos', image: landingImages.heroVeiculos },
 ];
@@ -97,32 +104,50 @@ export const features: Feature[] = [
   {
     icon: Wrench,
     name: 'Ordens de Serviço',
-    description: 'Abra, delegue e acompanhe cada OS com fotos, histórico e checklists do veículo.',
+    description:
+      'Abra, delegue e acompanhe cada OS com fotos, histórico e checklists do veículo.',
   },
   {
     icon: FileText,
     name: 'Orçamentos Digitais',
-    description: 'Crie orçamentos profissionais, envie para aprovação e converta em OS com um clique.',
+    description:
+      'Crie orçamentos profissionais, envie para aprovação e converta em OS com um clique.',
   },
   {
     icon: Users,
     name: 'Clientes & Veículos',
-    description: 'Base centralizada com histórico completo de veículos, serviços e documentos.',
+    description:
+      'Base centralizada com histórico completo de veículos, serviços e documentos.',
   },
   {
     icon: CircleDollarSign,
     name: 'Financeiro Completo',
-    description: 'Entradas, saídas e contas a receber. Saiba onde está cada real do seu negócio.',
+    description:
+      'Entradas, saídas e contas a receber. Saiba onde está cada real do seu negócio.',
   },
   {
     icon: Package,
     name: 'Controle de Estoque',
-    description: 'Gerencie peças e insumos com alertas de mínimo e baixa automática por OS.',
+    description:
+      'Gerencie peças e insumos com alertas de mínimo e baixa automática por OS.',
   },
   {
     icon: ClipboardList,
     name: 'Gestão da Equipe',
-    description: 'Atribua serviços, acompanhe a produtividade e analise a performance do time técnico.',
+    description:
+      'Atribua serviços, acompanhe a produtividade e analise a performance do time técnico.',
+  },
+  {
+    icon: FileBadge,
+    name: 'NFS-e em breve',
+    description:
+      'Na versão 2, gere notas fiscais de serviço a partir da operação da sua empresa.',
+  },
+  {
+    icon: Zap,
+    name: 'Diagnóstico inteligente em breve',
+    description:
+      'Na versão 2, tenha apoio inteligente para organizar o diagnóstico de veículos.',
   },
 ];
 
@@ -155,17 +180,41 @@ export const showcase = {
 };
 
 export const showcaseTabs: BrowserTab[] = [
-  { id: 'dashboard', label: 'Dashboard', image: landingImages.showcaseDashboard },
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    image: landingImages.showcaseDashboard,
+  },
   { id: 'clientes', label: 'Clientes', image: landingImages.showcaseClientes },
   { id: 'veiculos', label: 'Veículos', image: landingImages.showcaseVeiculos },
-  { id: 'orcamentos', label: 'Orçamentos', image: landingImages.showcaseOrcamentos },
-  { id: 'ordens', label: 'Ordem de Serviço', image: landingImages.showcaseOrdens },
-  { id: 'financeiro', label: 'Financeiro', image: landingImages.showcaseFinanceiro },
+  {
+    id: 'orcamentos',
+    label: 'Orçamentos',
+    image: landingImages.showcaseOrcamentos,
+  },
+  {
+    id: 'ordens',
+    label: 'Ordem de Serviço',
+    image: landingImages.showcaseOrdens,
+  },
+  {
+    id: 'financeiro',
+    label: 'Financeiro',
+    image: landingImages.showcaseFinanceiro,
+  },
   { id: 'chamados', label: 'Chamados', image: landingImages.showcaseChamados },
-  { id: 'meu-negocio', label: 'Meu Negócio', image: landingImages.showcaseMeuNegocio },
+  {
+    id: 'meu-negocio',
+    label: 'Meu Negócio',
+    image: landingImages.showcaseMeuNegocio,
+  },
   { id: 'servicos', label: 'Serviços', image: landingImages.showcaseServicos },
   { id: 'estoque', label: 'Estoque', image: landingImages.showcaseEstoque },
-  { id: 'mecanicos', label: 'Mecânicos', image: landingImages.showcaseMecanicos },
+  {
+    id: 'mecanicos',
+    label: 'Mecânicos',
+    image: landingImages.showcaseMecanicos,
+  },
 ];
 
 /* ── Seções de detalhe por segmento ───────────────── */
@@ -261,7 +310,8 @@ export const plans: Plan[] = [
     name: 'Starter',
     monthly: 89,
     annual: 74,
-    description: 'Para negócios automotivos que estão começando a digitalizar a operação.',
+    description:
+      'Para negócios automotivos que estão começando a digitalizar a operação.',
     features: [
       '1 usuário administrador',
       'Clientes e veículos ilimitados',
@@ -278,7 +328,8 @@ export const plans: Plan[] = [
     name: 'Pro',
     monthly: 159,
     annual: 132,
-    description: 'Para operações em crescimento que precisam de controle total.',
+    description:
+      'Para operações em crescimento que precisam de controle total.',
     features: [
       'Até 5 usuários',
       'Tudo do plano Starter',
