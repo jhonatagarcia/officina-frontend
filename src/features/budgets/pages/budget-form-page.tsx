@@ -98,7 +98,12 @@ export function BudgetFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
     setIsGeneratingPdf(true);
 
     try {
-      await generateBudgetPdf({ budget: budgetQuery.data });
+      // Create/update responses intentionally omit relations. Fetch the detail
+      // contract so a newly created pending budget has its client and vehicle
+      // identification available in the PDF as well.
+      const budget = await budgetsService.getById(budgetQuery.data.id);
+      queryClient.setQueryData(['orcamento', budget.id], budget);
+      await generateBudgetPdf({ budget });
       toast.success('PDF do orçamento gerado com sucesso.');
     } catch {
       toast.error('Não foi possível gerar o PDF do orçamento.');

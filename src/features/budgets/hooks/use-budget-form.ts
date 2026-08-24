@@ -95,7 +95,10 @@ export function useBudgetForm(mode: 'create' | 'edit' | 'view', id: string, onSu
       return budgetsService.create(payload);
     },
     onSuccess: (savedBudget) => {
-      queryClient.setQueryData(['orcamento', savedBudget.id], savedBudget);
+      // Mutations return the compact budget contract. Do not overwrite a
+      // detailed cache entry with it, otherwise client and vehicle data can be
+      // absent until a manual refetch (notably on the first pending budget).
+      queryClient.invalidateQueries({ queryKey: ['orcamento', savedBudget.id] });
       queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success(
