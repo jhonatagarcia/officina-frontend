@@ -5,6 +5,7 @@ import {
   Home,
   LayoutDashboard,
   LogOut,
+  UserPlus,
 } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../auth/useAdminAuth';
@@ -35,6 +36,11 @@ export function Sidebar() {
         <NavLink to="/admin/tenants">
           <Home size={16} /> Negócios
         </NavLink>
+        {user?.adminRole === 'SUPER_ADMIN' ? (
+          <NavLink to="/admin/signup-invites">
+            <UserPlus size={16} /> Convites
+          </NavLink>
+        ) : null}
         <div className="admin-nav-label">Suporte</div>
         <NavLink to="/admin/support">
           <Headphones size={16} /> Chamados{' '}

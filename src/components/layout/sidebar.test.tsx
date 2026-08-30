@@ -9,17 +9,44 @@ const { meMock } = vi.hoisted(() => ({
   meMock: vi.fn(),
 }));
 
+const { getSubscriptionMock } = vi.hoisted(() => ({
+  getSubscriptionMock: vi.fn(),
+}));
+
 vi.mock('@/features/auth/services/auth-service', () => ({
   authService: {
     me: meMock,
   },
 }));
 
+vi.mock('@/features/billing/services/billing-service', () => ({
+  billingService: {
+    getSubscription: getSubscriptionMock,
+  },
+}));
+
+vi.mock('@/features/workshop/hooks/use-workshop-profile', () => ({
+  useWorkshopProfile: () => ({ data: null }),
+}));
+
 const axiosPostSpy = vi.spyOn(axios, 'post');
 
 describe('Sidebar', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     axiosPostSpy.mockResolvedValue({ data: undefined });
+    getSubscriptionMock.mockResolvedValue({
+      status: 'TRIALING',
+      trialEndsAt: '2026-09-09T12:00:00.000Z',
+      currentPeriodStart: null,
+      currentPeriodEnd: null,
+      graceEndsAt: null,
+      cancelAtPeriodEnd: false,
+      billingEnabled: true,
+      provider: 'ASAAS',
+      environment: 'SANDBOX',
+      plan: null,
+    });
   });
 
   it('renderiza menus restritos com cadeado para perfil financeiro', () => {
@@ -32,7 +59,7 @@ describe('Sidebar', () => {
     useAuthStore.setState({
       hydrated: true,
       session: {
-        accessToken: '',
+        accessToken: 'synthetic-admin-token',
         user,
       },
     });
@@ -59,7 +86,7 @@ describe('Sidebar', () => {
     useAuthStore.setState({
       hydrated: true,
       session: {
-        accessToken: '',
+        accessToken: 'synthetic-admin-token',
         user,
       },
     });
@@ -87,7 +114,7 @@ describe('Sidebar', () => {
     useAuthStore.setState({
       hydrated: true,
       session: {
-        accessToken: '',
+        accessToken: 'synthetic-admin-token',
         user,
       },
     });
@@ -97,6 +124,8 @@ describe('Sidebar', () => {
 
     expect(screen.getByText('Oficina Paiva')).toBeInTheDocument();
     expect(screen.getByText('Administrador')).toBeInTheDocument();
+    expect(await screen.findByText('Período gratuito')).toBeInTheDocument();
+    expect(screen.queryByText('Plano Pro')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /sair/i }));
 

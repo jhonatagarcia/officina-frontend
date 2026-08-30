@@ -37,7 +37,19 @@ export interface RegisterWorkshopPayload {
   password: string;
   confirmPassword: string;
   captchaToken: string;
+  inviteToken?: string;
 }
+
+export type SignupMode = 'public' | 'invite_only' | 'closed';
+
+export interface SignupConfig {
+  mode: SignupMode;
+  publicRegistrationEnabled: boolean;
+  invitationRequired: boolean;
+}
+
+export type SignupInviteValidation =
+  { valid: false } | { valid: true; maskedEmail: string; expiresAt: string };
 
 export interface ForgotPasswordPayload {
   email: string;

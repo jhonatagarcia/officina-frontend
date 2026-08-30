@@ -12,6 +12,7 @@ interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onRegisterClick: () => void;
+  registrationEnabled: boolean;
 }
 
 function getSafePostLoginPath() {
@@ -36,6 +37,7 @@ export function LoginModal({
   isOpen,
   onClose,
   onRegisterClick,
+  registrationEnabled,
 }: LoginModalProps) {
   const navigate = useNavigate();
   const { loginWithGoogle, isGoogleLoggingIn } = useGoogleLogin();
@@ -157,16 +159,18 @@ export function LoginModal({
           </Card>
 
           {/* footer */}
-          <p className="mt-6 text-center text-sm text-slate-400">
-            Ainda não tem uma conta?{' '}
-            <button
-              className="font-semibold text-orange-300 transition-colors hover:text-orange-200"
-              type="button"
-              onClick={onRegisterClick}
-            >
-              Cadastre-se
-            </button>
-          </p>
+          {registrationEnabled ? (
+            <p className="mt-6 text-center text-sm text-slate-400">
+              Ainda não tem uma conta?{' '}
+              <button
+                className="font-semibold text-orange-300 transition-colors hover:text-orange-200"
+                type="button"
+                onClick={onRegisterClick}
+              >
+                Cadastre-se
+              </button>
+            </p>
+          ) : null}
         </div>
       </div>
     </div>

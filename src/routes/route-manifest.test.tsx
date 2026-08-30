@@ -17,6 +17,7 @@ describe('getSidebarRoutes', () => {
       'mecanicos-list',
       'usuarios-list',
       'comissoes-list',
+      'assinatura',
     ]);
   });
 

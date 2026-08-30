@@ -1,9 +1,10 @@
-import { Edit, PauseCircle, PlayCircle, Plus, Trash2 } from 'lucide-react';
+import { BadgeCheck, Edit, PauseCircle, PlayCircle, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { TopBar } from '../components/TopBar';
 import { planLabel, tenantStatusLabel } from '../lib/labels';
 import { ConfirmModal } from './ConfirmModal';
+import { PilotWorkshopModal } from './PilotWorkshopModal';
 import { TenantModal } from './TenantModal';
 import {
   Tenant,
@@ -12,6 +13,7 @@ import {
   useDeleteTenant,
   useInactivateTenant,
   useReactivateTenant,
+  useSetPilotWorkshop,
   useTenants,
   useUpdateTenant,
 } from './useTenants';
@@ -24,6 +26,7 @@ export default function TenantsPage() {
   const [plan, setPlan] = useState('');
   const [editing, setEditing] = useState<Tenant | null | undefined>();
   const [confirm, setConfirm] = useState<ConfirmState>(null);
+  const [pilotTenant, setPilotTenant] = useState<Tenant | null>(null);
   const debouncedSearch = useDebouncedValue(search, 300);
   const tenants = useTenants({ search: debouncedSearch, status, plan });
   const createTenant = useCreateTenant();
@@ -31,6 +34,7 @@ export default function TenantsPage() {
   const inactivate = useInactivateTenant();
   const reactivate = useReactivateTenant();
   const remove = useDeleteTenant();
+  const setPilot = useSetPilotWorkshop();
   const pending = createTenant.isPending || updateTenant.isPending;
 
   function saveTenant(payload: TenantPayload) {
@@ -63,6 +67,19 @@ export default function TenantsPage() {
       .catch((error: { message?: string }) => toast.error(error.message ?? 'Nao foi possivel concluir'));
   }
 
+  function confirmPilot(reason: string) {
+    if (!pilotTenant) return;
+    setPilot
+      .mutateAsync({ id: pilotTenant.id, reason })
+      .then(() => {
+        toast.success('Oficina definida como piloto permanente');
+        setPilotTenant(null);
+      })
+      .catch((error: { message?: string }) =>
+        toast.error(error.message ?? 'Nao foi possivel definir a oficina piloto'),
+      );
+  }
+
   return (
     <>
       <TopBar title="Negócios" />
@@ -82,15 +99,25 @@ export default function TenantsPage() {
             <select className="admin-select" value={status} onChange={(event) => setStatus(event.target.value)}>
               <option value="">Todos os status</option>
               <option value="ACTIVE">Ativo</option>
-              <option value="TRIAL">Em teste</option>
+              <option value="TRIALING">Em teste</option>
+              <option value="PAST_DUE">Em atraso</option>
+              <option value="SUSPENDED">Suspenso</option>
+              <option value="CANCELED">Cancelado</option>
+              <option value="EXPIRED">Expirado</option>
+              <option value="PILOT">Piloto</option>
+              <option value="LEGACY_FREE">Legado gratuito</option>
+              <option value="UNASSIGNED">Sem assinatura</option>
               <option value="INACTIVE">Inativo</option>
             </select>
             <select className="admin-select" value={plan} onChange={(event) => setPlan(event.target.value)}>
               <option value="">Todos os planos</option>
-              <option value="TRIAL">Teste gratuito</option>
-              <option value="BASIC">Basico</option>
-              <option value="PRO">Profissional</option>
-              <option value="ENTERPRISE">Empresarial</option>
+              <option value="ESSENTIAL">Essencial</option>
+              <option value="PROFESSIONAL">Profissional</option>
+              <option value="PERFORMANCE">Performance</option>
+              <option value="TRIALING">Período gratuito</option>
+              <option value="PILOT">Oficina piloto</option>
+              <option value="LEGACY_FREE">Legado gratuito</option>
+              <option value="UNASSIGNED">Sem assinatura</option>
             </select>
           </div>
           <table className="admin-table">
@@ -115,9 +142,22 @@ export default function TenantsPage() {
                     <td>{tenant.ownerName}</td>
                     <td><PlanPill plan={tenant.plan} /></td>
                     <td><StatusPill status={tenant.status} /></td>
-                    <td className="admin-positive">R$ {planValue(tenant.plan)}</td>
+                    <td className="admin-positive">{planValue(tenant.planAmount)}</td>
                     <td>{formatDate(tenant.createdAt)}</td>
                     <td>
+                      {tenant.status !== 'PILOT' ? (
+                        <>
+                          <button
+                            className="admin-button secondary"
+                            type="button"
+                            aria-label={`Definir ${tenant.name} como oficina piloto`}
+                            title="Definir como oficina piloto"
+                            onClick={() => setPilotTenant(tenant)}
+                          >
+                            <BadgeCheck size={14} />
+                          </button>{' '}
+                        </>
+                      ) : null}
                       <button className="admin-button secondary" type="button" onClick={() => setEditing(tenant)}><Edit size={14} /></button>{' '}
                       <button className="admin-button secondary" type="button" onClick={() => setConfirm({ type: tenant.status === 'INACTIVE' ? 'reactivate' : 'inactivate', tenant })}>
                         {tenant.status === 'INACTIVE' ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
@@ -145,22 +185,31 @@ export default function TenantsPage() {
           onConfirm={runConfirm}
         />
       ) : null}
+      {pilotTenant ? (
+        <PilotWorkshopModal
+          tenant={pilotTenant}
+          pending={setPilot.isPending}
+          onCancel={() => setPilotTenant(null)}
+          onConfirm={confirmPilot}
+        />
+      ) : null}
     </>
   );
 }
 
 function PlanPill({ plan }: { plan: Tenant['plan'] }) {
-  const color = plan === 'PRO' ? 'blue' : plan === 'ENTERPRISE' ? '' : plan === 'TRIAL' ? 'yellow' : '';
+  const color = plan === 'PROFESSIONAL' ? 'blue' : plan === 'TRIALING' ? 'yellow' : '';
   return <span className={`admin-pill ${color}`}>{planLabel(plan)}</span>;
 }
 
 function StatusPill({ status }: { status: Tenant['status'] }) {
-  const color = status === 'ACTIVE' ? 'green' : status === 'TRIAL' ? 'blue' : '';
+  const color = status === 'ACTIVE' || status === 'PILOT' ? 'green' : status === 'TRIALING' ? 'blue' : '';
   return <span className={`admin-pill ${color}`}>{tenantStatusLabel(status)}</span>;
 }
 
-function planValue(plan: Tenant['plan']) {
-  return { TRIAL: 0, BASIC: 99, PRO: 199, ENTERPRISE: 399 }[plan];
+function planValue(amount?: number | null) {
+  if (amount === null || amount === undefined) return '—';
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
 }
 
 function formatDate(value: string) {

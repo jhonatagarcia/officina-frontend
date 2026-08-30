@@ -6,6 +6,8 @@ import type {
   LoginPayload,
   RegisterWorkshopPayload,
   ResetPasswordPayload,
+  SignupConfig,
+  SignupInviteValidation,
 } from '@/types/auth';
 
 export const authService = {
@@ -21,6 +23,19 @@ export const authService = {
     const response = await http.post<AuthSession | { message?: string }>(
       '/auth/signup',
       payload,
+    );
+    return response.data;
+  },
+  async getSignupConfig() {
+    const response = await http.get<SignupConfig>('/auth/signup/config');
+    return response.data;
+  },
+  async validateSignupInvite(token: string) {
+    const response = await http.post<SignupInviteValidation>(
+      '/auth/signup-invites/validate',
+      {
+        token,
+      },
     );
     return response.data;
   },

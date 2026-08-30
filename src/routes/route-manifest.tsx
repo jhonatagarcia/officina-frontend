@@ -11,6 +11,7 @@ import {
   MessagesSquare,
   HandCoins,
   KeyRound,
+  ReceiptText,
   UserRoundCog,
   UsersRound,
   Wrench,
@@ -130,6 +131,11 @@ const UsersPage = lazy(() =>
 const CommissionsPage = lazy(() =>
   import('@/features/commissions/pages/commissions-page').then(
     ({ CommissionsPage }) => ({ default: CommissionsPage }),
+  ),
+);
+const SubscriptionPage = lazy(() =>
+  import('@/features/billing/pages/subscription-page').then(
+    ({ SubscriptionPage }) => ({ default: SubscriptionPage }),
   ),
 );
 
@@ -358,6 +364,15 @@ export const appRoutes: AppRouteDefinition[] = [
     sidebar: true,
   },
   {
+    key: 'assinatura',
+    path: 'assinatura',
+    roles: ['ADMIN'],
+    element: <SubscriptionPage />,
+    label: 'Assinatura',
+    icon: ReceiptText,
+    sidebar: true,
+  },
+  {
     key: 'chamados',
     path: 'chamados',
     roles: ['ADMIN', 'ATENDENTE', 'MECANICO', 'FINANCEIRO'],
@@ -391,6 +406,7 @@ const sidebarOrder = [
   'mecanicos-list',
   'usuarios-list',
   'comissoes-list',
+  'assinatura',
 ] as const;
 
 export function getSidebarRoutes(role?: Role) {
