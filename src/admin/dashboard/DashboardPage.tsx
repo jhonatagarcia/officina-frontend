@@ -49,10 +49,10 @@ export default function DashboardPage() {
       </TopBar>
       <section className="admin-content admin-grid">
         <div className="admin-grid admin-kpis">
-          <KpiCard label="Receita mensal" value={brl(kpis.data?.mrr ?? 0)} hint="+12% vs periodo ant." />
-          <KpiCard label="Receita anual projetada" value={brl(kpis.data?.arr ?? 0)} hint="+12% anualizado" color="#35d05f" />
+          <KpiCard label="Receita mensal recorrente" value={brl(kpis.data?.mrr ?? 0)} hint="assinaturas mensais ativas" />
+          <KpiCard label="Receita anual projetada" value={brl(kpis.data?.arr ?? 0)} hint="MRR anualizado" color="#35d05f" />
           <KpiCard label="Negócios ativos" value={String(kpis.data?.active ?? 0)} hint={`+${kpis.data?.newInPeriod ?? 0} novos no periodo`} color="#4db5ff" />
-          <KpiCard label="Pagantes" value={String(kpis.data?.paying ?? 0)} hint="conversao atual" color="#a472f7" />
+          <KpiCard label="Pagantes" value={String(kpis.data?.paying ?? 0)} hint="assinaturas ACTIVE" color="#a472f7" />
           <KpiCard label="Cancelamentos" value={`${kpis.data?.churnRate ?? 0}%`} hint="monitorado no periodo" color="#f1c400" negative />
           <KpiCard label="Em risco" value={String(kpis.data?.atRisk ?? 0)} hint="+30 dias sem login" color="#ff3f67" negative />
         </div>
@@ -60,7 +60,7 @@ export default function DashboardPage() {
         <div className="admin-grid admin-two">
           <section className="admin-card admin-card-pad">
             <strong>Receita por periodo</strong>
-            <div className="admin-muted">Receita mensal acumulada</div>
+            <div className="admin-muted">Pagamentos confirmados ou recebidos</div>
             <div className="admin-chart">
               {(revenue.data?.length ? revenue.data : [{ label: 'Sem dados', mrr: 0 }]).map((point) => (
                 <div key={point.label} style={{ flex: 1 }}>

@@ -19,6 +19,8 @@ const {
   googleLoginMock,
   registerWorkshopMock,
   forgotPasswordMock,
+  getSignupConfigMock,
+  validateSignupInviteMock,
   executeRecaptchaMock,
   toastErrorMock,
   toastSuccessMock,
@@ -29,6 +31,8 @@ const {
   googleLoginMock: vi.fn(),
   registerWorkshopMock: vi.fn(),
   forgotPasswordMock: vi.fn(),
+  getSignupConfigMock: vi.fn(),
+  validateSignupInviteMock: vi.fn(),
   executeRecaptchaMock: vi.fn(),
   toastErrorMock: vi.fn(),
   toastSuccessMock: vi.fn(),
@@ -58,6 +62,8 @@ vi.mock('@/features/auth/services/auth-service', () => ({
   authService: {
     forgotPassword: forgotPasswordMock,
     registerWorkshop: registerWorkshopMock,
+    getSignupConfig: getSignupConfigMock,
+    validateSignupInvite: validateSignupInviteMock,
   },
 }));
 
@@ -132,6 +138,13 @@ describe('LoginPage', () => {
     googleLoginMock.mockReset();
     registerWorkshopMock.mockReset();
     forgotPasswordMock.mockReset();
+    getSignupConfigMock.mockReset();
+    getSignupConfigMock.mockResolvedValue({
+      mode: 'public',
+      publicRegistrationEnabled: true,
+      invitationRequired: false,
+    });
+    validateSignupInviteMock.mockReset();
     executeRecaptchaMock.mockReset();
     executeRecaptchaMock.mockResolvedValue('recaptcha-token');
     toastErrorMock.mockReset();
@@ -139,6 +152,7 @@ describe('LoginPage', () => {
     loginState.isLoggingIn = false;
     googleLoginState.isGoogleLoggingIn = false;
     useAuthStore.getState().setSession(null);
+    window.history.replaceState(null, '', '/');
     installGoogleIdentityMock();
   });
 
@@ -355,8 +369,37 @@ describe('LoginPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('faz login automaticamente apos cadastro realizado com sucesso', async () => {
+  it('oculta o cadastro público quando o acesso exige convite', async () => {
+    getSignupConfigMock.mockResolvedValue({
+      mode: 'invite_only',
+      publicRegistrationEnabled: false,
+      invitationRequired: true,
+    });
+
+    renderWithProviders(<LoginPage />);
+
+    expect(
+      await screen.findByRole('heading', { name: /entrar na sua conta/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /cadastre-se/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('valida convite, remove o token da URL e cadastra com o mesmo token', async () => {
     const user = userEvent.setup();
+    const inviteToken = 'convite-secreto-sintetico';
+    window.history.replaceState(null, '', `/#invite=${inviteToken}`);
+    getSignupConfigMock.mockResolvedValue({
+      mode: 'invite_only',
+      publicRegistrationEnabled: false,
+      invitationRequired: true,
+    });
+    validateSignupInviteMock.mockResolvedValue({
+      valid: true,
+      maskedEmail: 'a***@local.com.br',
+      expiresAt: '2026-08-29T12:00:00.000Z',
+    });
     registerWorkshopMock.mockResolvedValueOnce({
       accessToken: 'signup-token',
       user: {
@@ -385,10 +428,12 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     );
 
-    await user.click(
-      await screen.findByRole('button', { name: /cadastre-se/i }),
-    );
     const dialog = await screen.findByRole('dialog');
+    expect(validateSignupInviteMock).toHaveBeenCalledWith(inviteToken);
+    expect(window.location.hash).toBe('');
+    expect(
+      within(dialog).getByText(/convite validado para a\*\*\*@local\.com\.br/i),
+    ).toBeInTheDocument();
     await user.type(
       within(dialog).getByLabelText(/nome fantasia do negócio/i),
       'Auto teste localhost',
@@ -418,6 +463,7 @@ describe('LoginPage', () => {
       password: 'Senha123',
       confirmPassword: 'Senha123',
       captchaToken: 'local-captcha-ok',
+      inviteToken,
     });
     expect(useAuthStore.getState().session?.accessToken).toBe('signup-token');
     expect(await screen.findByText('Dashboard seguro')).toBeInTheDocument();

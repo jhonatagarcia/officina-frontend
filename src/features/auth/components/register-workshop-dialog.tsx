@@ -53,12 +53,16 @@ interface RegisterWorkshopDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onRegistered?: (session: AuthSession) => void;
+  inviteToken?: string;
+  invitedEmail?: string;
 }
 
 export function RegisterWorkshopDialog({
   open,
   onOpenChange,
   onRegistered,
+  inviteToken,
+  invitedEmail,
 }: RegisterWorkshopDialogProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -107,6 +111,7 @@ export function RegisterWorkshopDialog({
       password: values.password,
       confirmPassword: values.confirmPassword,
       captchaToken: values.captchaToken,
+      ...(inviteToken ? { inviteToken } : {}),
     });
   }
 
@@ -122,8 +127,9 @@ export function RegisterWorkshopDialog({
               Cadastrar negócio
             </DialogTitle>
             <DialogDescription className="text-slate-400">
-              Crie o acesso inicial do negócio. O CNPJ é opcional e pode ser
-              informado depois nos dados do negócio.
+              {inviteToken
+                ? `Convite validado para ${invitedEmail ?? 'o e-mail autorizado'}. Informe esse mesmo e-mail para criar o acesso inicial.`
+                : 'Crie o acesso inicial do negócio. O CNPJ é opcional e pode ser informado depois nos dados do negócio.'}
             </DialogDescription>
           </DialogHeader>
           <form

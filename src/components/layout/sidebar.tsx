@@ -1,12 +1,14 @@
 import { NavLink } from 'react-router-dom';
 import { LockKeyhole, LogOut, Wrench } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { env } from '@/lib/env';
 import { useAuthState } from '@/features/auth/hooks/use-auth-state';
 import { useWorkshopProfile } from '@/features/workshop/hooks/use-workshop-profile';
 import { getSidebarMenuRoutes } from '@/routes/route-manifest';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { billingService } from '@/features/billing/services/billing-service';
+import type { BillingSubscription } from '@/features/billing/types';
 
 const roleLabelMap: Record<string, string> = {
   ADMIN: 'Administrador',
@@ -15,10 +17,27 @@ const roleLabelMap: Record<string, string> = {
   FINANCEIRO: 'Financeiro',
 };
 
+const subscriptionStatusLabel: Record<BillingSubscription['status'], string> = {
+  TRIALING: 'Período gratuito',
+  ACTIVE: 'Assinatura ativa',
+  PAST_DUE: 'Pagamento pendente',
+  SUSPENDED: 'Assinatura suspensa',
+  CANCELED: 'Assinatura cancelada',
+  EXPIRED: 'Período encerrado',
+  PILOT: 'Oficina piloto',
+  LEGACY_FREE: 'Acesso legado',
+};
+
 export function Sidebar() {
   const { role, session, logout } = useAuthState();
   const workshopQuery = useWorkshopProfile();
   const queryClient = useQueryClient();
+  const subscriptionQuery = useQuery({
+    queryKey: ['billing', 'subscription'],
+    queryFn: billingService.getSubscription,
+    enabled: Boolean(session?.accessToken),
+    staleTime: 60_000,
+  });
   const menuItems = getSidebarMenuRoutes();
   const workshopName =
     workshopQuery.data?.tradeName ??
@@ -26,6 +45,11 @@ export function Sidebar() {
     session?.user.workshop?.name ??
     'AutoPro System';
   const profileName = role === 'ADMIN' ? workshopName : session?.user.name;
+  const subscriptionLabel = subscriptionQuery.data?.plan?.name
+    ? `Plano ${subscriptionQuery.data.plan.name}`
+    : subscriptionQuery.data
+      ? subscriptionStatusLabel[subscriptionQuery.data.status]
+      : 'Assinatura';
 
   async function handleLogout() {
     await logout().catch(() => undefined);
@@ -114,7 +138,7 @@ export function Sidebar() {
                   {roleLabelMap[role ?? ''] ?? role}
                 </p>
                 <span className="rounded-full border border-orange-300/30 bg-orange-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-200">
-                  Plano Pro
+                  {subscriptionLabel}
                 </span>
               </div>
             </div>

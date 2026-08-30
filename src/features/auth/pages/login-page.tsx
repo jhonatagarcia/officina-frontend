@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft, Wrench } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLogin } from '@/features/auth/hooks/use-login';
 import { useGoogleLogin } from '@/features/auth/hooks/use-google-login';
 import { useRecaptcha } from '@/features/auth/hooks/use-recaptcha';
@@ -24,6 +24,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { env } from '@/lib/env';
+import {
+  useSignupConfig,
+  useSignupInviteValidation,
+} from '@/features/auth/hooks/use-signup-access';
 
 const loginFailureMessage = 'Usuário não cadastrado ou senha inválida.';
 
@@ -50,6 +54,19 @@ function getGoogleLoginErrorMessage(error: unknown) {
   return 'Não foi possível entrar com Google. Tente novamente ou use e-mail e senha.';
 }
 
+function readInviteTokenFromFragment(): string | undefined {
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const token = params.get('invite')?.trim();
+  if (!token) return undefined;
+
+  window.history.replaceState(
+    null,
+    '',
+    `${window.location.pathname}${window.location.search}`,
+  );
+  return token;
+}
+
 export function LoginPage() {
   const { login, isLoggingIn } = useLogin();
   const { loginWithGoogle, isGoogleLoggingIn } = useGoogleLogin();
@@ -58,6 +75,9 @@ export function LoginPage() {
   const location = useLocation();
   const [mode, setMode] = useState<'login' | 'forgot'>('login');
   const [registerOpen, setRegisterOpen] = useState(false);
+  const [inviteToken] = useState(readInviteTokenFromFragment);
+  const signupConfig = useSignupConfig();
+  const inviteValidation = useSignupInviteValidation(inviteToken);
   const loginForm = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -88,6 +108,10 @@ export function LoginPage() {
       );
     },
   });
+
+  useEffect(() => {
+    if (inviteValidation.data?.valid) setRegisterOpen(true);
+  }, [inviteValidation.data]);
 
   async function onLoginSubmit(values: LoginSchema) {
     try {
@@ -127,6 +151,13 @@ export function LoginPage() {
 
   const isForgotMode = mode === 'forgot';
   const isAuthenticating = isLoggingIn || isGoogleLoggingIn;
+  const publicRegistrationEnabled =
+    signupConfig.data?.publicRegistrationEnabled === true;
+  const validInviteData =
+    inviteValidation.data && 'maskedEmail' in inviteValidation.data
+      ? inviteValidation.data
+      : undefined;
+  const validInvite = Boolean(validInviteData);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -293,7 +324,7 @@ export function LoginPage() {
           </CardContent>
         </Card>
 
-        {!isForgotMode ? (
+        {!isForgotMode && (publicRegistrationEnabled || validInvite) ? (
           <div className="mt-8 text-center text-sm text-slate-400">
             Ainda não tem uma conta?{' '}
             <button
@@ -305,10 +336,24 @@ export function LoginPage() {
             </button>
           </div>
         ) : null}
+        {inviteToken && inviteValidation.isPending ? (
+          <p className="mt-6 text-sm text-slate-400">Validando convite...</p>
+        ) : null}
+        {inviteToken && inviteValidation.data?.valid === false ? (
+          <p className="mt-6 text-sm text-destructive" role="alert">
+            Este convite é inválido, expirou ou já foi utilizado.
+          </p>
+        ) : null}
       </div>
       <RegisterWorkshopDialog
         open={registerOpen}
         onOpenChange={setRegisterOpen}
+        {...(validInviteData && inviteToken
+          ? {
+              inviteToken,
+              invitedEmail: validInviteData.maskedEmail,
+            }
+          : {})}
       />
     </div>
   );

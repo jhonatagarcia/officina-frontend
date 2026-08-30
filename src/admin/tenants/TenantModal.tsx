@@ -8,7 +8,7 @@ const emptyTenant: TenantPayload = {
   phone: '',
   cnpj: '',
   state: '',
-  plan: 'TRIAL',
+  plan: 'ESSENTIAL',
   type: 'MECANICA',
   notes: '',
 };
@@ -65,10 +65,9 @@ export function TenantModal({
           <div className="admin-field">
             <label>Plano *</label>
             <select className="admin-select" value={form.plan} onChange={(event) => update('plan', event.target.value as TenantPayload['plan'])}>
-              <option value="TRIAL">Teste gratuito</option>
-              <option value="BASIC">Basico - R$99/mes</option>
-              <option value="PRO">Profissional - R$199/mes</option>
-              <option value="ENTERPRISE">Empresarial - R$399/mes</option>
+              <option value="ESSENTIAL">Essencial</option>
+              <option value="PROFESSIONAL">Profissional</option>
+              <option value="PERFORMANCE">Performance</option>
             </select>
           </div>
           <div className="admin-field">

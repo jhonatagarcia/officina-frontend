@@ -4,10 +4,13 @@ import type { AdminLog } from '../logs/useLogs';
 
 export function planLabel(plan: TenantPlan | string): string {
   const labels: Record<string, string> = {
-    TRIAL: 'Teste gratuito',
-    BASIC: 'Basico',
-    PRO: 'Profissional',
-    ENTERPRISE: 'Empresarial',
+    ESSENTIAL: 'Essencial',
+    PROFESSIONAL: 'Profissional',
+    PERFORMANCE: 'Performance',
+    TRIALING: 'Período gratuito',
+    PILOT: 'Oficina piloto',
+    LEGACY_FREE: 'Legado gratuito',
+    UNASSIGNED: 'Sem assinatura',
   };
 
   return labels[plan] ?? plan;
@@ -15,9 +18,16 @@ export function planLabel(plan: TenantPlan | string): string {
 
 export function tenantStatusLabel(status: TenantStatus | string): string {
   const labels: Record<string, string> = {
-    TRIAL: 'Em teste',
+    TRIALING: 'Em teste',
     ACTIVE: 'Ativo',
+    PAST_DUE: 'Em atraso',
+    SUSPENDED: 'Suspenso',
+    CANCELED: 'Cancelado',
+    EXPIRED: 'Expirado',
+    PILOT: 'Piloto',
+    LEGACY_FREE: 'Legado gratuito',
     INACTIVE: 'Inativo',
+    UNASSIGNED: 'Sem assinatura',
   };
 
   return labels[status] ?? status;
