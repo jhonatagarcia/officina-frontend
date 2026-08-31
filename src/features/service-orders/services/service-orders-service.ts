@@ -3,9 +3,12 @@ import { buildQueryParams, mapPaginatedResponse } from '@/services/api/query-str
 import type { ApiPaginatedResponse, QueryParams } from '@/types/common';
 import type {
   CreateServiceOrderPendingPartPayload,
+  AddServiceOrderServicePayload,
   ServiceOrder,
   ServiceOrderBudgetItem,
   ServiceOrderPart,
+  ReturnableServiceOrderPartConsumption,
+  ReturnServiceOrderPartPayload,
   ServiceOrderPendingPart,
   ServiceOrderStatus,
   UpdateServiceOrderPendingPartPayload,
@@ -18,10 +21,29 @@ interface ServiceOrderPartApiResponse extends Omit<ServiceOrderPart, 'unitPrice'
   totalPrice: number | string;
 }
 
+interface ReturnableServiceOrderPartConsumptionApiResponse
+  extends Omit<ReturnableServiceOrderPartConsumption, 'createdAt'> {
+  createdAt: string;
+}
+
 interface ServiceOrderBudgetItemApiResponse
-  extends Omit<ServiceOrderBudgetItem, 'unitPrice' | 'totalPrice'> {
+  extends Omit<
+    ServiceOrderBudgetItem,
+    | 'unitPrice'
+    | 'totalPrice'
+    | 'laborUnitPrice'
+    | 'laborTotalPrice'
+    | 'partUnitPrice'
+    | 'partTotalPrice'
+    | 'inventoryItem'
+  > {
   unitPrice: number | string;
   totalPrice: number | string;
+  laborUnitPrice?: number | string | undefined;
+  laborTotalPrice?: number | string | undefined;
+  partUnitPrice?: number | string | undefined;
+  partTotalPrice?: number | string | undefined;
+  inventoryItem?: ServiceOrderBudgetItem['inventoryItem'] | undefined;
 }
 
 interface ServiceOrderPendingPartApiResponse
@@ -77,6 +99,15 @@ function mapServiceOrderBudgetItem(item: ServiceOrderBudgetItemApiResponse): Ser
     ...item,
     unitPrice: toNumber(item.unitPrice),
     totalPrice: toNumber(item.totalPrice),
+    laborUnitPrice:
+      item.laborUnitPrice !== undefined ? toNumber(item.laborUnitPrice) : undefined,
+    laborTotalPrice:
+      item.laborTotalPrice !== undefined ? toNumber(item.laborTotalPrice) : undefined,
+    partUnitPrice:
+      item.partUnitPrice !== undefined ? toNumber(item.partUnitPrice) : undefined,
+    partTotalPrice:
+      item.partTotalPrice !== undefined ? toNumber(item.partTotalPrice) : undefined,
+    inventoryItem: item.inventoryItem ?? null,
   };
 }
 
@@ -165,9 +196,32 @@ export const serviceOrdersService = {
     const response = await http.post<ServiceOrderPartApiResponse>(`/service-orders/${id}/parts`, payload);
     return mapServiceOrderPart(response.data);
   },
+  async addService(id: string, payload: AddServiceOrderServicePayload) {
+    const response = await http.post<ServiceOrderBudgetItemApiResponse>(`/service-orders/${id}/services`, payload);
+    return mapServiceOrderBudgetItem(response.data);
+  },
   async removePart(id: string, partId: string) {
     const response = await http.delete<ServiceOrderPartApiResponse>(`/service-orders/${id}/parts/${partId}`);
     return mapServiceOrderPart(response.data);
+  },
+  async listReturnableConsumptions(id: string, partId: string) {
+    const response = await http.get<ReturnableServiceOrderPartConsumptionApiResponse[]>(
+      `/service-orders/${id}/parts/${partId}/returnable-consumptions`,
+    );
+    return response.data;
+  },
+  async returnPart(
+    id: string,
+    partId: string,
+    payload: ReturnServiceOrderPartPayload,
+    operationKey: string,
+  ) {
+    const response = await http.post<{ part: ServiceOrderPartApiResponse }>(
+      `/service-orders/${id}/parts/${partId}/returns`,
+      payload,
+      { headers: { 'Idempotency-Key': operationKey } },
+    );
+    return mapServiceOrderPart(response.data.part);
   },
   async updateItem(id: string, itemId: string, payload: UpdateServiceOrderItemPayload) {
     const response = await http.patch<ServiceOrderBudgetItemApiResponse>(

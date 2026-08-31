@@ -1,9 +1,5 @@
 export type ServiceOrderStatus =
-  | 'ABERTA'
-  | 'AGUARDANDO_PECA'
-  | 'EM_ANDAMENTO'
-  | 'FINALIZADA'
-  | 'ENTREGUE';
+  'ABERTA' | 'AGUARDANDO_PECA' | 'EM_ANDAMENTO' | 'FINALIZADA' | 'ENTREGUE';
 
 export interface ServiceOrder {
   id: string;
@@ -12,6 +8,7 @@ export interface ServiceOrder {
   clientId: string;
   vehicleId: string;
   mechanicId: string | null;
+  mechanicEmployeeId?: string | null;
   clientName: string;
   vehicleLabel: string;
   mechanicName: string | null;
@@ -27,7 +24,8 @@ export interface ServiceOrder {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
-  whatsappNotification?: ServiceOrderWhatsAppNotification | undefined;
+  // TODO(WhatsApp Cloud API): reativar com o contrato de notificacao do backend.
+  // whatsappNotification?: ServiceOrderWhatsAppNotification | undefined;
   partsTotal?: number | undefined;
   laborTotal?: number | undefined;
   discount?: number | undefined;
@@ -42,17 +40,16 @@ export interface ServiceOrder {
   pendingParts?: ServiceOrderPendingPart[] | undefined;
 }
 
-export interface ServiceOrderWhatsAppNotification {
-  status: 'SENT' | 'SKIPPED' | 'FAILED';
-  reason?: string | undefined;
-}
+/*
+ * TODO(WhatsApp Cloud API): contrato preservado para a retomada da feature.
+ * export interface ServiceOrderWhatsAppNotification {
+ *   status: 'SENT' | 'SKIPPED' | 'FAILED';
+ *   reason?: string | undefined;
+ * }
+ */
 
 export type PendingPartStatus =
-  | 'PENDING'
-  | 'PARTIALLY_AVAILABLE'
-  | 'AVAILABLE'
-  | 'RESOLVED'
-  | 'CANCELED';
+  'PENDING' | 'PARTIALLY_AVAILABLE' | 'AVAILABLE' | 'RESOLVED' | 'CANCELED';
 
 export interface ServiceOrderPendingPart {
   id: string;
@@ -95,6 +92,14 @@ export type UpdateServiceOrderItemPayload = Pick<
   | 'unitPrice'
 >;
 
+export interface AddServiceOrderServicePayload {
+  serviceCatalogItemId: string;
+  inventoryItemId?: string | null | undefined;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
 export interface ServiceOrderBudgetItem {
   id: string;
   type: 'PART' | 'LABOR' | 'LABOR_AND_PART';
@@ -105,6 +110,10 @@ export interface ServiceOrderBudgetItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  laborUnitPrice?: number | undefined;
+  laborTotalPrice?: number | undefined;
+  partUnitPrice?: number | undefined;
+  partTotalPrice?: number | undefined;
   inventoryItem: {
     id: string;
     name: string;
@@ -130,7 +139,9 @@ export interface ServiceOrderVehicleSummary {
 export interface ServiceOrderMechanicSummary {
   id: string;
   name: string;
-  role: string;
+  function: string;
+  isActive: boolean;
+  legacy: boolean;
 }
 
 export interface ServiceOrderPart {
@@ -147,4 +158,18 @@ export interface ServiceOrderPart {
     name: string;
     internalCode: string;
   };
+}
+
+export interface ReturnableServiceOrderPartConsumption {
+  id: string;
+  quantityConsumed: number;
+  quantityReturned: number;
+  quantityAvailable: number;
+  createdAt: string;
+}
+
+export interface ReturnServiceOrderPartPayload {
+  consumptionMovementId: string;
+  quantity: number;
+  reason: string;
 }

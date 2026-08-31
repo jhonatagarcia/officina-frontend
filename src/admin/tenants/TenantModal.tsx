@@ -8,7 +8,7 @@ const emptyTenant: TenantPayload = {
   phone: '',
   cnpj: '',
   state: '',
-  plan: 'TRIAL',
+  plan: 'ESSENTIAL',
   type: 'MECANICA',
   notes: '',
 };
@@ -53,11 +53,11 @@ export function TenantModal({
     <div className="admin-modal-backdrop">
       <form className="admin-modal" onSubmit={submit}>
         <div className="admin-modal-header">
-          <strong>{tenant ? 'Editar Oficina' : 'Nova Oficina'}</strong>
+          <strong>{tenant ? 'Editar negócio' : 'Novo negócio'}</strong>
           <button className="admin-button secondary" type="button" onClick={onClose}>×</button>
         </div>
         <div className="admin-form-grid">
-          <Field label="Nome da Oficina *" value={form.name} onChange={(value) => update('name', value)} required />
+          <Field label="Nome do negócio *" value={form.name} onChange={(value) => update('name', value)} required />
           <Field label="Nome do Responsavel *" value={form.ownerName} onChange={(value) => update('ownerName', value)} required />
           <Field label="E-mail *" type="email" value={form.email} onChange={(value) => update('email', value)} required />
           <Field label="Telefone" value={form.phone ?? ''} onChange={(value) => update('phone', value)} />
@@ -65,10 +65,9 @@ export function TenantModal({
           <div className="admin-field">
             <label>Plano *</label>
             <select className="admin-select" value={form.plan} onChange={(event) => update('plan', event.target.value as TenantPayload['plan'])}>
-              <option value="TRIAL">Teste gratuito</option>
-              <option value="BASIC">Basico - R$99/mes</option>
-              <option value="PRO">Profissional - R$199/mes</option>
-              <option value="ENTERPRISE">Empresarial - R$399/mes</option>
+              <option value="ESSENTIAL">Essencial</option>
+              <option value="PROFESSIONAL">Profissional</option>
+              <option value="PERFORMANCE">Performance</option>
             </select>
           </div>
           <div className="admin-field">

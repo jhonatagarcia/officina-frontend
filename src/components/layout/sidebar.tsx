@@ -1,12 +1,14 @@
 import { NavLink } from 'react-router-dom';
 import { LockKeyhole, LogOut, Wrench } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { env } from '@/lib/env';
 import { useAuthState } from '@/features/auth/hooks/use-auth-state';
 import { useWorkshopProfile } from '@/features/workshop/hooks/use-workshop-profile';
 import { getSidebarMenuRoutes } from '@/routes/route-manifest';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { billingService } from '@/features/billing/services/billing-service';
+import type { BillingSubscription } from '@/features/billing/types';
 
 const roleLabelMap: Record<string, string> = {
   ADMIN: 'Administrador',
@@ -15,44 +17,80 @@ const roleLabelMap: Record<string, string> = {
   FINANCEIRO: 'Financeiro',
 };
 
+const subscriptionStatusLabel: Record<BillingSubscription['status'], string> = {
+  TRIALING: 'Período gratuito',
+  ACTIVE: 'Assinatura ativa',
+  PAST_DUE: 'Pagamento pendente',
+  SUSPENDED: 'Assinatura suspensa',
+  CANCELED: 'Assinatura cancelada',
+  EXPIRED: 'Período encerrado',
+  PILOT: 'Oficina piloto',
+  LEGACY_FREE: 'Acesso legado',
+};
+
 export function Sidebar() {
   const { role, session, logout } = useAuthState();
   const workshopQuery = useWorkshopProfile();
   const queryClient = useQueryClient();
+  const subscriptionQuery = useQuery({
+    queryKey: ['billing', 'subscription'],
+    queryFn: billingService.getSubscription,
+    enabled: Boolean(session?.accessToken),
+    staleTime: 60_000,
+  });
   const menuItems = getSidebarMenuRoutes();
-  const workshopName = workshopQuery.data?.tradeName ?? session?.user.workshop?.tradeName ?? session?.user.workshop?.name ?? 'Mini SaaS Oficina';
+  const workshopName =
+    workshopQuery.data?.tradeName ??
+    session?.user.workshop?.tradeName ??
+    session?.user.workshop?.name ??
+    'AutoPro System';
   const profileName = role === 'ADMIN' ? workshopName : session?.user.name;
+  const subscriptionLabel = subscriptionQuery.data?.plan?.name
+    ? `Plano ${subscriptionQuery.data.plan.name}`
+    : subscriptionQuery.data
+      ? subscriptionStatusLabel[subscriptionQuery.data.status]
+      : 'Assinatura';
 
-  function handleLogout() {
+  async function handleLogout() {
+    await logout().catch(() => undefined);
     queryClient.clear();
-    logout();
   }
 
   return (
-    <aside className="surface-grid sticky top-0 h-screen overflow-hidden border-r border-slate-800/60 bg-slate-950 px-5 py-6 text-slate-100">
+    <aside className="surface-grid sticky top-0 h-dvh overflow-hidden border-r border-slate-800/60 bg-slate-950 px-5 py-6 text-slate-100">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.2),transparent_26%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.12),transparent_24%)]" />
       <div className="relative flex h-full flex-col">
-        <div className="mb-8 rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.24)] backdrop-blur">
+        <div className="mb-8 shrink-0 rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_20px_50px_rgba(0,0,0,0.24)] backdrop-blur">
           <div className="flex items-start gap-3">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-[0_18px_44px_rgba(234,88,12,0.22)]">
               <Wrench className="size-7" />
             </div>
             <div className="min-w-0">
-              <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white">{env.VITE_APP_NAME}</h1>
+              <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-white">
+                {env.VITE_APP_NAME}
+              </h1>
             </div>
           </div>
-          <p className="mt-2 text-sm text-slate-300">Produtividade operacional para oficinas mecânicas, funilárias e auto elétricas</p>
+          <p className="mt-2 text-sm text-slate-300">
+            Produtividade operacional para negócios automotivos, Oficina
+            Mecanica, Funilarias e Auto Elétricas
+          </p>
         </div>
-        <nav className="space-y-2">
+        <nav className="sidebar-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]">
           {menuItems.map((item) => {
-            const isLocked = role !== 'ADMIN' && (!role || !item.roles.includes(role));
+            const isLocked =
+              role !== 'ADMIN' && (!role || !item.roles.includes(role));
 
             return (
               <NavLink
                 key={item.key}
                 to={`/inicio/${item.path}`}
                 aria-disabled={isLocked}
-                title={isLocked ? 'Acesso restrito ao perfil administrador' : undefined}
+                title={
+                  isLocked
+                    ? 'Acesso restrito ao perfil administrador'
+                    : undefined
+                }
                 onClick={(event) => {
                   if (isLocked) {
                     event.preventDefault();
@@ -70,27 +108,47 @@ export function Sidebar() {
                   )
                 }
               >
-                {item.icon ? <item.icon className={cn('size-4 transition-colors', !isLocked ? 'group-hover:text-orange-200' : null)} /> : null}
+                {item.icon ? (
+                  <item.icon
+                    className={cn(
+                      'size-4 transition-colors',
+                      !isLocked ? 'group-hover:text-orange-200' : null,
+                    )}
+                  />
+                ) : null}
                 <span className="min-w-0 flex-1">{item.label}</span>
                 {isLocked ? (
-                  <LockKeyhole className="size-3.5 text-amber-300" aria-label="Acesso bloqueado" />
+                  <LockKeyhole
+                    className="size-3.5 text-amber-300"
+                    aria-label="Acesso bloqueado"
+                  />
                 ) : null}
               </NavLink>
             );
           })}
         </nav>
-        <div className="mt-auto pt-6">
+        <div className="mt-auto shrink-0 pt-6">
           <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 shadow-[0_18px_44px_rgba(0,0,0,0.18)] backdrop-blur">
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-white">{profileName}</p>
+              <p className="truncate text-sm font-semibold text-white">
+                {profileName}
+              </p>
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <p className="text-xs uppercase tracking-wide text-slate-400">{roleLabelMap[role ?? ''] ?? role}</p>
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  {roleLabelMap[role ?? ''] ?? role}
+                </p>
                 <span className="rounded-full border border-orange-300/30 bg-orange-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-200">
-                  Plano Pro
+                  {subscriptionLabel}
                 </span>
               </div>
             </div>
-            <Button variant="outline" size="icon" onClick={handleLogout} aria-label="Sair" className="shrink-0 rounded-2xl border-white/10 bg-white/10 text-white hover:bg-white/15 hover:text-white">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleLogout}
+              aria-label="Sair"
+              className="shrink-0 rounded-2xl border-white/10 bg-white/10 text-white hover:bg-white/15 hover:text-white"
+            >
               <LogOut className="size-4" />
             </Button>
           </div>

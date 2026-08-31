@@ -1,11 +1,15 @@
 import type { Budget } from '@/features/budgets/types';
 import { budgetsService } from '@/features/budgets/services/budgets-service';
-import type { DashboardOperationalAlert, DashboardOverview, DashboardPeriod } from '@/features/dashboard/types';
+import type {
+  DashboardOperationalAlert,
+  DashboardOverview,
+  DashboardPeriod,
+} from '@/features/dashboard/types';
 import { inventoryService } from '@/features/inventory/services/inventory-service';
 import type { InventoryItem } from '@/features/inventory/types';
 import type { ServiceOrder } from '@/features/service-orders/types';
 import { serviceOrdersService } from '@/features/service-orders/services/service-orders-service';
-import { formatServiceOrderNumber, toNumber } from '@/lib/utils';
+import { formatCurrency, formatServiceOrderNumber, toNumber } from '@/lib/utils';
 import { http } from '@/services/api/http';
 
 interface DashboardSummaryApiResponse {
@@ -17,9 +21,16 @@ interface DashboardSummaryApiResponse {
   budgets: {
     pending: number;
   };
+  clients: {
+    total: number;
+    new: number;
+    returnRate: number;
+  };
   financial: {
     monthRevenue: number | string;
     stockOutValue: number | string;
+    netBalanceValue?: number | string;
+    pendingServiceOrderPaymentsValue?: number | string;
     averageTicket?: number | string;
   };
   inventory: {
@@ -32,20 +43,46 @@ interface DashboardSummaryApiResponse {
       internalCode: string;
     }[];
   };
+  operational: {
+    averageExecutionDays: number | string;
+  };
+  workforce?: {
+    activeEmployees: number | string;
+  };
 }
 
-type DashboardSummary = Omit<DashboardOverview, 'activeServiceOrders' | 'pendingBudgets' | 'operationalAlerts'>;
+type DashboardSummary = Omit<
+  DashboardOverview,
+  'activeServiceOrders' | 'pendingBudgets' | 'operationalAlerts'
+>;
 
-function mapDashboardSummary(response: DashboardSummaryApiResponse): DashboardSummary {
+function mapDashboardSummary(
+  response: DashboardSummaryApiResponse,
+): DashboardSummary {
   return {
     serviceOrders: response.serviceOrders,
     budgets: response.budgets,
+    clients: {
+      total: toNumber(response.clients.total),
+      new: toNumber(response.clients.new),
+      returnRate: toNumber(response.clients.returnRate),
+    },
     financial: {
       monthRevenue: toNumber(response.financial.monthRevenue),
       stockOutValue: toNumber(response.financial.stockOutValue),
+      netBalanceValue: toNumber(response.financial.netBalanceValue),
+      pendingServiceOrderPaymentsValue: toNumber(
+        response.financial.pendingServiceOrderPaymentsValue,
+      ),
       averageTicket: toNumber(response.financial.averageTicket),
     },
     inventory: response.inventory,
+    operational: {
+      averageExecutionDays: toNumber(response.operational.averageExecutionDays),
+    },
+    workforce: {
+      activeEmployees: toNumber(response.workforce?.activeEmployees),
+    },
   };
 }
 
@@ -60,7 +97,9 @@ function differenceInDays(date: string) {
   if (Number.isNaN(parsedDate.getTime())) return null;
 
   const msPerDay = 1000 * 60 * 60 * 24;
-  return Math.floor((startOfToday().getTime() - parsedDate.getTime()) / msPerDay);
+  return Math.floor(
+    (startOfToday().getTime() - parsedDate.getTime()) / msPerDay,
+  );
 }
 
 function describeOldestBudget(budget: Budget | undefined) {
@@ -96,13 +135,22 @@ function buildOperationalAlerts(params: {
   const alerts: DashboardOperationalAlert[] = [];
   const pendingBudgets = params.pendingBudgets
     .filter((budget) => budget.status === 'PENDENTE')
-    .sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime());
-  const criticalStockItems = params.lowStockItems.filter((item) => item.status === 'CRITICO');
+    .sort(
+      (left, right) =>
+        new Date(left.createdAt).getTime() -
+        new Date(right.createdAt).getTime(),
+    );
+  const criticalStockItems = params.lowStockItems.filter(
+    (item) => item.status === 'CRITICO',
+  );
   const overdueOrders = params.activeServiceOrders.filter((order) => {
     if (!order.expectedDeliveryAt) return false;
 
     const expectedDelivery = new Date(order.expectedDeliveryAt);
-    return !Number.isNaN(expectedDelivery.getTime()) && expectedDelivery < startOfToday();
+    return (
+      !Number.isNaN(expectedDelivery.getTime()) &&
+      expectedDelivery < startOfToday()
+    );
   });
 
   if (criticalStockItems.length > 0) {
@@ -123,19 +171,37 @@ function buildOperationalAlerts(params: {
       severity: 'warning',
       title: 'Itens abaixo do mínimo',
       metric: `${params.summary.inventory.lowStockCount} item(ns)`,
-      description: 'Há itens com saldo abaixo do mínimo configurado e reposição pendente.',
+      description:
+        'Há itens com saldo abaixo do mínimo configurado e reposição pendente.',
+    });
+  }
+
+  if (params.summary.financial.pendingServiceOrderPaymentsValue > 0) {
+    alerts.push({
+      id: 'pending-service-order-payments',
+      severity: 'warning',
+      title: 'Pagamentos de OS pendentes',
+      metric: formatCurrency(params.summary.financial.pendingServiceOrderPaymentsValue),
+      description:
+        'Existem cobranças de ordens de serviço ainda não pagas. Registre o pagamento para manter o financeiro atualizado.',
+      actionLabel: 'Ver pagamentos',
+      actionTo: '/inicio/financeiro?status=EM_ABERTO',
     });
   }
 
   if (overdueOrders.length > 0) {
-    const oldestOrder = overdueOrders
-      .slice()
-      .sort((left, right) => {
-        const leftTime = left.expectedDeliveryAt ? new Date(left.expectedDeliveryAt).getTime() : Number.MAX_SAFE_INTEGER;
-        const rightTime = right.expectedDeliveryAt ? new Date(right.expectedDeliveryAt).getTime() : Number.MAX_SAFE_INTEGER;
-        return leftTime - rightTime;
-      })[0];
-    const delayDays = oldestOrder?.expectedDeliveryAt ? differenceInDays(oldestOrder.expectedDeliveryAt) : null;
+    const oldestOrder = overdueOrders.slice().sort((left, right) => {
+      const leftTime = left.expectedDeliveryAt
+        ? new Date(left.expectedDeliveryAt).getTime()
+        : Number.MAX_SAFE_INTEGER;
+      const rightTime = right.expectedDeliveryAt
+        ? new Date(right.expectedDeliveryAt).getTime()
+        : Number.MAX_SAFE_INTEGER;
+      return leftTime - rightTime;
+    })[0];
+    const delayDays = oldestOrder?.expectedDeliveryAt
+      ? differenceInDays(oldestOrder.expectedDeliveryAt)
+      : null;
 
     alerts.push({
       id: 'overdue-service-orders',
@@ -157,13 +223,18 @@ function buildOperationalAlerts(params: {
       severity: pendingBudgets.length >= 5 ? 'warning' : 'info',
       title: 'Orçamentos aguardando retorno',
       metric: `${pendingBudgets.length} pendente(s)`,
-      description: describeOldestBudget(oldestPendingBudget) || 'Existem orçamentos aguardando aprovação do cliente.',
+      description:
+        describeOldestBudget(oldestPendingBudget) ||
+        'Existem orçamentos aguardando aprovação do cliente.',
       actionLabel: oldestPendingBudget ? 'Ver pendência' : undefined,
-      actionTo: oldestPendingBudget ? '/inicio/orcamentos?status=PENDENTE' : undefined,
+      actionTo: oldestPendingBudget
+        ? '/inicio/orcamentos?status=PENDENTE'
+        : undefined,
     });
   }
 
-  const activeFlow = params.summary.serviceOrders.open + params.summary.serviceOrders.inProgress;
+  const activeFlow =
+    params.summary.serviceOrders.open + params.summary.serviceOrders.inProgress;
   if (activeFlow > 0) {
     alerts.push({
       id: 'workshop-flow',
@@ -180,8 +251,16 @@ function buildOperationalAlerts(params: {
 }
 
 export const dashboardService = {
-  async getOverview(period: DashboardPeriod = 'YEAR'): Promise<DashboardOverview> {
-    const [summaryResponse, lowStockItems, openOrders, inProgressOrders, pendingBudgets] = await Promise.all([
+  async getOverview(
+    period: DashboardPeriod = 'YEAR',
+  ): Promise<DashboardOverview> {
+    const [
+      summaryResponse,
+      lowStockItems,
+      openOrders,
+      inProgressOrders,
+      pendingBudgets,
+    ] = await Promise.all([
       http.get<DashboardSummaryApiResponse>('/dashboard/summary', {
         params: { period },
       }),

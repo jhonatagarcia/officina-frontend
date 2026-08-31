@@ -24,7 +24,7 @@ describe('financialService', () => {
             dueDate: '2026-04-10T00:00:00.000Z',
             paidAt: null,
             paymentMethod: null,
-            status: 'overdue',
+            status: 'pending',
             clientId: null,
             serviceOrderId: 'os-123',
             notes: null,
@@ -53,7 +53,7 @@ describe('financialService', () => {
       expect.objectContaining({
         id: '1',
         amount: 150.5,
-        status: 'VENCIDO',
+        status: 'EM_ABERTO',
         type: 'RECEIVABLE',
       }),
     ]);

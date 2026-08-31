@@ -12,6 +12,11 @@ vi.mock('@/features/reference-data/hooks/use-inventory-options', () => ({
         value: 'inv-1',
         quantity: 4,
       },
+      {
+        label: 'PA-001 • Pastilha de freio',
+        value: 'inv-2',
+        quantity: 0,
+      },
     ],
   }),
 }));
@@ -72,6 +77,18 @@ describe('PendingPartDialog', () => {
       />,
     );
 
-    expect(screen.getByText('Disponível em estoque').parentElement).toHaveTextContent('4');
+    expect(screen.getByText(/Disponível em estoque:/)).toHaveTextContent('Disponível em estoque: 4');
+    expect(screen.getByText(/Disponível em estoque:/).parentElement).not.toHaveTextContent('Quantidade necessária');
+  });
+
+  it('avisa quando a peca selecionada nao tem estoque disponivel', () => {
+    renderWithProviders(
+      <PendingPartDialog open isSubmitting={false} onOpenChange={vi.fn()} onSubmit={vi.fn()} />,
+    );
+
+    fireEvent.click(screen.getByText('Selecione a peça'));
+    fireEvent.click(screen.getByText('PA-001 • Pastilha de freio'));
+
+    expect(screen.getByText('Produto não disponível em estoque. Será necessário efetuar a compra do produto.')).toBeInTheDocument();
   });
 });

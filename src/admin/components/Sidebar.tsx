@@ -1,4 +1,12 @@
-import { FileText, Headphones, Home, LayoutDashboard, LogOut } from 'lucide-react';
+import {
+  Activity,
+  FileText,
+  Headphones,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  UserPlus,
+} from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../auth/useAdminAuth';
 import { useAdminLogSummary } from '../logs/useLogs';
@@ -7,6 +15,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 
 export function Sidebar() {
   const logout = useAdminAuth((state) => state.logout);
+  const user = useAdminAuth((state) => state.user);
   const navigate = useNavigate();
   const supportSummary = useSupportSummary();
   const logSummary = useAdminLogSummary();
@@ -25,15 +34,34 @@ export function Sidebar() {
           <LayoutDashboard size={16} /> Painel
         </NavLink>
         <NavLink to="/admin/tenants">
-          <Home size={16} /> Oficinas
+          <Home size={16} /> Negócios
         </NavLink>
+        {user?.adminRole === 'SUPER_ADMIN' ? (
+          <NavLink to="/admin/signup-invites">
+            <UserPlus size={16} /> Convites
+          </NavLink>
+        ) : null}
         <div className="admin-nav-label">Suporte</div>
         <NavLink to="/admin/support">
-          <Headphones size={16} /> Chamados {activeTickets > 0 ? <span className="admin-badge">{activeTickets}</span> : null}
+          <Headphones size={16} /> Chamados{' '}
+          {activeTickets > 0 ? (
+            <span className="admin-badge">{activeTickets}</span>
+          ) : null}
         </NavLink>
         <NavLink to="/admin/logs">
-          <FileText size={16} /> Registros e Erros {criticalEvents > 0 ? <span className="admin-badge">{criticalEvents}</span> : null}
+          <FileText size={16} /> Registros e Erros{' '}
+          {criticalEvents > 0 ? (
+            <span className="admin-badge">{criticalEvents}</span>
+          ) : null}
         </NavLink>
+        {user?.adminRole === 'SUPER_ADMIN' ? (
+          <NavLink
+            to="/admin/observability"
+            data-testid="admin-observability-nav"
+          >
+            <Activity size={16} /> Observabilidade
+          </NavLink>
+        ) : null}
         <button
           type="button"
           onClick={() => {
@@ -45,9 +73,9 @@ export function Sidebar() {
         </button>
       </nav>
       <div className="admin-user">
-        <div className="admin-avatar">JH</div>
+        <div className="admin-avatar">{initials(user?.name ?? 'AM')}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <strong>Jhonata</strong>
+          <strong>{user?.name ?? 'Admin Master'}</strong>
           <br />
           <span>Administrador Master</span>
         </div>
@@ -55,4 +83,13 @@ export function Sidebar() {
       </div>
     </aside>
   );
+}
+
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
 }

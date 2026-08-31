@@ -19,35 +19,64 @@ vi.mock('@/features/reference-data/hooks/use-inventory-options', () => ({
   }),
 }));
 
+vi.mock('@/features/reference-data/hooks/use-service-options', () => ({
+  useServiceOptions: () => ({
+    isLoading: false,
+    data: [
+      {
+        label: 'Troca de óleo',
+        value: 'svc-1',
+        code: 'SRV-001',
+        description: 'Troca de óleo',
+        suggestedTotalPrice: 120,
+      },
+    ],
+  }),
+}));
+
 describe('ServiceOrderStockPartDialog', () => {
-  it('envia a peça disponível usando o payload existente do endpoint de peças', () => {
+  it('adiciona um novo serviço sem peça vinculada', () => {
     const onSubmit = vi.fn();
     renderWithProviders(
       <ServiceOrderStockPartDialog open isSubmitting={false} onOpenChange={vi.fn()} onSubmit={onSubmit} />,
     );
 
-    fireEvent.click(screen.getByText('Selecione a peça'));
-    fireEvent.click(screen.getByText('FO-001 • Filtro de óleo'));
-    fireEvent.change(screen.getByLabelText(/quantidade necessária/i), { target: { value: '2' } });
-    fireEvent.click(screen.getByRole('button', { name: /aplicar na os/i }));
+    fireEvent.click(screen.getByText('Selecione o serviço'));
+    fireEvent.click(screen.getByText('Troca de óleo'));
+    fireEvent.change(screen.getByLabelText(/quantidade/i), { target: { value: '2' } });
+    fireEvent.click(screen.getByRole('button', { name: /adicionar serviço/i }));
 
     expect(onSubmit).toHaveBeenCalledWith({
-      inventoryItemId: 'inv-1',
+      serviceCatalogItemId: 'svc-1',
+      inventoryItemId: null,
+      description: 'Troca de óleo',
       quantity: 2,
-      unitPrice: 45,
+      unitPrice: 120,
     });
   });
 
-  it('bloqueia aplicação quando a quantidade necessária supera o estoque', () => {
+  it('adiciona um novo serviço com peça vinculada', () => {
+    const onSubmit = vi.fn();
     renderWithProviders(
-      <ServiceOrderStockPartDialog open isSubmitting={false} onOpenChange={vi.fn()} onSubmit={vi.fn()} />,
+      <ServiceOrderStockPartDialog open isSubmitting={false} onOpenChange={vi.fn()} onSubmit={onSubmit} />,
     );
 
-    fireEvent.click(screen.getByText('Selecione a peça'));
+    fireEvent.click(screen.getByText('Selecione o serviço'));
+    fireEvent.click(screen.getByText('Troca de óleo'));
+    fireEvent.click(screen.getByText('Sem peça vinculada'));
     fireEvent.click(screen.getByText('FO-001 • Filtro de óleo'));
-    fireEvent.change(screen.getByLabelText(/quantidade necessária/i), { target: { value: '4' } });
+    fireEvent.change(screen.getByLabelText(/quantidade/i), { target: { value: '2' } });
 
-    expect(screen.getByText(/estoque insuficiente/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /aplicar na os/i })).toBeDisabled();
+    expect(screen.getByText('R$ 330,00')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /adicionar serviço/i }));
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      serviceCatalogItemId: 'svc-1',
+      inventoryItemId: 'inv-1',
+      description: 'Troca de óleo + Filtro de óleo',
+      quantity: 2,
+      unitPrice: 120,
+    });
   });
 });

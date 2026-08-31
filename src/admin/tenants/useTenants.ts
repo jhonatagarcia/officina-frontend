@@ -1,8 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../api/admin-api';
 
-export type TenantPlan = 'TRIAL' | 'BASIC' | 'PRO' | 'ENTERPRISE';
-export type TenantStatus = 'TRIAL' | 'ACTIVE' | 'INACTIVE';
+export type TenantPlan =
+  | 'ESSENTIAL'
+  | 'PROFESSIONAL'
+  | 'PERFORMANCE'
+  | 'TRIALING'
+  | 'PILOT'
+  | 'LEGACY_FREE'
+  | 'UNASSIGNED';
+export type TenantStatus =
+  | 'TRIALING'
+  | 'ACTIVE'
+  | 'PAST_DUE'
+  | 'SUSPENDED'
+  | 'CANCELED'
+  | 'EXPIRED'
+  | 'PILOT'
+  | 'LEGACY_FREE'
+  | 'INACTIVE'
+  | 'UNASSIGNED';
 export type TenantType = 'MECANICA' | 'FUNILARIA' | 'AMBOS';
 
 export interface Tenant {
@@ -15,6 +32,8 @@ export interface Tenant {
   cnpj?: string | null;
   state?: string | null;
   plan: TenantPlan;
+  planName?: string | null;
+  planAmount?: number | null;
   status: TenantStatus;
   type?: TenantType | null;
   notes?: string | null;
@@ -22,6 +41,8 @@ export interface Tenant {
   createdAt: string;
   lastActivityAt?: string | null;
   usersCount: number;
+  authenticatedUsersCount?: number;
+  employeesCount?: number;
   serviceOrdersCount: number;
 }
 
@@ -105,5 +126,21 @@ export function useDeleteTenant() {
   return useMutation({
     mutationFn: (id: string) => adminApi.delete<Tenant>(`/tenants/${id}`).then((r) => r.data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'tenants'] }),
+  });
+}
+
+export function useSetPilotWorkshop() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      adminApi
+        .post<{ status: 'PILOT' }>(`/billing/workshops/${id}/pilot`, { reason })
+        .then((response) => response.data),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin', 'tenants'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] }),
+      ]);
+    },
   });
 }

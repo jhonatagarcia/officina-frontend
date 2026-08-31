@@ -98,6 +98,10 @@ export const budgetsService = {
     const response = await http.patch<BudgetApiResponse>(`/budgets/${id}`, payload);
     return mapBudget(response.data);
   },
+  async removeItem(id: string, itemId: string) {
+    const response = await http.delete<BudgetApiResponse>(`/budgets/${id}/items/${itemId}`);
+    return mapBudget(response.data);
+  },
   async approve(id: string) {
     const response = await http.patch<BudgetApiResponse>(`/budgets/${id}/approve`);
     return mapBudget(response.data);

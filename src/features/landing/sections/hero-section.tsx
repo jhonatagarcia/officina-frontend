@@ -3,7 +3,8 @@ import { ArrowRight, PlayCircle } from 'lucide-react';
 import { hero, heroTabs } from '../content';
 import { BrowserMockup } from '../components/browser-mockup';
 import { ButtonLink } from '../components/button-link';
-import { WhatsAppIcon } from '../components/whatsapp-icon';
+// TODO(WhatsApp Cloud API): reativar junto com o card de notificacao do hero.
+// import { WhatsAppIcon } from '../components/whatsapp-icon';
 import { usePrefersReducedMotion } from '../hooks/use-prefers-reduced-motion';
 
 export function HeroSection() {
@@ -48,15 +49,18 @@ export function HeroSection() {
         </div>
         <div className="hero-mockup">
           <BrowserMockup tabs={heroTabs} idPrefix="hero-browser" ariaLabel="Telas principais do AutoPro System" />
-          <div className="hero-notif" aria-hidden="true">
-            <div className="hero-notif-ico">
-              <WhatsAppIcon />
+          {/*
+            TODO(WhatsApp Cloud API): card preservado para o futuro rollout.
+            <div className="hero-notif" aria-hidden="true">
+              <div className="hero-notif-ico">
+                <WhatsAppIcon />
+              </div>
+              <div>
+                <div className="hero-notif-app">{hero.notification.app}</div>
+                <div className="hero-notif-msg">{hero.notification.message}</div>
+              </div>
             </div>
-            <div>
-              <div className="hero-notif-app">{hero.notification.app}</div>
-              <div className="hero-notif-msg">{hero.notification.message}</div>
-            </div>
-          </div>
+          */}
           <div className="hero-kpi" aria-hidden="true">
             <div className="hero-kpi-label">{hero.kpi.label}</div>
             <div className="hero-kpi-val">{hero.kpi.value}</div>

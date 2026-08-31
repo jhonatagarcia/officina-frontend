@@ -8,6 +8,10 @@ import {
   ClipboardCheck,
   FileText,
   LayoutDashboard,
+  MessagesSquare,
+  HandCoins,
+  KeyRound,
+  ReceiptText,
   UserRoundCog,
   UsersRound,
   Wrench,
@@ -15,68 +19,124 @@ import {
 import type { Role } from '@/types/auth';
 
 const DashboardPage = lazy(() =>
-  import('@/features/dashboard/pages/dashboard-page').then(({ DashboardPage }) => ({ default: DashboardPage })),
+  import('@/features/dashboard/pages/dashboard-page').then(
+    ({ DashboardPage }) => ({ default: DashboardPage }),
+  ),
 );
 const ClientsPage = lazy(() =>
-  import('@/features/clients/pages/clients-page').then(({ ClientsPage }) => ({ default: ClientsPage })),
+  import('@/features/clients/pages/clients-page').then(({ ClientsPage }) => ({
+    default: ClientsPage,
+  })),
 );
 const ClientFormPage = lazy(() =>
-  import('@/features/clients/pages/client-form-page').then(({ ClientFormPage }) => ({ default: ClientFormPage })),
+  import('@/features/clients/pages/client-form-page').then(
+    ({ ClientFormPage }) => ({ default: ClientFormPage }),
+  ),
 );
 const VehiclesPage = lazy(() =>
-  import('@/features/vehicles/pages/vehicles-page').then(({ VehiclesPage }) => ({ default: VehiclesPage })),
+  import('@/features/vehicles/pages/vehicles-page').then(
+    ({ VehiclesPage }) => ({ default: VehiclesPage }),
+  ),
 );
 const VehicleFormPage = lazy(() =>
-  import('@/features/vehicles/pages/vehicle-form-page').then(({ VehicleFormPage }) => ({ default: VehicleFormPage })),
+  import('@/features/vehicles/pages/vehicle-form-page').then(
+    ({ VehicleFormPage }) => ({ default: VehicleFormPage }),
+  ),
 );
 const VehicleHistoryPage = lazy(() =>
-  import('@/features/vehicle-history/pages/vehicle-history-page').then(({ VehicleHistoryPage }) => ({
-    default: VehicleHistoryPage,
-  })),
+  import('@/features/vehicle-history/pages/vehicle-history-page').then(
+    ({ VehicleHistoryPage }) => ({
+      default: VehicleHistoryPage,
+    }),
+  ),
 );
 const BudgetsPage = lazy(() =>
-  import('@/features/budgets/pages/budgets-page').then(({ BudgetsPage }) => ({ default: BudgetsPage })),
+  import('@/features/budgets/pages/budgets-page').then(({ BudgetsPage }) => ({
+    default: BudgetsPage,
+  })),
 );
 const BudgetFormPage = lazy(() =>
-  import('@/features/budgets/pages/budget-form-page').then(({ BudgetFormPage }) => ({ default: BudgetFormPage })),
+  import('@/features/budgets/pages/budget-form-page').then(
+    ({ BudgetFormPage }) => ({ default: BudgetFormPage }),
+  ),
 );
 const ServiceOrdersPage = lazy(() =>
-  import('@/features/service-orders/pages/service-orders-page').then(({ ServiceOrdersPage }) => ({
-    default: ServiceOrdersPage,
-  })),
+  import('@/features/service-orders/pages/service-orders-page').then(
+    ({ ServiceOrdersPage }) => ({
+      default: ServiceOrdersPage,
+    }),
+  ),
 );
 const ServiceOrderDetailsPage = lazy(() =>
-  import('@/features/service-orders/pages/service-order-details-page').then(({ ServiceOrderDetailsPage }) => ({
-    default: ServiceOrderDetailsPage,
-  })),
+  import('@/features/service-orders/pages/service-order-details-page').then(
+    ({ ServiceOrderDetailsPage }) => ({
+      default: ServiceOrderDetailsPage,
+    }),
+  ),
 );
 const InventoryPage = lazy(() =>
-  import('@/features/inventory/pages/inventory-page').then(({ InventoryPage }) => ({ default: InventoryPage })),
+  import('@/features/inventory/pages/inventory-page').then(
+    ({ InventoryPage }) => ({ default: InventoryPage }),
+  ),
 );
 const InventoryFormPage = lazy(() =>
-  import('@/features/inventory/pages/inventory-form-page').then(({ InventoryFormPage }) => ({
-    default: InventoryFormPage,
-  })),
+  import('@/features/inventory/pages/inventory-form-page').then(
+    ({ InventoryFormPage }) => ({
+      default: InventoryFormPage,
+    }),
+  ),
 );
 const FinancialPage = lazy(() =>
-  import('@/features/financial/pages/financial-page').then(({ FinancialPage }) => ({ default: FinancialPage })),
+  import('@/features/financial/pages/financial-page').then(
+    ({ FinancialPage }) => ({ default: FinancialPage }),
+  ),
 );
 const WorkshopProfilePage = lazy(() =>
-  import('@/features/workshop/pages/workshop-profile-page').then(({ WorkshopProfilePage }) => ({ default: WorkshopProfilePage })),
+  import('@/features/workshop/pages/workshop-profile-page').then(
+    ({ WorkshopProfilePage }) => ({ default: WorkshopProfilePage }),
+  ),
 );
 const ServicesPage = lazy(() =>
-  import('@/features/services/pages/services-page').then(({ ServicesPage }) => ({ default: ServicesPage })),
+  import('@/features/services/pages/services-page').then(
+    ({ ServicesPage }) => ({ default: ServicesPage }),
+  ),
 );
 const ServiceFormPage = lazy(() =>
-  import('@/features/services/pages/service-form-page').then(({ ServiceFormPage }) => ({ default: ServiceFormPage })),
+  import('@/features/services/pages/service-form-page').then(
+    ({ ServiceFormPage }) => ({ default: ServiceFormPage }),
+  ),
 );
 const MechanicsPage = lazy(() =>
-  import('@/features/mechanics/pages/mechanics-page').then(({ MechanicsPage }) => ({ default: MechanicsPage })),
+  import('@/features/mechanics/pages/mechanics-page').then(
+    ({ MechanicsPage }) => ({ default: MechanicsPage }),
+  ),
 );
 const MechanicFormPage = lazy(() =>
-  import('@/features/mechanics/pages/mechanic-form-page').then(({ MechanicFormPage }) => ({
-    default: MechanicFormPage,
+  import('@/features/mechanics/pages/mechanic-form-page').then(
+    ({ MechanicFormPage }) => ({
+      default: MechanicFormPage,
+    }),
+  ),
+);
+const SupportPage = lazy(() =>
+  import('@/features/support/pages/support-page').then(({ SupportPage }) => ({
+    default: SupportPage,
   })),
+);
+const UsersPage = lazy(() =>
+  import('@/features/users/pages/users-page').then(({ UsersPage }) => ({
+    default: UsersPage,
+  })),
+);
+const CommissionsPage = lazy(() =>
+  import('@/features/commissions/pages/commissions-page').then(
+    ({ CommissionsPage }) => ({ default: CommissionsPage }),
+  ),
+);
+const SubscriptionPage = lazy(() =>
+  import('@/features/billing/pages/subscription-page').then(
+    ({ SubscriptionPage }) => ({ default: SubscriptionPage }),
+  ),
 );
 
 export interface AppRouteDefinition {
@@ -87,7 +147,6 @@ export interface AppRouteDefinition {
   label?: string;
   icon?: LucideIcon | undefined;
   sidebar?: boolean;
-  requiresCnpj?: boolean;
 }
 
 export const appRoutes: AppRouteDefinition[] = [
@@ -285,14 +344,49 @@ export const appRoutes: AppRouteDefinition[] = [
     label: 'Financeiro',
     icon: BadgeDollarSign,
     sidebar: true,
-    requiresCnpj: true,
+  },
+  {
+    key: 'usuarios-list',
+    path: 'usuarios',
+    roles: ['ADMIN'],
+    element: <UsersPage />,
+    label: 'Contas de acesso',
+    icon: KeyRound,
+    sidebar: true,
+  },
+  {
+    key: 'comissoes-list',
+    path: 'comissoes',
+    roles: ['ADMIN', 'MECANICO'],
+    element: <CommissionsPage />,
+    label: 'Comissoes',
+    icon: HandCoins,
+    sidebar: true,
+  },
+  {
+    key: 'assinatura',
+    path: 'assinatura',
+    roles: ['ADMIN'],
+    element: <SubscriptionPage />,
+    label: 'Assinatura',
+    icon: ReceiptText,
+    sidebar: true,
+  },
+  {
+    key: 'chamados',
+    path: 'chamados',
+    roles: ['ADMIN', 'ATENDENTE', 'MECANICO', 'FINANCEIRO'],
+    element: <SupportPage />,
+    label: 'Chamados',
+    icon: MessagesSquare,
+    sidebar: true,
   },
   {
     key: 'oficina-profile',
     path: 'oficina',
     roles: ['ADMIN'],
     element: <WorkshopProfilePage />,
-    label: 'Oficina',
+    label: 'Meu Negócio',
     icon: Building2,
     sidebar: true,
   },
@@ -305,10 +399,14 @@ const sidebarOrder = [
   'orcamentos-list',
   'ordens-servico-list',
   'financeiro-list',
+  'chamados',
   'oficina-profile',
   'servicos-list',
   'estoque-list',
   'mecanicos-list',
+  'usuarios-list',
+  'comissoes-list',
+  'assinatura',
 ] as const;
 
 export function getSidebarRoutes(role?: Role) {
@@ -316,11 +414,19 @@ export function getSidebarRoutes(role?: Role) {
 
   return appRoutes
     .filter((route) => route.sidebar && route.roles.includes(role))
-    .sort((left, right) => sidebarOrder.indexOf(left.key as (typeof sidebarOrder)[number]) - sidebarOrder.indexOf(right.key as (typeof sidebarOrder)[number]));
+    .sort(
+      (left, right) =>
+        sidebarOrder.indexOf(left.key as (typeof sidebarOrder)[number]) -
+        sidebarOrder.indexOf(right.key as (typeof sidebarOrder)[number]),
+    );
 }
 
 export function getSidebarMenuRoutes() {
   return appRoutes
     .filter((route) => route.sidebar)
-    .sort((left, right) => sidebarOrder.indexOf(left.key as (typeof sidebarOrder)[number]) - sidebarOrder.indexOf(right.key as (typeof sidebarOrder)[number]));
+    .sort(
+      (left, right) =>
+        sidebarOrder.indexOf(left.key as (typeof sidebarOrder)[number]) -
+        sidebarOrder.indexOf(right.key as (typeof sidebarOrder)[number]),
+    );
 }

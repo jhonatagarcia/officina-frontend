@@ -1,10 +1,12 @@
 export type Role = 'ADMIN' | 'ATENDENTE' | 'MECANICO' | 'FINANCEIRO';
+export type AdminRole = 'SUPER_ADMIN' | 'SUPPORT';
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: Role;
+  adminRole?: AdminRole;
   isActive?: boolean;
   lastLoginAt?: string | null;
   createdAt?: string;
@@ -21,7 +23,7 @@ export interface AuthSession {
 export interface LoginPayload {
   email: string;
   password: string;
-  captchaToken?: string;
+  captchaToken?: string | undefined;
 }
 
 export interface GoogleLoginPayload {
@@ -35,7 +37,19 @@ export interface RegisterWorkshopPayload {
   password: string;
   confirmPassword: string;
   captchaToken: string;
+  inviteToken?: string;
 }
+
+export type SignupMode = 'public' | 'invite_only' | 'closed';
+
+export interface SignupConfig {
+  mode: SignupMode;
+  publicRegistrationEnabled: boolean;
+  invitationRequired: boolean;
+}
+
+export type SignupInviteValidation =
+  { valid: false } | { valid: true; maskedEmail: string; expiresAt: string };
 
 export interface ForgotPasswordPayload {
   email: string;

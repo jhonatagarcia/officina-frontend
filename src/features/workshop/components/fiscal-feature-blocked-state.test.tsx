@@ -4,11 +4,18 @@ import { FiscalFeatureBlockedState } from '@/features/workshop/components/fiscal
 import { renderWithProviders } from '@/test/render-with-providers';
 
 describe('FiscalFeatureBlockedState', () => {
-  it('exibe bloqueio visual, motivo e CTA para cadastrar CNPJ', () => {
+  it('informa que financeiro nao depende de CNPJ e nao simula emissao fiscal', () => {
     renderWithProviders(<FiscalFeatureBlockedState featureName="Financeiro" />);
 
-    expect(screen.getByText('Financeiro bloqueado temporariamente')).toBeInTheDocument();
-    expect(screen.getByText(/Esta funcionalidade exige o CNPJ da oficina cadastrado/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /cadastrar cnpj/i })).toHaveAttribute('href', '/inicio/oficina');
+    expect(
+      screen.getByText('Financeiro disponível sem CNPJ'),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/CNPJ é opcional/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Emissão fiscal não está disponível/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /cadastrar cnpj/i }),
+    ).not.toBeInTheDocument();
   });
 });

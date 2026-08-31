@@ -53,7 +53,5 @@ export function shouldShowWaitingForPartStep(
     pendingParts?: Pick<ServiceOrderPendingPart, 'quantityRequired' | 'quantityAvailable' | 'status'>[] | undefined;
   },
 ) {
-  if (order.status === 'AGUARDANDO_PECA') return true;
-
-  return (order.pendingParts ?? []).length > 0;
+  return order.status === 'AGUARDANDO_PECA';
 }

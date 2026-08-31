@@ -1,9 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
 import { BudgetItemsEditor } from '@/features/budgets/components/budget-items-editor';
 import { BudgetSummaryCard } from '@/features/budgets/components/budget-summary-card';
 import { useBudgetForm } from '@/features/budgets/hooks/use-budget-form';
+import { generateBudgetPdf } from '@/features/budgets/lib/budget-pdf';
+import { budgetsService } from '@/features/budgets/services/budgets-service';
 import { useClientOptions } from '@/features/reference-data/hooks/use-client-options';
 import { useVehicleOptions } from '@/features/reference-data/hooks/use-vehicle-options';
 import { SelectField, TextAreaField } from '@/components/shared/form-fields';
@@ -34,6 +38,8 @@ interface VehicleOption extends Option {
 export function BudgetFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
   const navigate = useNavigate();
   const { id = '' } = useParams();
+  const queryClient = useQueryClient();
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const clientOptionsQuery = useClientOptions();
   const vehicleOptionsQuery = useVehicleOptions();
   const { budgetQuery, form, fieldArray, mutation, items, discount, total } =
@@ -50,9 +56,30 @@ export function BudgetFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
     !budgetQuery.data?.serviceOrder;
   const selectedClientId = form.watch('clientId');
   const selectedVehicleId = form.watch('vehicleId');
+  const canGenerateBudgetPdf =
+    Boolean(budgetQuery.data) &&
+    (budgetQuery.data?.status === 'PENDENTE' || budgetQuery.data?.status === 'APROVADO');
   const vehicleOptions = (
     (vehicleOptionsQuery.data as VehicleOption[] | undefined) ?? []
   ).filter((vehicle) => vehicle.clientId === selectedClientId);
+  const removeBudgetItemMutation = useMutation({
+    mutationFn: (itemId: string) => budgetsService.removeItem(id, itemId),
+    onSuccess: (savedBudget) => {
+      queryClient.setQueryData(['orcamento', savedBudget.id], savedBudget);
+      queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      const linkedServiceOrderId = budgetQuery.data?.serviceOrder?.id;
+      if (linkedServiceOrderId) {
+        queryClient.invalidateQueries({ queryKey: ['ordem-servico', linkedServiceOrderId] });
+        queryClient.invalidateQueries({ queryKey: ['ordens-servico'] });
+      }
+      toast.success('Item removido do orçamento.');
+    },
+    onError: (error: { message?: string | string[] }) => {
+      const message = Array.isArray(error.message) ? error.message[0] : error.message;
+      toast.error(message || 'Não foi possível remover o item do orçamento.');
+    },
+  });
 
   useEffect(() => {
     if (!selectedVehicleId) return;
@@ -64,6 +91,26 @@ export function BudgetFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
       form.setValue('vehicleId', '');
     }
   }, [form, selectedVehicleId, vehicleOptions]);
+
+  const handleGenerateBudgetPdf = async () => {
+    if (!budgetQuery.data || !canGenerateBudgetPdf) return;
+
+    setIsGeneratingPdf(true);
+
+    try {
+      // Create/update responses intentionally omit relations. Fetch the detail
+      // contract so a newly created pending budget has its client and vehicle
+      // identification available in the PDF as well.
+      const budget = await budgetsService.getById(budgetQuery.data.id);
+      queryClient.setQueryData(['orcamento', budget.id], budget);
+      await generateBudgetPdf({ budget });
+      toast.success('PDF do orçamento gerado com sucesso.');
+    } catch {
+      toast.error('Não foi possível gerar o PDF do orçamento.');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
 
   if (
     clientOptionsQuery.isLoading ||
@@ -170,6 +217,14 @@ export function BudgetFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
               form={form}
               items={items}
               readOnly={isReadOnly}
+              onRemoveItem={(index, item) => {
+                if (mode === 'edit' && item.id) {
+                  removeBudgetItemMutation.mutate(item.id);
+                  return;
+                }
+
+                fieldArray.remove(index);
+              }}
             />
             <div className="max-w-sm space-y-2 border-t border-border-soft pt-6">
               <Label htmlFor="discount">Desconto</Label>
@@ -205,8 +260,11 @@ export function BudgetFormPage({ mode }: { mode: 'create' | 'edit' | 'view' }) {
           </form>
         </FormCard>
         <BudgetSummaryCard
+          canGeneratePdf={canGenerateBudgetPdf}
           discount={discount}
+          isGeneratingPdf={isGeneratingPdf}
           itemsCount={items.length}
+          onGeneratePdf={handleGenerateBudgetPdf}
           total={total}
         />
       </div>

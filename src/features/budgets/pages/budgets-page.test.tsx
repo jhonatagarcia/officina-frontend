@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BudgetsPage } from '@/features/budgets/pages/budgets-page';
 import { budgetsService } from '@/features/budgets/services/budgets-service';
@@ -55,7 +55,7 @@ describe('BudgetsPage', () => {
   });
 
   it('oferece edição para orçamento com OS enquanto ela não estiver entregue', async () => {
-    vi.mocked(budgetsService.list).mockResolvedValueOnce({
+    vi.mocked(budgetsService.list).mockResolvedValue({
       data: [
         makeBudget({}),
         makeBudget({ id: 'budget-2', code: 'ORC-002', status: 'APROVADO' }),
@@ -102,5 +102,25 @@ describe('BudgetsPage', () => {
     fireEvent.click(editButton);
 
     expect(navigateMock).toHaveBeenCalledWith('/inicio/orcamentos/budget-1/editar');
+  });
+
+  it('converte orçamento aprovado e abre a OS retornada pela API', async () => {
+    vi.mocked(budgetsService.list).mockResolvedValueOnce({
+      data: [makeBudget({ status: 'APROVADO' })],
+      page: 1,
+      pageSize: 10,
+      total: 1,
+      totalPages: 1,
+    });
+    vi.mocked(budgetsService.convert).mockResolvedValue({
+      serviceOrder: { id: 'os-1' },
+    });
+
+    renderWithProviders(<BudgetsPage />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Converter em OS' }));
+
+    await waitFor(() => expect(vi.mocked(budgetsService.convert).mock.calls[0]?.[0]).toBe('budget-1'));
+    expect(navigateMock).toHaveBeenCalledWith('/inicio/ordens-servico/os-1');
   });
 });

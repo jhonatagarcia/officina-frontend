@@ -63,9 +63,18 @@ export function formatServiceOrderStatusLabel(status: ServiceOrderStatus) {
 }
 
 export function getServiceOrderLaborItems(order: ServiceOrder): ServiceOrderBudgetItem[] {
-  const laborItems = getEditableServiceOrderItems(order).filter(
-    (item) => item.type === 'LABOR' || item.type === 'LABOR_AND_PART',
-  );
+  const laborItems = getEditableServiceOrderItems(order)
+    .filter((item) => item.type === 'LABOR' || item.type === 'LABOR_AND_PART')
+    .map((item) =>
+      item.type === 'LABOR_AND_PART'
+        ? {
+            ...item,
+            unitPrice: item.laborUnitPrice ?? item.unitPrice,
+            totalPrice: item.laborTotalPrice ?? item.totalPrice,
+          }
+        : item,
+    )
+    .filter((item) => item.totalPrice > 0);
 
   if (laborItems.length) return laborItems;
   if (order.executionItemsMaterialized) return [];

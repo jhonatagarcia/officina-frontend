@@ -81,7 +81,7 @@ export function VehiclesPage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Veículos" description="Controle da frota atendida pela oficina.">
+      <PageHeader title="Veículos" description="Controle da frota atendida pelo negócio.">
         <IndicatorHeaderActions
           onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
           primaryActionLabel="Novo veículo"

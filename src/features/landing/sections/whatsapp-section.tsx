@@ -1,3 +1,7 @@
+/*
+ * TODO(WhatsApp Cloud API): componente preservado e pausado.
+ * A landing page nao importa este modulo enquanto a feature estiver fora do produto.
+ *
 import { Check, Send } from 'lucide-react';
 import { whatsapp } from '../content';
 import { landingWhatsAppMessages } from '../whatsapp-messages';
@@ -71,3 +75,6 @@ export function WhatsAppSection() {
     </section>
   );
 }
+*/
+
+export {};

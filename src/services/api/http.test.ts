@@ -17,25 +17,80 @@ function rejectWithStatus(status: number, message = 'backend detail') {
 
 describe('normalizeApiErrorResponse', () => {
   it('usa mensagens genericas para erros de autenticacao e autorizacao', () => {
-    expect(normalizeApiErrorResponse(401, { message: 'token jwt invalido: abc.def' })).toEqual({
+    expect(
+      normalizeApiErrorResponse(401, {
+        message: 'token jwt invalido: abc.def',
+      }),
+    ).toEqual({
       message: 'Sua sessão expirou. Faça login novamente.',
       statusCode: 401,
     });
-    expect(normalizeApiErrorResponse(403, { message: 'role ADMIN required' })).toEqual({
+    expect(
+      normalizeApiErrorResponse(403, { message: 'role ADMIN required' }),
+    ).toEqual({
       message: 'Você não possui permissão para executar esta ação.',
       statusCode: 403,
     });
   });
 
   it('sanitiza mensagens de validacao permitidas pelo backend', () => {
-    expect(normalizeApiErrorResponse(409, { message: '<b>CPF ja cadastrado</b>\nDetalhe' })).toEqual({
+    expect(
+      normalizeApiErrorResponse(409, {
+        message: '<b>CPF ja cadastrado</b>\nDetalhe',
+      }),
+    ).toEqual({
       message: 'CPF ja cadastrado Detalhe',
       statusCode: 409,
     });
   });
 
+  it('preserva apenas metadados conhecidos e coerentes de conflito', () => {
+    expect(
+      normalizeApiErrorResponse(409, {
+        message: 'Conflito identificado',
+        code: 'SERVICE_NAME_CATEGORY_CONFLICT',
+        field: 'name',
+      }),
+    ).toEqual({
+      message: 'Conflito identificado',
+      statusCode: 409,
+      code: 'SERVICE_NAME_CATEGORY_CONFLICT',
+      field: 'name',
+    });
+
+    expect(
+      normalizeApiErrorResponse(409, {
+        message: 'Conflito seguro',
+        code: 'UNKNOWN_INTERNAL_CONSTRAINT',
+        field: 'name',
+      }),
+    ).toEqual({
+      message: 'Conflito seguro',
+      statusCode: 409,
+    });
+  });
+
+  it('preserva ate tres chaves de validacao seguras do HTTP 400', () => {
+    expect(
+      normalizeApiErrorResponse(400, {
+        message: [
+          'name nao deve estar vazio',
+          'userId deve ser um identificador valido',
+        ],
+      }),
+    ).toEqual({
+      message:
+        'name nao deve estar vazio userId deve ser um identificador valido',
+      statusCode: 400,
+    });
+  });
+
   it('nao repassa detalhes de erros inesperados', () => {
-    expect(normalizeApiErrorResponse(500, { message: 'Database host internal.local falhou' })).toEqual({
+    expect(
+      normalizeApiErrorResponse(500, {
+        message: 'Database host internal.local falhou',
+      }),
+    ).toEqual({
       message: 'Não foi possível processar a solicitação.',
       statusCode: 500,
     });
@@ -66,6 +121,41 @@ describe('normalizeApiErrorResponse', () => {
     expect(useAuthStore.getState().session).toBeNull();
     expect(events).toEqual(['SESSION_EXPIRED']);
 
+    unsubscribe();
+  });
+
+  it('nao recarrega a tela nem emite expiracao quando login retorna 401', async () => {
+    window.history.pushState({}, '', '/login');
+    const events: string[] = [];
+    const unsubscribe = subscribeAuthEvent((event) => events.push(event.type));
+    const state = useAuthStore.getState();
+    const silentRefreshSpy = vi.spyOn(state, 'silentRefresh');
+    state.setSession({
+      accessToken: 'token-antigo',
+      user: {
+        id: 'user-1',
+        name: 'Ana',
+        email: 'ana@oficina.com',
+        role: 'ADMIN',
+      },
+    });
+
+    await expect(
+      http.post(
+        '/auth/login',
+        { email: 'naoexiste@local.com', password: 'Senha123' },
+        { adapter: rejectWithStatus(401, 'Credenciais invalidas') },
+      ),
+    ).rejects.toEqual({
+      message: 'Sua sessão expirou. Faça login novamente.',
+      statusCode: 401,
+    });
+
+    expect(silentRefreshSpy).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().session?.accessToken).toBe('token-antigo');
+    expect(events).toEqual([]);
+
+    silentRefreshSpy.mockRestore();
     unsubscribe();
   });
 

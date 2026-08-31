@@ -28,25 +28,25 @@ describe('service-order-status', () => {
     expect(getServiceOrderStatusLabel('EM_ANDAMENTO')).toBe('Em andamento');
   });
 
-  it('torna OS entregue somente leitura', () => {
+  it('identifica OS entregue como somente leitura para edição de conteúdo', () => {
     expect(isReadOnlyServiceOrderStatus('ENTREGUE')).toBe(true);
     expect(isReadOnlyServiceOrderStatus('FINALIZADA')).toBe(false);
   });
 
-  it('mostra etapa aguardando peca quando a OS possui registro do processo de pendencia', () => {
+  it('mostra etapa aguardando peca apenas quando a OS esta nesse status', () => {
     expect(shouldShowWaitingForPartStep({ status: 'AGUARDANDO_PECA', pendingParts: [] })).toBe(true);
     expect(
       shouldShowWaitingForPartStep({
         status: 'EM_ANDAMENTO',
         pendingParts: [{ status: 'PENDING', quantityRequired: 2, quantityAvailable: 0 }],
       }),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       shouldShowWaitingForPartStep({
-        status: 'EM_ANDAMENTO',
+        status: 'ABERTA',
         pendingParts: [{ status: 'RESOLVED', quantityRequired: 2, quantityAvailable: 2 }],
       }),
-    ).toBe(true);
+    ).toBe(false);
     expect(shouldShowWaitingForPartStep({ status: 'EM_ANDAMENTO', pendingParts: [] })).toBe(false);
   });
 });
