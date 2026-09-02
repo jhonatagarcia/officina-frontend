@@ -3,7 +3,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function Table({ className, ...props }: React.HTMLAttributes<HTMLTableElement>) {
-  return <table className={cn('w-full caption-bottom text-base', className)} {...props} />;
+  return <table className={cn('w-full caption-bottom text-sm sm:text-base', className)} {...props} />;
 }
 
 export function TableHeader({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
@@ -19,11 +19,11 @@ export function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTable
 }
 
 export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
-  return <th className={cn('h-14 px-6 text-left align-middle text-[13px] font-bold uppercase tracking-[0.1em] text-muted-foreground', className)} {...props} />;
+  return <th className={cn('h-12 px-3 text-left align-middle text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground sm:h-14 sm:px-6 sm:text-[13px] sm:tracking-[0.1em]', className)} {...props} />;
 }
 
 export function TableCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn('px-6 py-5 align-middle text-base', className)} {...props} />;
+  return <td className={cn('px-3 py-4 align-middle text-sm sm:px-6 sm:py-5 sm:text-base', className)} {...props} />;
 }
 
 export type SortDirection = 'asc' | 'desc';

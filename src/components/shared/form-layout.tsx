@@ -14,7 +14,7 @@ export const formPrimaryButtonClassName =
 export function FormCard({ children }: PropsWithChildren) {
   return (
     <Card className="bg-card shadow-xs">
-      <CardContent className="p-7">{children}</CardContent>
+      <CardContent className="p-4 sm:p-6 lg:p-7">{children}</CardContent>
     </Card>
   );
 }
@@ -35,5 +35,5 @@ export function FormSectionHeader({
 }
 
 export function FormActions({ children }: PropsWithChildren) {
-  return <div className="flex justify-end md:col-span-2">{children}</div>;
+  return <div className="flex flex-col-reverse gap-2 [&>button]:w-full sm:flex-row sm:justify-end sm:[&>button]:w-auto md:col-span-2">{children}</div>;
 }

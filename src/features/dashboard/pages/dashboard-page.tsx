@@ -271,11 +271,11 @@ function MetricCard({
   const deltaTone = getDeltaTone(delta ?? 0);
 
   return (
-    <Card className="h-full overflow-hidden bg-card shadow-xs">
-      <CardContent className="relative flex h-full min-h-44 flex-col p-5">
+    <Card className="h-full min-w-0 overflow-hidden bg-card shadow-xs">
+      <CardContent className="relative flex h-full min-h-44 min-w-0 flex-col p-4 sm:p-5">
         <div
           className={cn(
-            'absolute right-6 top-6 rounded-xl p-2',
+            'absolute right-4 top-4 rounded-xl p-2 sm:right-6 sm:top-6',
             toneMap[tone].soft,
             toneMap[tone].text,
           )}
@@ -285,8 +285,8 @@ function MetricCard({
         <p className="pr-12 text-sm font-semibold text-muted-foreground">
           {title}
         </p>
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <p className="font-bold leading-none tracking-tight text-foreground text-[clamp(1.65rem,2.2vw,2.35rem)] [font-variant-numeric:tabular-nums]">
+        <div className="mt-8 flex min-w-0 flex-wrap items-center gap-3">
+          <p className="min-w-0 break-words font-bold leading-none tracking-tight text-foreground text-[clamp(1.45rem,7vw,2.35rem)] [font-variant-numeric:tabular-nums] sm:text-[clamp(1.65rem,2.2vw,2.35rem)]">
             <AnimatedValue value={value} formatter={formatter} />
           </p>
           {typeof delta === 'number' ? (
@@ -335,11 +335,11 @@ function BarMetricCard({
   const months = ['dez', 'jan', 'fev', 'mar', 'abr', 'mai'];
 
   return (
-    <Card className="h-full bg-card shadow-xs">
-      <CardContent className="p-5">
+    <Card className="h-full min-w-0 overflow-hidden bg-card shadow-xs">
+      <CardContent className="min-w-0 p-4 sm:p-5">
         <p className="text-sm font-semibold text-muted-foreground">{title}</p>
-        <div className="mt-8 flex items-center gap-3">
-          <p className="text-3xl font-bold leading-none [font-variant-numeric:tabular-nums]">
+        <div className="mt-6 flex flex-wrap items-center gap-2 sm:mt-8 sm:gap-3">
+          <p className="text-2xl font-bold leading-none [font-variant-numeric:tabular-nums] sm:text-3xl">
             {formatInteger(animatedValue)}
           </p>
           <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-bold text-emerald-500">
@@ -350,12 +350,12 @@ function BarMetricCard({
             vs abr
           </span>
         </div>
-        <div className="mt-8 grid h-56 grid-cols-6 items-end gap-7 border-b border-border-soft px-6">
+        <div className="mt-8 grid h-48 min-w-0 grid-cols-6 items-end gap-1 border-b border-border-soft px-0 sm:h-56 sm:gap-3 sm:px-3 lg:gap-7 lg:px-6">
           {animatedValues.map((item, index) => (
             <div key={index} className="flex h-full flex-col justify-end gap-3">
               <p
                 className={cn(
-                  'text-center text-xl font-bold',
+                  'text-center text-xs font-bold sm:text-sm lg:text-xl',
                   index === values.length - 1
                     ? 'text-foreground'
                     : 'text-muted-foreground',
@@ -378,7 +378,7 @@ function BarMetricCard({
             </div>
           ))}
         </div>
-        <div className="mt-4 grid grid-cols-6 px-6 text-center text-sm font-semibold text-muted-foreground/70">
+        <div className="mt-4 grid grid-cols-6 px-0 text-center text-[11px] font-semibold text-muted-foreground/70 sm:px-3 sm:text-sm lg:px-6">
           {months.map((month, index) => (
             <span
               key={month}
@@ -424,20 +424,20 @@ function StatusDonutCard({
     inProgressEnd + (animatedPending / animatedSafeTotal) * 100;
 
   return (
-    <Card className="h-full bg-card shadow-xs">
-      <CardContent className="p-5">
+    <Card className="h-full min-w-0 bg-card shadow-xs">
+      <CardContent className="p-4 sm:p-5">
         <p className="text-sm font-semibold text-muted-foreground">
           OS por status
         </p>
-        <div className="mt-7 grid gap-6 md:grid-cols-[190px_1fr] md:items-center">
+        <div className="mt-7 grid gap-6 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-center lg:grid-cols-[190px_minmax(0,1fr)]">
           <div
-            className="relative mx-auto size-44 rounded-full"
+            className="relative mx-auto size-36 rounded-full sm:size-40 lg:size-44"
             style={{
               background: `conic-gradient(#16A34A 0 ${readyEnd}%, #F59E0B ${readyEnd}% ${inProgressEnd}%, #0EA5E9 ${inProgressEnd}% ${pendingEnd}%, #A6A29A ${pendingEnd}% 100%)`,
             }}
           >
-            <div className="absolute inset-10 flex flex-col items-center justify-center rounded-full bg-card">
-              <span className="text-3xl font-bold [font-variant-numeric:tabular-nums]">
+            <div className="absolute inset-8 flex flex-col items-center justify-center rounded-full bg-card sm:inset-9 lg:inset-10">
+              <span className="text-2xl font-bold [font-variant-numeric:tabular-nums] sm:text-3xl">
                 {formatInteger(animatedTotal)}
               </span>
               <span className="text-sm text-muted-foreground">total</span>
@@ -478,14 +478,14 @@ function RankingCard({
   items: Array<{ label: string; detail: string; value: string }>;
 }) {
   return (
-    <Card className="h-full bg-card shadow-xs">
-      <CardContent className="p-5">
+    <Card className="h-full min-w-0 bg-card shadow-xs">
+      <CardContent className="p-4 sm:p-5">
         <p className="text-sm font-semibold text-muted-foreground">{title}</p>
         <div className="mt-8 space-y-0">
           {items.map((item, index) => (
             <div
               key={`${item.label}-${index}`}
-              className="grid grid-cols-[24px_1fr_auto] items-center gap-3 border-b border-border-soft py-3 last:border-b-0"
+              className="grid min-w-0 grid-cols-[24px_minmax(0,1fr)] items-center gap-x-3 border-b border-border-soft py-3 last:border-b-0 sm:grid-cols-[24px_minmax(0,1fr)_auto]"
             >
               <span className="text-xs font-semibold text-muted-foreground/70">
                 {index + 1}
@@ -496,7 +496,7 @@ function RankingCard({
                   {item.detail}
                 </p>
               </div>
-              <p className="text-sm font-bold [font-variant-numeric:tabular-nums]">
+              <p className="col-start-2 mt-1 text-sm font-bold [font-variant-numeric:tabular-nums] sm:col-start-auto sm:mt-0">
                 {item.value}
               </p>
             </div>
@@ -526,7 +526,7 @@ function DotStatusPill({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold',
+        'inline-flex max-w-full items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold',
         toneMap[tone].soft,
         colorMap[tone].split(' ')[1],
       )}
@@ -534,7 +534,7 @@ function DotStatusPill({
       <span
         className={cn('dot size-2 rounded-full', colorMap[tone].split(' ')[0])}
       />
-      {label}
+      <span className="truncate">{label}</span>
     </span>
   );
 }
@@ -547,7 +547,7 @@ function DashboardPeriodFilter({
   onChange: (value: DashboardPeriod) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2 rounded-xl border border-border-soft bg-card p-4 shadow-xs">
+    <div className="-mx-1 flex snap-x gap-2 overflow-x-auto rounded-xl border border-border-soft bg-card p-3 shadow-xs sm:mx-0 sm:flex-wrap sm:overflow-visible sm:p-4">
       {dashboardPeriodOptions.map((option) => {
         const isActive = value === option.value;
 
@@ -556,7 +556,7 @@ function DashboardPeriodFilter({
             key={option.value}
             type="button"
             className={cn(
-              'inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold shadow-xs transition',
+              'inline-flex min-h-10 shrink-0 snap-start items-center gap-2 rounded-full border px-4 text-sm font-semibold shadow-xs transition',
               isActive
                 ? 'border-primary bg-primary text-white shadow-md'
                 : 'border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground',
@@ -595,15 +595,15 @@ function DashboardTableCard({
       id={id}
       className="scroll-mt-6 h-full overflow-hidden bg-card shadow-xs"
     >
-      <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-border-soft p-5">
-        <div>
+      <CardHeader className="flex flex-col items-stretch justify-between gap-3 border-b border-border-soft p-4 sm:flex-row sm:items-center sm:p-5">
+        <div className="min-w-0">
           <CardTitle className="text-lg">{title}</CardTitle>
           {description ? (
             <p className="mt-1 text-sm text-muted-foreground">{description}</p>
           ) : null}
         </div>
         <Button
-          className="rounded-lg bg-card font-semibold"
+          className="w-full rounded-lg bg-card font-semibold sm:w-auto"
           size="sm"
           variant="outline"
           onClick={onAction}
@@ -1268,45 +1268,47 @@ export function DashboardPage() {
         >
           {activeServiceOrders.length ? (
             <div className="space-y-4">
-              <DashboardTable>
-                <TableHeader>
-                  <TableRow>
-                    <DashboardTableHead>OS</DashboardTableHead>
-                    <DashboardTableHead>Cliente</DashboardTableHead>
-                    <DashboardTableHead>Veículo</DashboardTableHead>
-                    <DashboardTableHead>Mecânico</DashboardTableHead>
-                    <DashboardTableHead>Status</DashboardTableHead>
-                    <DashboardTableHead className="text-right">
-                      Valor
-                    </DashboardTableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedActiveServiceOrders.map((order) => (
-                    <TableRow key={order.id} className="hover:bg-muted/40">
-                      <DashboardTableCell>
-                        <PlateChip>
-                          {formatServiceOrderNumber(order.orderNumber)}
-                        </PlateChip>
-                      </DashboardTableCell>
-                      <DashboardTableCell>
-                        {order.clientName}
-                      </DashboardTableCell>
-                      <DashboardTableCell>
-                        <VehicleIdentityCell
-                          plate={order.vehicle?.plate}
-                          description={
-                            order.vehicle
-                              ? `${order.vehicle.brand} ${order.vehicle.model} ${order.vehicle.year}`
-                              : null
-                          }
-                          fallback={order.vehicleLabel}
-                        />
-                      </DashboardTableCell>
-                      <DashboardTableCell>
-                        {order.mechanicName ?? '-'}
-                      </DashboardTableCell>
-                      <DashboardTableCell>
+              <div className="grid gap-3 p-4 xl:hidden">
+                {paginatedActiveServiceOrders.map((order) => (
+                  <article
+                    key={order.id}
+                    className="min-w-0 rounded-xl border border-border-soft bg-background/45 p-4 shadow-xs"
+                  >
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <PlateChip>
+                        {formatServiceOrderNumber(order.orderNumber)}
+                      </PlateChip>
+                      <p className="shrink-0 text-sm font-bold [font-variant-numeric:tabular-nums]">
+                        {formatCurrency(order.total ?? 0)}
+                      </p>
+                    </div>
+                    <div className="mt-4 min-w-0 space-y-3">
+                      <div>
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                          Cliente
+                        </p>
+                        <p className="mt-1 break-words text-sm font-semibold">
+                          {order.clientName}
+                        </p>
+                      </div>
+                      <VehicleIdentityCell
+                        plate={order.vehicle?.plate}
+                        description={
+                          order.vehicle
+                            ? `${order.vehicle.brand} ${order.vehicle.model} ${order.vehicle.year}`
+                            : null
+                        }
+                        fallback={order.vehicleLabel}
+                      />
+                      <div className="flex flex-wrap items-end justify-between gap-3 border-t border-border-soft pt-3">
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                            Mecânico
+                          </p>
+                          <p className="mt-1 truncate text-sm">
+                            {order.mechanicName ?? 'Não atribuído'}
+                          </p>
+                        </div>
                         <DotStatusPill
                           label={
                             order.status === 'EM_ANDAMENTO'
@@ -1317,14 +1319,70 @@ export function DashboardPage() {
                           }
                           tone={serviceOrderStatusTone(order.status)}
                         />
-                      </DashboardTableCell>
-                      <DashboardTableCell className="text-right font-bold [font-variant-numeric:tabular-nums]">
-                        {formatCurrency(order.total ?? 0)}
-                      </DashboardTableCell>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <div className="hidden xl:block">
+                <DashboardTable>
+                  <TableHeader>
+                    <TableRow>
+                      <DashboardTableHead>OS</DashboardTableHead>
+                      <DashboardTableHead>Cliente</DashboardTableHead>
+                      <DashboardTableHead>Veículo</DashboardTableHead>
+                      <DashboardTableHead>Mecânico</DashboardTableHead>
+                      <DashboardTableHead>Status</DashboardTableHead>
+                      <DashboardTableHead className="text-right">
+                        Valor
+                      </DashboardTableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </DashboardTable>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedActiveServiceOrders.map((order) => (
+                      <TableRow key={order.id} className="hover:bg-muted/40">
+                        <DashboardTableCell>
+                          <PlateChip>
+                            {formatServiceOrderNumber(order.orderNumber)}
+                          </PlateChip>
+                        </DashboardTableCell>
+                        <DashboardTableCell>
+                          {order.clientName}
+                        </DashboardTableCell>
+                        <DashboardTableCell>
+                          <VehicleIdentityCell
+                            plate={order.vehicle?.plate}
+                            description={
+                              order.vehicle
+                                ? `${order.vehicle.brand} ${order.vehicle.model} ${order.vehicle.year}`
+                                : null
+                            }
+                            fallback={order.vehicleLabel}
+                          />
+                        </DashboardTableCell>
+                        <DashboardTableCell>
+                          {order.mechanicName ?? '-'}
+                        </DashboardTableCell>
+                        <DashboardTableCell>
+                          <DotStatusPill
+                            label={
+                              order.status === 'EM_ANDAMENTO'
+                                ? 'Em andamento'
+                                : order.status === 'ABERTA'
+                                  ? 'Aberta'
+                                  : 'Concluída'
+                            }
+                            tone={serviceOrderStatusTone(order.status)}
+                          />
+                        </DashboardTableCell>
+                        <DashboardTableCell className="text-right font-bold [font-variant-numeric:tabular-nums]">
+                          {formatCurrency(order.total ?? 0)}
+                        </DashboardTableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </DashboardTable>
+              </div>
               <div className="px-5 pb-5">
                 <Pagination
                   page={currentActiveServiceOrdersPage}
@@ -1355,51 +1413,92 @@ export function DashboardPage() {
         >
           {pendingBudgets.length ? (
             <div className="space-y-4">
-              <DashboardTable>
-                <TableHeader>
-                  <TableRow>
-                    <DashboardTableHead>Código</DashboardTableHead>
-                    <DashboardTableHead>Cliente</DashboardTableHead>
-                    <DashboardTableHead>Veículo</DashboardTableHead>
-                    <DashboardTableHead>Status</DashboardTableHead>
-                    <DashboardTableHead>Criado em</DashboardTableHead>
-                    <DashboardTableHead className="text-right">
-                      Valor
-                    </DashboardTableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedPendingBudgets.map((budget) => (
-                    <TableRow key={budget.id} className="hover:bg-muted/40">
-                      <DashboardTableCell>
-                        <PlateChip>{budget.code}</PlateChip>
-                      </DashboardTableCell>
-                      <DashboardTableCell>
-                        {budget.client?.name ?? '-'}
-                      </DashboardTableCell>
-                      <DashboardTableCell>
-                        <VehicleIdentityCell
-                          plate={budget.vehicle?.plate}
-                          description={
-                            budget.vehicle
-                              ? `${budget.vehicle.brand} ${budget.vehicle.model} ${budget.vehicle.year}`
-                              : null
-                          }
-                        />
-                      </DashboardTableCell>
-                      <DashboardTableCell>
-                        <DotStatusPill label="Pendente" tone="amber" />
-                      </DashboardTableCell>
-                      <DashboardTableCell>
-                        {formatDateOnly(budget.createdAt)}
-                      </DashboardTableCell>
-                      <DashboardTableCell className="text-right font-bold [font-variant-numeric:tabular-nums]">
+              <div className="grid gap-3 p-4 xl:hidden">
+                {paginatedPendingBudgets.map((budget) => (
+                  <article
+                    key={budget.id}
+                    className="min-w-0 rounded-xl border border-border-soft bg-background/45 p-4 shadow-xs"
+                  >
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <PlateChip>{budget.code}</PlateChip>
+                      <p className="shrink-0 text-sm font-bold [font-variant-numeric:tabular-nums]">
                         {formatCurrency(budget.total)}
-                      </DashboardTableCell>
+                      </p>
+                    </div>
+                    <div className="mt-4 min-w-0 space-y-3">
+                      <div>
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                          Cliente
+                        </p>
+                        <p className="mt-1 break-words text-sm font-semibold">
+                          {budget.client?.name ?? 'Não informado'}
+                        </p>
+                      </div>
+                      <VehicleIdentityCell
+                        plate={budget.vehicle?.plate}
+                        description={
+                          budget.vehicle
+                            ? `${budget.vehicle.brand} ${budget.vehicle.model} ${budget.vehicle.year}`
+                            : null
+                        }
+                      />
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-soft pt-3">
+                        <p className="text-xs text-muted-foreground">
+                          Criado em {formatDateOnly(budget.createdAt)}
+                        </p>
+                        <DotStatusPill label="Pendente" tone="amber" />
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <div className="hidden xl:block">
+                <DashboardTable>
+                  <TableHeader>
+                    <TableRow>
+                      <DashboardTableHead>Código</DashboardTableHead>
+                      <DashboardTableHead>Cliente</DashboardTableHead>
+                      <DashboardTableHead>Veículo</DashboardTableHead>
+                      <DashboardTableHead>Status</DashboardTableHead>
+                      <DashboardTableHead>Criado em</DashboardTableHead>
+                      <DashboardTableHead className="text-right">
+                        Valor
+                      </DashboardTableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </DashboardTable>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedPendingBudgets.map((budget) => (
+                      <TableRow key={budget.id} className="hover:bg-muted/40">
+                        <DashboardTableCell>
+                          <PlateChip>{budget.code}</PlateChip>
+                        </DashboardTableCell>
+                        <DashboardTableCell>
+                          {budget.client?.name ?? '-'}
+                        </DashboardTableCell>
+                        <DashboardTableCell>
+                          <VehicleIdentityCell
+                            plate={budget.vehicle?.plate}
+                            description={
+                              budget.vehicle
+                                ? `${budget.vehicle.brand} ${budget.vehicle.model} ${budget.vehicle.year}`
+                                : null
+                            }
+                          />
+                        </DashboardTableCell>
+                        <DashboardTableCell>
+                          <DotStatusPill label="Pendente" tone="amber" />
+                        </DashboardTableCell>
+                        <DashboardTableCell>
+                          {formatDateOnly(budget.createdAt)}
+                        </DashboardTableCell>
+                        <DashboardTableCell className="text-right font-bold [font-variant-numeric:tabular-nums]">
+                          {formatCurrency(budget.total)}
+                        </DashboardTableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </DashboardTable>
+              </div>
               <div className="px-5 pb-5">
                 <Pagination
                   page={currentPendingBudgetsPage}
@@ -1430,7 +1529,47 @@ export function DashboardPage() {
         >
           {sortedItems.length ? (
             <div className="space-y-4">
-              <DashboardTable>
+              <div className="grid gap-3 p-4 xl:hidden">
+                {paginatedLowStockItems.map((item) => (
+                  <article
+                    key={item.id}
+                    className="min-w-0 rounded-xl border border-border-soft bg-background/45 p-4 shadow-xs"
+                  >
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <PlateChip>{item.internalCode}</PlateChip>
+                        <p className="mt-3 break-words text-sm font-semibold">
+                          {item.name}
+                        </p>
+                      </div>
+                      <DotStatusPill
+                        label={item.quantity <= 0 ? 'Crítico' : 'Baixo'}
+                        tone={item.quantity <= 0 ? 'red' : 'amber'}
+                      />
+                    </div>
+                    <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-border-soft pt-3">
+                      <div>
+                        <dt className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                          Estoque atual
+                        </dt>
+                        <dd className="mt-1 text-base font-bold [font-variant-numeric:tabular-nums]">
+                          {item.quantity}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                          Estoque mínimo
+                        </dt>
+                        <dd className="mt-1 text-base font-bold text-muted-foreground [font-variant-numeric:tabular-nums]">
+                          {item.minimumQuantity}
+                        </dd>
+                      </div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+              <div className="hidden xl:block">
+                <DashboardTable>
                 <TableHeader>
                   <TableRow>
                     <SortableTableHead
@@ -1492,7 +1631,8 @@ export function DashboardPage() {
                     </TableRow>
                   ))}
                 </TableBody>
-              </DashboardTable>
+                </DashboardTable>
+              </div>
               <div className="px-5 pb-5">
                 <Pagination
                   page={currentLowStockItemsPage}
@@ -1528,8 +1668,8 @@ export function DashboardPage() {
                     key={alert.id}
                     className={`rounded-xl border p-4 ${alertContainerMap[alert.severity]}`}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3">
+                    <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex min-w-0 items-start gap-3">
                         <AlertTriangle className="mt-0.5 size-4 text-current" />
                         <div className="space-y-1">
                           <p className="font-medium text-foreground">
@@ -1538,17 +1678,20 @@ export function DashboardPage() {
                           <p>{alert.description}</p>
                         </div>
                       </div>
-                      <Badge variant={alertVariantMap[alert.severity]}>
+                      <Badge
+                        className="w-fit shrink-0"
+                        variant={alertVariantMap[alert.severity]}
+                      >
                         {alertLabelMap[alert.severity]}
                       </Badge>
                     </div>
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                    <div className="mt-3 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-xs font-medium uppercase tracking-wide text-foreground/80">
                         {alert.metric}
                       </p>
                       {alertAction ? (
                         <Button
-                          className="rounded-lg bg-card font-semibold"
+                          className="w-full rounded-lg bg-card font-semibold sm:w-auto"
                           size="sm"
                           variant="outline"
                           onClick={alertAction.onClick}
@@ -1613,7 +1756,7 @@ export function DashboardPage() {
       <CustomizableWidgetGrid
         storageKey="oficina:dashboard:widgets:v1"
         widgets={dashboardWidgets}
-        gridClassName="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+        gridClassName="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-4"
         isConfiguring={isConfiguringPanel}
         onConfiguringChange={setIsConfiguringPanel}
         showHeaderAction={false}

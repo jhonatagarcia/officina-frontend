@@ -17,7 +17,7 @@ interface TableFilterChipsProps<TValue extends string> {
 
 export function TableFilterChips<TValue extends string>({ value, options, onChange }: TableFilterChipsProps<TValue>) {
   return (
-    <div className="flex flex-wrap gap-2 border-b border-border-soft p-4">
+    <div className="responsive-scroll flex gap-2 overflow-x-auto border-b border-border-soft p-3 sm:flex-wrap sm:overflow-visible sm:p-4">
       {options.map((option) => {
         const isActive = value === option.value;
         const Icon = option.icon;
@@ -27,7 +27,7 @@ export function TableFilterChips<TValue extends string>({ value, options, onChan
             key={option.value}
             type="button"
             className={cn(
-              'inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold shadow-xs transition',
+              'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-semibold shadow-xs transition',
               isActive
                 ? 'border-primary bg-primary text-white shadow-md'
                 : 'border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground',
