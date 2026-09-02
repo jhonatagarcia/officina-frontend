@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { Wrench } from 'lucide-react';
+import { Wrench, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { LoginForm } from '@/features/auth/components/login-form';
@@ -83,7 +83,7 @@ export function LoginModal({
   return (
     /* backdrop */
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 px-4 py-8"
+      className="fixed inset-0 z-[300] flex items-center justify-center overflow-y-auto bg-black/80 px-4 py-8"
       role="dialog"
       aria-modal="true"
       aria-label="Login"
@@ -94,12 +94,14 @@ export function LoginModal({
       {/* modal panel */}
       <div className="relative w-full max-w-[480px] rounded-3xl border border-white/10 bg-slate-950 shadow-[0_32px_96px_rgba(0,0,0,0.6)]">
         <button
-          className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+          className="fixed right-4 top-4 z-[60] inline-flex size-11 items-center justify-center rounded-xl border border-white/20 bg-slate-950 text-white shadow-[0_12px_32px_rgba(0,0,0,0.55)] transition-colors hover:border-orange-300/60 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
           type="button"
           aria-label="Fechar"
+          title="Fechar"
           onClick={onClose}
         >
-          ✕
+          <X className="size-5" strokeWidth={2.25} />
+          <span className="sr-only">Fechar</span>
         </button>
 
         <div className="flex flex-col items-center px-6 pb-8 pt-10 text-slate-100 sm:px-10">
