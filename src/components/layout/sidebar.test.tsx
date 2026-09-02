@@ -131,4 +131,32 @@ describe('Sidebar', () => {
 
     await waitFor(() => expect(useAuthStore.getState().session).toBeNull());
   });
+
+  it('permite fechar o menu compacto e o identifica para tecnologias assistivas', () => {
+    const user = {
+      id: '1',
+      name: 'Admin',
+      email: 'admin@oficina.com',
+      role: 'ADMIN' as const,
+    };
+    useAuthStore.setState({
+      hydrated: true,
+      session: {
+        accessToken: 'synthetic-admin-token',
+        user,
+      },
+    });
+    meMock.mockResolvedValue(user);
+    const onClose = vi.fn();
+
+    renderWithProviders(<Sidebar isOpen onClose={onClose} />);
+
+    expect(
+      screen.getByRole('complementary', { name: /navegação principal/i }),
+    ).toHaveAttribute('id', 'primary-navigation');
+
+    fireEvent.click(screen.getByRole('button', { name: /fechar menu/i }));
+
+    expect(onClose).toHaveBeenCalledOnce();
+  });
 });

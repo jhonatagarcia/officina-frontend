@@ -124,7 +124,22 @@
   }
 
   body {
-    @apply bg-background font-sans text-foreground antialiased;
+    @apply min-w-0 overflow-x-hidden bg-background font-sans text-foreground antialiased;
+    min-height: 100dvh;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    min-width: 320px;
+    scroll-behavior: smooth;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
   }
 }
 
@@ -167,5 +182,54 @@
 
   .sidebar-scrollbar:hover::-webkit-scrollbar-thumb {
     background-color: hsl(var(--primary) / 0.8);
+  }
+
+  .responsive-scroll {
+    scrollbar-color: hsl(var(--primary) / 0.48) transparent;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .responsive-scroll::-webkit-scrollbar {
+    height: 0.5rem;
+  }
+
+  .responsive-scroll::-webkit-scrollbar-thumb {
+    border: 0.125rem solid transparent;
+    border-radius: 9999px;
+    background-clip: padding-box;
+    background-color: hsl(var(--primary) / 0.48);
+  }
+
+  @media (max-width: 639px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+
+    .overflow-x-auto {
+      scrollbar-color: hsl(var(--primary) / 0.48) transparent;
+      scrollbar-width: thin;
+      overscroll-behavior-inline: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .overflow-x-auto::-webkit-scrollbar {
+      height: 0.5rem;
+    }
+
+    .overflow-x-auto::-webkit-scrollbar-thumb {
+      border: 0.125rem solid transparent;
+      border-radius: 9999px;
+      background-clip: padding-box;
+      background-color: hsl(var(--primary) / 0.48);
+    }
+  }
+
+  @media (pointer: coarse) {
+    button:not([role='switch']) {
+      min-height: 44px;
+    }
   }
 }
