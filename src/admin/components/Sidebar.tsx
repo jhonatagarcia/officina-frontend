@@ -13,6 +13,8 @@ import { useAdminAuth } from '../auth/useAdminAuth';
 import { useAdminLogSummary } from '../logs/useLogs';
 import { useSupportSummary } from '../support/useSupport';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { toast } from 'sonner';
+import { revokeAdminSession } from '../api/admin-api';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -86,8 +88,14 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         <button
           type="button"
           onClick={() => {
-            logout();
-            navigate('/admin/login', { replace: true });
+            void revokeAdminSession()
+              .then(() => {
+                logout();
+                navigate('/admin/login', { replace: true });
+              })
+              .catch(() => {
+                toast.error('Não foi possível encerrar a sessão. Tente novamente.');
+              });
           }}
         >
           <LogOut size={16} /> Sair

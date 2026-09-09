@@ -9,6 +9,10 @@ export const adminApi = axios.create({
   timeout: 10_000,
 });
 
+export async function revokeAdminSession(): Promise<void> {
+  await adminApi.post('/auth/logout');
+}
+
 adminApi.interceptors.request.use((config) => {
   const token = useAdminAuth.getState().token;
   if (token) {

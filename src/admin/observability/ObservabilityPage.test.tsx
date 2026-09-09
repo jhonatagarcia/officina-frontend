@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminApp from '@/admin/AdminApp';
@@ -238,5 +238,19 @@ describe('Admin Master observability route and navigation', () => {
     );
 
     expect(screen.getByTestId('admin-observability-nav')).toBeInTheDocument();
+  });
+
+  it('revoga a sessão no servidor antes de limpar o estado local', async () => {
+    vi.spyOn(adminApi, 'get').mockResolvedValue({
+      data: { active: 0, critical: 0 },
+    });
+    const logoutRequest = vi.spyOn(adminApi, 'post').mockResolvedValue({ data: undefined });
+    useAdminAuth.setState({ token: 'master-token', user: adminMaster });
+
+    renderWithProviders(<Sidebar />);
+    fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
+
+    await waitFor(() => expect(logoutRequest).toHaveBeenCalledWith('/auth/logout'));
+    await waitFor(() => expect(useAdminAuth.getState().token).toBeNull());
   });
 });
