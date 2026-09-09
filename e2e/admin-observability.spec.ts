@@ -191,3 +191,29 @@ test('admin sem papel Admin Master nao acessa rota nem navegacao', async ({
   await expect(page).toHaveURL(/\/admin\/login$/);
   await expect(page.getByTestId('admin-observability-page')).toHaveCount(0);
 });
+
+test('logout administrativo revoga a sessao antes de voltar ao login', async ({ page }) => {
+  await page.route('**/api/v1/admin/auth/login', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(adminMasterResponse),
+    }),
+  );
+  const logoutRequest = page.waitForRequest(
+    (request) =>
+      request.method() === 'POST' && request.url().endsWith('/api/v1/admin/auth/logout'),
+  );
+  await page.route('**/api/v1/admin/auth/logout', (route) =>
+    route.fulfill({ status: 204 }),
+  );
+
+  await page.goto('/admin/login');
+  await page.getByLabel('E-mail').fill('admin@example.test');
+  await page.getByLabel('Senha').fill('senha-sintetica');
+  await page.getByRole('button', { name: 'Entrar' }).click();
+  await page.getByRole('button', { name: 'Sair' }).click();
+
+  await logoutRequest;
+  await expect(page).toHaveURL(/\/admin\/login$/);
+});
