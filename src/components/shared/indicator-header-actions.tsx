@@ -6,6 +6,7 @@ interface IndicatorHeaderActionsProps extends PropsWithChildren {
   onAdjustPanel: () => void;
   primaryActionLabel?: string;
   onPrimaryAction?: () => void;
+  primaryActionDisabled?: boolean;
 }
 
 export function IndicatorHeaderActions({
@@ -13,6 +14,7 @@ export function IndicatorHeaderActions({
   onAdjustPanel,
   primaryActionLabel,
   onPrimaryAction,
+  primaryActionDisabled,
 }: IndicatorHeaderActionsProps) {
   return (
     <>
@@ -30,6 +32,7 @@ export function IndicatorHeaderActions({
         <Button
           className="min-h-11 rounded-xl bg-[linear-gradient(135deg,#F77139_0%,#E04618_100%)] px-5 font-semibold text-white shadow-[0_12px_24px_rgba(224,70,24,0.22)] hover:brightness-105"
           type="button"
+          disabled={primaryActionDisabled}
           onClick={onPrimaryAction}
         >
           <Plus className="size-4" strokeWidth={1.75} />

@@ -9,7 +9,7 @@ const plan = {
   code: 'ESSENTIAL',
   name: 'Essencial',
   description: 'Plano inicial do AutoPro System',
-  entitlements: { includedUsers: 5 },
+  entitlements: { fullV1Access: true, workshops: 1, billingVersion: 1 },
   prices: [
     {
       id: 'price-e2e-1',
@@ -21,6 +21,7 @@ const plan = {
 };
 
 const trialSubscription = {
+  accessMode: 'FULL',
   status: 'TRIALING',
   trialEndsAt: '2026-09-09T12:00:00.000Z',
   currentPeriodStart: null,
@@ -31,6 +32,13 @@ const trialSubscription = {
   provider: 'ASAAS',
   environment: 'SANDBOX',
   plan: null,
+};
+
+const expiredSubscription = {
+  ...trialSubscription,
+  accessMode: 'LIMITED',
+  status: 'EXPIRED',
+  trialEndsAt: '2026-08-01T12:00:00.000Z',
 };
 
 async function authenticatedAdmin(page: import('@playwright/test').Page) {
@@ -101,4 +109,35 @@ test('oficina piloto permanece isenta e não inicia checkout', async ({ page }) 
   await expect(
     page.getByRole('button', { name: 'Pagar um mês com Pix' }),
   ).toBeDisabled();
+});
+
+test('teste expirado mantém apenas clientes e veículos em modo de consulta', async ({ page }) => {
+  await authenticatedAdmin(page);
+  await interceptApi(page, '/billing/subscription', expiredSubscription);
+  await interceptApi(page, '/clients', {
+    data: [
+      {
+        id: 'client-limited-1',
+        name: 'Cliente somente consulta',
+        document: null,
+        phone: null,
+        email: null,
+        notes: null,
+        isActive: true,
+        createdAt: '2026-01-01T12:00:00.000Z',
+        updatedAt: '2026-01-01T12:00:00.000Z',
+      },
+    ],
+    meta: { page: 1, limit: 5, total: 1, totalPages: 1 },
+  });
+
+  await page.goto('/inicio/dashboard');
+  await expect(page).toHaveURL(/\/inicio\/clientes$/);
+  await expect(page.getByText('Cliente somente consulta')).toBeVisible();
+  await expect(page.getByText(/período gratuito terminou/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Novo cliente' }).first()).toBeDisabled();
+  await expect(page.getByRole('link', { name: 'Financeiro' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Clientes' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Veículos' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Assinatura', exact: true })).toBeVisible();
 });

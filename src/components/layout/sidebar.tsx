@@ -43,7 +43,11 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     enabled: Boolean(session?.accessToken),
     staleTime: 60_000,
   });
-  const menuItems = getSidebarMenuRoutes();
+  const menuItems = getSidebarMenuRoutes().filter(
+    (item) =>
+      subscriptionQuery.data?.accessMode !== 'LIMITED' ||
+      ['clientes-list', 'veiculos-list', 'assinatura', 'chamados'].includes(item.key),
+  );
   const workshopName =
     workshopQuery.data?.tradeName ??
     session?.user.workshop?.tradeName ??

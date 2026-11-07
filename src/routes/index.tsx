@@ -2,9 +2,10 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/app-layout';
 import { LoadingState } from '@/components/shared/loading-state';
-import { GuestRoute, ProtectedRoute, RoleGuard } from '@/routes/route-guards';
+import { BillingRouteGuard, GuestRoute, ProtectedRoute, RoleGuard } from '@/routes/route-guards';
 import { LoginPage } from '@/features/auth/pages/login-page';
 import { ResetPasswordPage } from '@/features/auth/pages/reset-password-page';
+import { VerifyEmailPage } from '@/features/auth/pages/verify-email-page';
 import { LandingPage } from '@/features/landing/pages/landing-page';
 import { TestimonialsPage } from '@/features/landing/pages/testimonials-page';
 import { appRoutes } from '@/routes/route-manifest';
@@ -40,6 +41,7 @@ export function AppRouter() {
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/confirmar-email" element={<VerifyEmailPage />} />
         </Route>
 
         {/* ── TENANT APP ── */}
@@ -55,7 +57,9 @@ export function AppRouter() {
                 key={route.key}
                 element={<RoleGuard roles={route.roles} />}
               >
-                <Route path={route.path} element={route.element} />
+                <Route element={<BillingRouteGuard routeKey={route.key} />}>
+                  <Route path={route.path} element={route.element} />
+                </Route>
               </Route>
             ))}
           </Route>

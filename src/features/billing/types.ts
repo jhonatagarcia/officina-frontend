@@ -24,6 +24,7 @@ export interface BillingPlan {
 }
 
 export interface BillingSubscription {
+  accessMode: 'FULL' | 'LIMITED';
   status: BillingSubscriptionStatus;
   trialEndsAt: string | null;
   currentPeriodStart: string | null;

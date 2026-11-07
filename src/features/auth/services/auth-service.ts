@@ -8,6 +8,7 @@ import type {
   ResetPasswordPayload,
   SignupConfig,
   SignupInviteValidation,
+  VerifyEmailPayload,
 } from '@/types/auth';
 
 export const authService = {
@@ -20,10 +21,18 @@ export const authService = {
     return response.data;
   },
   async registerWorkshop(payload: RegisterWorkshopPayload) {
-    const response = await http.post<AuthSession | { message?: string }>(
+    const response = await http.post<AuthSession>(
       '/auth/signup',
       payload,
     );
+    return response.data;
+  },
+  async verifyEmail(payload: VerifyEmailPayload) {
+    const response = await http.post<{ message: string }>('/auth/verify-email', payload);
+    return response.data;
+  },
+  async resendVerification(payload: { email: string; captchaToken: string }) {
+    const response = await http.post<{ message: string }>('/auth/resend-verification', payload);
     return response.data;
   },
   async getSignupConfig() {

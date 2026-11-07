@@ -4,7 +4,7 @@ import { env } from '@/lib/env';
 const recaptchaScriptId = 'google-recaptcha-v3';
 const recaptchaScriptTimeoutMs = 10_000;
 
-interface RecaptchaWindow extends Window {
+interface RecaptchaV3Window {
   grecaptcha?: {
     ready: (callback: () => void) => void;
     execute: (siteKey: string, options: { action: string }) => Promise<string>;
@@ -12,7 +12,7 @@ interface RecaptchaWindow extends Window {
 }
 
 function getRecaptcha() {
-  return (window as RecaptchaWindow).grecaptcha;
+  return (window as unknown as RecaptchaV3Window).grecaptcha;
 }
 
 function loadRecaptchaScript(siteKey: string) {

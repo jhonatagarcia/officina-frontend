@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
 import { cn, formatCpfCnpj, formatPhone, formatDateOnly } from '@/lib/utils';
+import { useBillingAccess } from '@/features/billing/hooks/use-billing-access';
 
 function InfoChip({ children }: { children: ReactNode }) {
   return (
@@ -60,6 +61,7 @@ export function ClientsPage() {
   const params = useListParams();
   const [isConfiguringPanel, setIsConfiguringPanel] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
+  const billingAccess = useBillingAccess();
 
   const query = useQuery({
     queryKey: ['clientes', params.page, DEFAULT_TABLE_PAGE_SIZE, params.search],
@@ -133,6 +135,7 @@ export function ClientsPage() {
         <IndicatorHeaderActions
           onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
           primaryActionLabel="Novo cliente"
+          primaryActionDisabled={billingAccess.limited}
           onPrimaryAction={() => navigate('/inicio/clientes/novo')}
         >
           <SearchInput
@@ -158,7 +161,7 @@ export function ClientsPage() {
             <CardTitle className="text-lg">Clientes cadastrados</CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">Lista de clientes com contato, documento e vínculo de veículos.</p>
           </div>
-          <Button className="rounded-lg font-semibold" size="sm" variant="outline" onClick={() => navigate('/inicio/clientes/novo')}>
+          <Button disabled={billingAccess.limited} className="rounded-lg font-semibold" size="sm" variant="outline" onClick={() => navigate('/inicio/clientes/novo')}>
             Novo cliente
           </Button>
         </CardHeader>
@@ -240,10 +243,10 @@ export function ClientsPage() {
                       <ClientsTableCell className="text-muted-foreground">{formatDateOnly(client.updatedAt)}</ClientsTableCell>
                       <ClientsTableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button className="rounded-lg" size="icon-sm" variant="outline" onClick={() => navigate(`/inicio/clientes/${client.id}`)}>
+                          <Button disabled={billingAccess.limited} className="rounded-lg" size="icon-sm" variant="outline" onClick={() => navigate(`/inicio/clientes/${client.id}`)}>
                             <Eye className="size-4" strokeWidth={1.75} />
                           </Button>
-                          <Button className="rounded-lg" size="icon-sm" variant="outline" onClick={() => navigate(`/inicio/clientes/${client.id}/editar`)}>
+                          <Button disabled={billingAccess.limited} className="rounded-lg" size="icon-sm" variant="outline" onClick={() => navigate(`/inicio/clientes/${client.id}/editar`)}>
                             <Pencil className="size-4" strokeWidth={1.75} />
                           </Button>
                         </div>
