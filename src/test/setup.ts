@@ -9,6 +9,8 @@ vi.stubEnv(
   'google-client-id.test.apps.googleusercontent.com',
 );
 vi.stubEnv('VITE_GOOGLE_ALLOWED_ORIGINS', 'http://localhost:3000');
+// Testes de formulário usam o fallback determinístico e nunca dependem de uma chave local real.
+vi.stubEnv('VITE_RECAPTCHA_SITE_KEY', '');
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

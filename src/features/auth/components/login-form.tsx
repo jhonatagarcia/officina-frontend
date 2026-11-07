@@ -3,12 +3,14 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useLogin } from '@/features/auth/hooks/use-login';
-import { useRecaptcha } from '@/features/auth/hooks/use-recaptcha';
+import { useState } from 'react';
 import { loginSchema, type LoginSchema } from '@/features/auth/schemas/login-schema';
 import { PasswordField } from '@/features/auth/components/password-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { CaptchaField } from '@/features/auth/components/captcha-field';
+import type { ApiErrorResponse } from '@/types/common';
 
 const loginFailureMessage = 'Usuário não cadastrado ou senha inválida.';
 
@@ -19,7 +21,7 @@ interface LoginFormProps {
 
 export function LoginForm({ onSuccess, redirectTo = '/inicio/dashboard' }: LoginFormProps) {
   const { login, isLoggingIn } = useLogin();
-  const executeRecaptcha = useRecaptcha();
+  const [captchaRequired, setCaptchaRequired] = useState(false);
   const navigate = useNavigate();
 
   const form = useForm<LoginSchema>({
@@ -30,14 +32,21 @@ export function LoginForm({ onSuccess, redirectTo = '/inicio/dashboard' }: Login
   async function onSubmit(values: LoginSchema) {
     try {
       form.clearErrors('root');
-      const captchaToken = await executeRecaptcha('login');
-      await login({ ...values, captchaToken });
+      await login(values);
       toast.success('Acesso realizado com sucesso.');
       onSuccess?.();
       navigate(redirectTo, { replace: true });
-    } catch {
-      form.setError('root', { message: loginFailureMessage });
-      toast.error(loginFailureMessage);
+    } catch (error) {
+      const apiError = error as ApiErrorResponse;
+      if (apiError.code === 'CAPTCHA_REQUIRED' || apiError.code === 'EMAIL_NOT_VERIFIED') {
+        setCaptchaRequired(true);
+      }
+      const message = apiError.code === 'AUTH_TEMPORARILY_BLOCKED' || apiError.code === 'EMAIL_NOT_VERIFIED'
+        ? apiError.message
+        : loginFailureMessage;
+      form.setError('root', { message });
+      form.setValue('captchaToken', '');
+      toast.error(message);
     }
   }
 
@@ -78,6 +87,16 @@ export function LoginForm({ onSuccess, redirectTo = '/inicio/dashboard' }: Login
           />
         )}
       />
+
+      {captchaRequired ? (
+        <Controller
+          control={form.control}
+          name="captchaToken"
+          render={({ field }) => (
+            <CaptchaField disabled={isLoggingIn} value={field.value ?? ''} onChange={field.onChange} />
+          )}
+        />
+      ) : null}
 
       <Button className="h-11 w-full" disabled={isLoggingIn} type="submit">
         {isLoggingIn ? 'Entrando...' : 'Entrar'}

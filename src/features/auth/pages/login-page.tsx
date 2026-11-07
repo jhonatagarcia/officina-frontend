@@ -7,7 +7,6 @@ import { ArrowLeft, Wrench } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useLogin } from '@/features/auth/hooks/use-login';
 import { useGoogleLogin } from '@/features/auth/hooks/use-google-login';
-import { useRecaptcha } from '@/features/auth/hooks/use-recaptcha';
 import { authService } from '@/features/auth/services/auth-service';
 import {
   forgotPasswordSchema,
@@ -24,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { env } from '@/lib/env';
+import type { ApiErrorResponse } from '@/types/common';
 import {
   useSignupConfig,
   useSignupInviteValidation,
@@ -70,11 +70,12 @@ function readInviteTokenFromFragment(): string | undefined {
 export function LoginPage() {
   const { login, isLoggingIn } = useLogin();
   const { loginWithGoogle, isGoogleLoggingIn } = useGoogleLogin();
-  const executeRecaptcha = useRecaptcha();
   const navigate = useNavigate();
   const location = useLocation();
   const [mode, setMode] = useState<'login' | 'forgot'>('login');
   const [registerOpen, setRegisterOpen] = useState(false);
+  const [captchaRequired, setCaptchaRequired] = useState(false);
+  const [emailVerificationPending, setEmailVerificationPending] = useState(false);
   const [inviteToken] = useState(readInviteTokenFromFragment);
   const signupConfig = useSignupConfig();
   const inviteValidation = useSignupInviteValidation(inviteToken);
@@ -108,6 +109,11 @@ export function LoginPage() {
       );
     },
   });
+  const resendVerification = useMutation({
+    mutationFn: authService.resendVerification,
+    onSuccess: (data) => toast.success(data.message),
+    onError: () => toast.error('Não foi possível reenviar a confirmação agora.'),
+  });
 
   useEffect(() => {
     if (inviteValidation.data?.valid) setRegisterOpen(true);
@@ -116,13 +122,24 @@ export function LoginPage() {
   async function onLoginSubmit(values: LoginSchema) {
     try {
       loginForm.clearErrors('root');
-      const captchaToken = await executeRecaptcha('login');
-      await login({ ...values, captchaToken });
+      await login(values);
       toast.success('Acesso realizado com sucesso.');
       navigate(getSafePostLoginPath(location.state), { replace: true });
-    } catch {
-      loginForm.setError('root', { message: loginFailureMessage });
-      toast.error(loginFailureMessage);
+    } catch (error) {
+      const apiError = error as ApiErrorResponse;
+      if (apiError.code === 'CAPTCHA_REQUIRED') setCaptchaRequired(true);
+      if (apiError.code === 'EMAIL_NOT_VERIFIED') {
+        setCaptchaRequired(true);
+        setEmailVerificationPending(true);
+      }
+      const message = apiError.code === 'AUTH_TEMPORARILY_BLOCKED'
+        ? apiError.message
+        : apiError.code === 'EMAIL_NOT_VERIFIED'
+          ? 'Confirme seu e-mail antes de entrar.'
+          : loginFailureMessage;
+      loginForm.setError('root', { message });
+      loginForm.setValue('captchaToken', '');
+      toast.error(message);
     }
   }
 
@@ -281,6 +298,19 @@ export function LoginPage() {
                     />
                   )}
                 />
+                {captchaRequired ? (
+                  <Controller
+                    control={loginForm.control}
+                    name="captchaToken"
+                    render={({ field }) => (
+                      <CaptchaField
+                        disabled={isAuthenticating}
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                      />
+                    )}
+                  />
+                ) : null}
                 <Button
                   className="h-11 w-full"
                   disabled={isAuthenticating}
@@ -288,6 +318,20 @@ export function LoginPage() {
                 >
                   {isLoggingIn ? 'Entrando...' : 'Entrar'}
                 </Button>
+                {emailVerificationPending ? (
+                  <Button
+                    className="w-full"
+                    type="button"
+                    variant="outline"
+                    disabled={resendVerification.isPending || !loginForm.watch('captchaToken')}
+                    onClick={() => resendVerification.mutate({
+                      email: loginForm.getValues('email'),
+                      captchaToken: loginForm.getValues('captchaToken') ?? '',
+                    })}
+                  >
+                    {resendVerification.isPending ? 'Reenviando...' : 'Reenviar confirmação de e-mail'}
+                  </Button>
+                ) : null}
                 {loginForm.formState.errors.root?.message ? (
                   <p
                     className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"

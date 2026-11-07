@@ -49,6 +49,7 @@ describe('SubscriptionPage', () => {
 
   it('exibe preço canônico, status e diferenças entre cartão recorrente e Pix avulso', async () => {
     vi.mocked(billingService.getSubscription).mockResolvedValue({
+      accessMode: 'FULL',
       status: 'TRIALING',
       trialEndsAt: '2026-09-09T12:00:00.000Z',
       currentPeriodStart: null,
@@ -73,6 +74,7 @@ describe('SubscriptionPage', () => {
 
   it('não oferece checkout para a oficina piloto permanente', async () => {
     vi.mocked(billingService.getSubscription).mockResolvedValue({
+      accessMode: 'FULL',
       status: 'PILOT',
       trialEndsAt: null,
       currentPeriodStart: null,

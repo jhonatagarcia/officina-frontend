@@ -19,11 +19,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SortableTableHead, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DEFAULT_TABLE_PAGE_SIZE } from '@/constants/pagination';
+import { useBillingAccess } from '@/features/billing/hooks/use-billing-access';
 
 export function VehiclesPage() {
   const navigate = useNavigate();
   const params = useListParams();
   const [isConfiguringPanel, setIsConfiguringPanel] = useState(false);
+  const billingAccess = useBillingAccess();
   const query = useQuery({
     queryKey: ['veiculos', params.page, DEFAULT_TABLE_PAGE_SIZE, params.search],
     queryFn: () => vehiclesService.list({ page: params.page, pageSize: DEFAULT_TABLE_PAGE_SIZE, search: params.search }),
@@ -85,6 +87,7 @@ export function VehiclesPage() {
         <IndicatorHeaderActions
           onAdjustPanel={() => setIsConfiguringPanel((current) => !current)}
           primaryActionLabel="Novo veículo"
+          primaryActionDisabled={billingAccess.limited}
           onPrimaryAction={() => navigate('/inicio/veiculos/novo')}
         >
           <SearchInput value={params.search} onChange={params.setSearch} placeholder="Buscar por placa, marca, modelo ou cliente" />
@@ -125,10 +128,10 @@ export function VehiclesPage() {
                       <TableCell>{vehicle.year}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button size="icon" variant="outline" onClick={() => navigate(`/inicio/veiculos/${vehicle.id}`)}>
+                          <Button disabled={billingAccess.limited} size="icon" variant="outline" onClick={() => navigate(`/inicio/veiculos/${vehicle.id}`)}>
                             <Eye className="size-4" />
                           </Button>
-                          <Button size="icon" variant="outline" onClick={() => navigate(`/inicio/veiculos/${vehicle.id}/editar`)}>
+                          <Button disabled={billingAccess.limited} size="icon" variant="outline" onClick={() => navigate(`/inicio/veiculos/${vehicle.id}/editar`)}>
                             <Pencil className="size-4" />
                           </Button>
                         </div>

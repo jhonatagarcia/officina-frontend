@@ -21,7 +21,6 @@ const {
   forgotPasswordMock,
   getSignupConfigMock,
   validateSignupInviteMock,
-  executeRecaptchaMock,
   toastErrorMock,
   toastSuccessMock,
   loginState,
@@ -33,7 +32,6 @@ const {
   forgotPasswordMock: vi.fn(),
   getSignupConfigMock: vi.fn(),
   validateSignupInviteMock: vi.fn(),
-  executeRecaptchaMock: vi.fn(),
   toastErrorMock: vi.fn(),
   toastSuccessMock: vi.fn(),
   loginState: { isLoggingIn: false },
@@ -52,10 +50,6 @@ vi.mock('@/features/auth/hooks/use-google-login', () => ({
     loginWithGoogle: googleLoginMock,
     isGoogleLoggingIn: googleLoginState.isGoogleLoggingIn,
   }),
-}));
-
-vi.mock('@/features/auth/hooks/use-recaptcha', () => ({
-  useRecaptcha: () => executeRecaptchaMock,
 }));
 
 vi.mock('@/features/auth/services/auth-service', () => ({
@@ -145,8 +139,6 @@ describe('LoginPage', () => {
       invitationRequired: false,
     });
     validateSignupInviteMock.mockReset();
-    executeRecaptchaMock.mockReset();
-    executeRecaptchaMock.mockResolvedValue('recaptcha-token');
     toastErrorMock.mockReset();
     toastSuccessMock.mockReset();
     loginState.isLoggingIn = false;
@@ -156,7 +148,7 @@ describe('LoginPage', () => {
     installGoogleIdentityMock();
   });
 
-  it('gera token reCAPTCHA e envia credenciais válidas', async () => {
+  it('envia credenciais sem exigir captcha antes do limite de falhas', async () => {
     loginMock.mockResolvedValue(undefined);
 
     renderWithProviders(<LoginPage />);
@@ -177,10 +169,9 @@ describe('LoginPage', () => {
       expect(loginMock).toHaveBeenCalledWith({
         email: 'gestor@oficina.com',
         password: 'Senha123',
-        captchaToken: 'recaptcha-token',
+        captchaToken: '',
       }),
     );
-    expect(executeRecaptchaMock).toHaveBeenCalledWith('login');
   });
 
   it('renderiza botao de login com Google via Google Identity Services', async () => {
@@ -401,18 +392,12 @@ describe('LoginPage', () => {
       expiresAt: '2026-08-29T12:00:00.000Z',
     });
     registerWorkshopMock.mockResolvedValueOnce({
-      accessToken: 'signup-token',
+      accessToken: 'signup-access-token',
       user: {
-        id: 'user-1',
+        id: 'signup-user',
         name: 'Auto teste localhost',
         email: 'autoteste@local.com.br',
         role: 'ADMIN',
-        workshopFiscalStatus: 'COMPLETE',
-        workshop: {
-          id: 'workshop-1',
-          tradeName: 'Auto teste localhost',
-          cnpj: '11222333000181',
-        },
       },
     });
 
@@ -465,8 +450,35 @@ describe('LoginPage', () => {
       captchaToken: 'local-captcha-ok',
       inviteToken,
     });
-    expect(useAuthStore.getState().session?.accessToken).toBe('signup-token');
+    expect(useAuthStore.getState().session?.accessToken).toBe('signup-access-token');
+    expect(toastSuccessMock).toHaveBeenCalledWith(
+      'Cadastro criado. Seu período gratuito de 30 dias foi iniciado.',
+    );
     expect(await screen.findByText('Dashboard seguro')).toBeInTheDocument();
+  });
+
+  it('exige novo desafio apos o servidor rejeitar o captcha no cadastro', async () => {
+    const user = userEvent.setup();
+    registerWorkshopMock.mockRejectedValueOnce({
+      code: 'CAPTCHA_REQUIRED',
+      message: 'Confirme o CAPTCHA para continuar',
+    });
+    renderWithProviders(<LoginPage />);
+
+    await user.click(await screen.findByRole('button', { name: /cadastre-se/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByLabelText(/nome fantasia do negócio/i), 'Oficina Local');
+    await user.type(within(dialog).getByLabelText(/^e-mail$/i), 'teste@local.com.br');
+    await user.type(within(dialog).getByLabelText(/^senha$/i), 'Senha123');
+    await user.type(within(dialog).getByLabelText(/confirmar senha/i), 'Senha123');
+    const captcha = within(dialog).getByRole('checkbox', { name: /não sou um robô/i });
+    await user.click(captcha);
+    expect(captcha).toHaveAttribute('aria-checked', 'true');
+    await user.click(within(dialog).getByRole('button', { name: /criar cadastro/i }));
+
+    await waitFor(() => expect(registerWorkshopMock).toHaveBeenCalledOnce());
+    await waitFor(() => expect(captcha).toHaveAttribute('aria-checked', 'false'));
+    expect(toastErrorMock).toHaveBeenCalledWith('Confirme o CAPTCHA para continuar');
   });
 
   it('permite mostrar e ocultar a senha', () => {
@@ -490,7 +502,6 @@ describe('LoginPage', () => {
     expect(
       await screen.findByText(/informe um e-mail válido/i),
     ).toBeInTheDocument();
-    expect(executeRecaptchaMock).not.toHaveBeenCalled();
     expect(loginMock).not.toHaveBeenCalled();
   });
 

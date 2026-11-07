@@ -3,6 +3,19 @@ import { futureFlowFixtures, interceptApi, syntheticSession } from './fixtures/a
 
 async function authenticated(page: import('@playwright/test').Page) {
   await page.route('**/auth/refresh', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(syntheticSession()) }));
+  await interceptApi(page, '/billing/subscription', {
+    accessMode: 'FULL',
+    status: 'TRIALING',
+    trialEndsAt: '2026-12-31T23:59:59.000Z',
+    currentPeriodStart: null,
+    currentPeriodEnd: null,
+    graceEndsAt: null,
+    cancelAtPeriodEnd: false,
+    billingEnabled: true,
+    provider: 'ASAAS',
+    environment: 'SANDBOX',
+    plan: null,
+  });
 }
 
 test('lista cliente sintético e não mistura tenant visualmente', async ({ page }) => {

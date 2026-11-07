@@ -40,6 +40,10 @@ export interface RegisterWorkshopPayload {
   inviteToken?: string;
 }
 
+export interface VerifyEmailPayload {
+  token: string;
+}
+
 export type SignupMode = 'public' | 'invite_only' | 'closed';
 
 export interface SignupConfig {

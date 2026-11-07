@@ -289,7 +289,6 @@ export const segmentDetails: SegmentDetail[] = [
 export interface Plan {
   name: string;
   monthly: number;
-  annual: number;
   description: string;
   features: string[];
   cta: { label: string; href: string };
@@ -299,63 +298,28 @@ export interface Plan {
 export const pricing = {
   tag: 'Planos',
   title: 'Simples, transparente e sem surpresas',
-  subtitle: 'Cancele quando quiser. Sem taxas de implantação.',
-  saveBadge: '2 meses grátis',
+  subtitle:
+    '30 dias grátis com acesso completo. Depois, assine somente se quiser continuar usando todas as funcionalidades.',
   periodMonthly: 'cobrado mensalmente por estabelecimento',
-  periodAnnual: 'cobrado anualmente por estabelecimento',
 };
 
 export const plans: Plan[] = [
   {
-    name: 'Starter',
-    monthly: 89,
-    annual: 74,
+    name: 'Essencial',
+    monthly: 79.9,
     description:
-      'Para negócios automotivos que estão começando a digitalizar a operação.',
+      'Um plano único com todas as funcionalidades da versão atual do AutoPro System.',
     features: [
-      '1 usuário administrador',
+      '30 dias grátis com acesso completo',
       'Clientes e veículos ilimitados',
       'Orçamentos e OS ilimitados',
-      'Catálogo de serviços',
-      // TODO(WhatsApp Cloud API): 'Notificações WhatsApp',
+      'Serviços, estoque e financeiro',
+      'Gestão da equipe e comissões',
       'Histórico de serviços por veículo',
-      'Suporte via chat',
+      'Acesso por computador, tablet e celular',
     ],
-    cta: { label: 'Começar gratuitamente', href: brand.demoHref },
-    highlighted: false,
-  },
-  {
-    name: 'Pro',
-    monthly: 159,
-    annual: 132,
-    description:
-      'Para operações em crescimento que precisam de controle total.',
-    features: [
-      'Até 5 usuários',
-      'Tudo do plano Starter',
-      'Controle financeiro completo',
-      'Controle de estoque',
-      'Gestão da equipe técnica',
-      'Relatórios e indicadores',
-    ],
-    cta: { label: 'Assinar o Pro', href: brand.demoHref },
+    cta: { label: 'Começar 30 dias grátis', href: brand.demoHref },
     highlighted: true,
-  },
-  {
-    name: 'Business',
-    monthly: 299,
-    annual: 249,
-    description: 'Para redes e grandes operações com múltiplas unidades.',
-    features: [
-      'Usuários ilimitados',
-      'Tudo do plano Pro',
-      'Múltiplas unidades',
-      'API e integrações',
-      'Suporte prioritário 24/7',
-      'Onboarding personalizado',
-    ],
-    cta: { label: 'Falar com o comercial', href: brand.demoHref },
-    highlighted: false,
   },
 ];
 
@@ -396,7 +360,7 @@ export const testimonials: Testimonial[] = [
 
 export const finalCta = {
   title: 'Pronto para modernizar seu negócio automotivo?',
-  subtitle: '14 dias grátis, sem cartão de crédito. Configure em 5 minutos.',
+  subtitle: '30 dias grátis, sem cartão de crédito. Configure em 5 minutos.',
   primaryCta: { label: 'Criar conta gratuita', href: '#planos' },
   secondaryCta: { label: 'Falar com o time', href: brand.demoHref },
 };

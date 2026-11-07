@@ -1542,7 +1542,8 @@ Mockup de celular — cores literais do WhatsApp nos dois temas
 
 .landing-root .pricing-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: minmax(0, 520px);
+  justify-content: center;
   gap: 20px;
 }
 

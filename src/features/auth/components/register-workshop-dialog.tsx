@@ -16,7 +16,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/store/auth-store';
-import type { AuthSession } from '@/types/auth';
 import {
   Dialog,
   DialogContent,
@@ -43,16 +42,9 @@ function formatCnpj(value: string) {
     .replace(/(\d{4})(\d)/, '$1-$2');
 }
 
-function isAuthSession(data: unknown): data is AuthSession {
-  return Boolean(
-    data && typeof data === 'object' && 'accessToken' in data && 'user' in data,
-  );
-}
-
 interface RegisterWorkshopDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onRegistered?: (session: AuthSession) => void;
   inviteToken?: string;
   invitedEmail?: string;
 }
@@ -60,12 +52,11 @@ interface RegisterWorkshopDialogProps {
 export function RegisterWorkshopDialog({
   open,
   onOpenChange,
-  onRegistered,
   inviteToken,
   invitedEmail,
 }: RegisterWorkshopDialogProps) {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const setSession = useAuthStore((state) => state.setSession);
   const form = useForm<RegisterSchema>({
     resolver: zodResolver(registerSchema),
@@ -81,23 +72,16 @@ export function RegisterWorkshopDialog({
   const mutation = useMutation({
     mutationFn: authService.registerWorkshop,
     onSuccess: (data) => {
-      if (!isAuthSession(data)) {
-        toast.success('Cadastro realizado com sucesso.');
-        onOpenChange(false);
-        form.reset();
-        return;
-      }
-
       queryClient.clear();
       setSession(data);
-      toast.success('Cadastro realizado com sucesso. Você já está logado.');
-      onRegistered?.(data);
+      toast.success('Cadastro criado. Seu período gratuito de 30 dias foi iniciado.');
       onOpenChange(false);
       form.reset();
       navigate('/inicio/dashboard', { replace: true });
     },
     onError: (error) => {
       toast.error(getRegisterErrorMessage(error));
+      form.setValue('captchaToken', '');
     },
   });
   const isSubmitting = mutation.isPending;

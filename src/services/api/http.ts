@@ -17,7 +17,13 @@ export const http = axios.create({
 });
 
 const defaultApiErrorMessage = 'Não foi possível processar a solicitação.';
-const safeBackendMessageStatuses = new Set([400, 404, 409, 422]);
+const safeBackendMessageStatuses = new Set([400, 401, 402, 404, 409, 422, 429]);
+const safeAuthCodes = new Set([
+  'CAPTCHA_REQUIRED',
+  'EMAIL_NOT_VERIFIED',
+  'AUTH_TEMPORARILY_BLOCKED',
+  'BILLING_LIMITED_ACCESS',
+]);
 const safeConflictMetadata = new Map<
   string,
   'name' | 'code' | 'internalCode' | null
@@ -80,9 +86,18 @@ export function normalizeApiErrorResponse(
   payload?: ApiErrorPayload,
 ): ApiErrorResponse {
   if (status === 401) {
+    const safeCode =
+      typeof payload?.code === 'string' && safeAuthCodes.has(payload.code)
+        ? payload.code
+        : undefined;
+
     return {
-      message: 'Sua sessão expirou. Faça login novamente.',
+      message: safeCode
+        ? normalizeMessageValue(payload?.message) ??
+          'Não foi possível concluir a autenticação.'
+        : 'Sua sessão expirou. Faça login novamente.',
       statusCode: status,
+      ...(safeCode ? { code: safeCode } : {}),
     };
   }
 
@@ -112,6 +127,9 @@ export function normalizeApiErrorResponse(
     message: safeBackendMessage ?? defaultApiErrorMessage,
     ...(status !== undefined ? { statusCode: status } : {}),
     ...(conflictCode ? { code: conflictCode } : {}),
+    ...(typeof payload?.code === 'string' && safeAuthCodes.has(payload.code)
+      ? { code: payload.code }
+      : {}),
     ...(conflictField ? { field: conflictField } : {}),
   };
 }
